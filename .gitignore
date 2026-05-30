@@ -1,0 +1,22 @@
+# ── Credentials & secrets ────────────────────────────────
+includes/config.php
+
+# ── Composer dependencies (run: composer install on server) ──
+vendor/
+
+# ── User-uploaded files ───────────────────────────────────
+uploads/documents/*
+!uploads/documents/.gitkeep
+
+# ── Logs ─────────────────────────────────────────────────
+logs/*
+!logs/.gitkeep
+
+# ── Dev-only files ────────────────────────────────────────
+test_setup.php
+
+# ── OS & editor noise ─────────────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode/
+*.swp
