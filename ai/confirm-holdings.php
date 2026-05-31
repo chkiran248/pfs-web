@@ -3,6 +3,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/fund-classifier.php';
 
 header('Content-Type: application/json');
 
@@ -38,11 +39,14 @@ try {
     foreach ($submitted as $h) {
         if (!($h['include'] ?? true) || empty($h['fund_name'])) continue;
 
+        // Classify fund_type properly from fund name
+        $classified_type = classify_holding($h['fund_name'] ?? '')['db_type'];
+
         $ins->execute([
             ':uid'   => $user_id,
             ':fn'    => substr($h['fund_name'], 0, 200),
             ':fh'    => substr($h['fund_house'] ?? '', 0, 100),
-            ':ft'    => $h['fund_type'] ?? 'equity',
+            ':ft'    => $classified_type,
             ':units' => (float)($h['units_held'] ?? 0),
             ':avg'   => (float)($h['avg_nav'] ?? 0),
             ':cur'   => (float)($h['current_nav'] ?? 0),

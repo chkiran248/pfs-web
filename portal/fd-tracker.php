@@ -45,13 +45,13 @@ require_once '../includes/portal-header.php';
 <p class="page-subtitle">Track all your Fixed Deposits and get maturity alerts</p>
 
 <div class="stats-grid">
-  <div class="stat-box"><div class="stat-label">Total FD Invested</div><div class="stat-value neutral">₹<?= number_format($total_invested, 0) ?></div></div>
-  <div class="stat-box"><div class="stat-label">Total Maturity Value</div><div class="stat-value positive">₹<?= number_format($total_maturity, 0) ?></div></div>
-  <div class="stat-box"><div class="stat-label">Total Interest Earned</div><div class="stat-value positive">₹<?= number_format($total_maturity - $total_invested, 0) ?></div></div>
+  <div class="stat-box"><div class="stat-label">Total FD Invested</div><div class="stat-value neutral"><?= format_inr($total_invested) ?></div></div>
+  <div class="stat-box"><div class="stat-label">Total Maturity Value</div><div class="stat-value positive"><?= format_inr($total_maturity) ?></div></div>
+  <div class="stat-box"><div class="stat-label">Total Interest Earned</div><div class="stat-value positive"><?= format_inr($total_maturity - $total_invested) ?></div></div>
   <div class="stat-box">
     <div class="stat-label">Due Within 90 Days</div>
     <div class="stat-value <?= $due_soon > 0 ? 'gold' : 'neutral' ?>"><?= $due_soon ?> FD<?= $due_soon !== 1 ? 's' : '' ?></div>
-    <?php if ($due_soon > 0): ?><div class="stat-sub">₹<?= number_format($due_soon_amt, 0) ?> maturing</div><?php endif; ?>
+    <?php if ($due_soon > 0): ?><div class="stat-sub"><?= format_inr($due_soon_amt) ?> maturing</div><?php endif; ?>
   </div>
 </div>
 
@@ -84,11 +84,11 @@ require_once '../includes/portal-header.php';
         ?>
         <tr>
           <td style="font-weight:500;color:var(--cream)"><?= htmlspecialchars($fd['fund_name'], ENT_QUOTES, 'UTF-8') ?></td>
-          <td>₹<?= number_format($invested, 0) ?></td>
+          <td><?= format_inr($invested) ?></td>
           <td style="font-family:'DM Mono',monospace"><?= $rate ?>%</td>
           <td style="font-size:0.82rem"><?= $fd['purchase_date'] ? date('d M Y', strtotime($fd['purchase_date'])) : '—' ?></td>
           <td style="font-size:0.82rem"><?= $maturity ? date('d M Y', strtotime($maturity)) : '—' ?></td>
-          <td style="color:var(--lime);font-family:'DM Mono',monospace">₹<?= number_format($mat_val, 0) ?></td>
+          <td style="color:var(--lime);font-family:'DM Mono',monospace"><?= format_inr($mat_val) ?></td>
           <td style="font-family:'DM Mono',monospace;font-size:0.82rem"><?= is_null($days_left) ? '—' : ($days_left < 0 ? 'Matured' : $days_left.' days') ?></td>
           <td><span class="badge <?= $status['class'] ?>"><?= $status['label'] ?></span></td>
         </tr>

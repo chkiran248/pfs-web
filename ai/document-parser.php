@@ -86,6 +86,8 @@ function build_extraction_prompt(string $text, string $doc_type, string $file_pa
         'CAS_MUTUAL_FUND' => "Extract ALL mutual fund holdings from this CAMS/KFintech Consolidated Account Statement.
 For each holding return: fund_name, fund_house, fund_type (equity/debt/hybrid/elss/index/international/liquid/gold), folio_number, units_held (decimal), avg_nav, current_nav, invested_amount, current_value, purchase_date (YYYY-MM-DD), sip_active (true/false), sip_amount (monthly).",
 
+        'DEMAT_STATEMENT' => "Extract ALL holdings from this NSDL/CDSL Demat Account Statement. NSDL statements show: ISIN, Company/Issuer Name, Market Type, Quantity, Current Market Value. For each holding return: fund_name (full company name), fund_house ('NSE' or 'BSE' or 'NSDL'), fund_type ('equity' for shares, 'debt' for bonds/debentures), units_held (quantity as number), avg_nav (0 if not shown), current_nav (0 if not shown), invested_amount (0 if not shown), current_value (current market value — extract this), purchase_date (null if not shown), ticker_symbol (NSE/BSE symbol if shown). Extract EVERY row even if some fields are missing.",
+
         'BROKER_STATEMENT' => "Extract ALL stock holdings. For each: fund_name (company name), fund_house (exchange NSE/BSE), fund_type='equity', units_held (shares), avg_nav (avg buy price), current_nav (current price if shown), invested_amount, current_value, purchase_date (YYYY-MM-DD), ticker_symbol.",
 
         'FD_CERTIFICATE' => "Extract Fixed Deposit details. For each: fund_name (bank + 'FD'), fund_house (bank name), fund_type='fd', invested_amount (principal), interest_rate (number, e.g. 7.5), purchase_date (YYYY-MM-DD), maturity_date (YYYY-MM-DD), current_value (maturity amount if shown).",
@@ -96,9 +98,11 @@ For each holding return: fund_name, fund_house, fund_type (equity/debt/hybrid/el
     };
 
     $system = "You are a financial data extraction specialist for Indian financial documents.
-Return ONLY a valid JSON array of holding objects — no explanation, no markdown fences, no preamble.
-If nothing found return [].
-All monetary values as plain numbers (no ₹ or commas). All dates YYYY-MM-DD. Percentages as numbers.";
+Your response MUST start with [ and end with ] — a valid JSON array of holding objects.
+No explanation before or after. No markdown fences. No preamble.
+If nothing found, return exactly: []
+All monetary values: plain numbers without ₹ or commas (e.g. 150000 not 1,50,000).
+All dates: YYYY-MM-DD format. Percentages: plain numbers (7.5 not 7.5%).";
 
     $user_content = [];
     if ($has_text) {
@@ -113,10 +117,56 @@ All monetary values as plain numbers (no ₹ or commas). All dates YYYY-MM-DD. P
     return ['system' => $system, 'user_content' => $user_content];
 }
 
+/**
+ * Robustly extract a JSON array from Claude's response.
+ * Handles: pure JSON, markdown-fenced, JSON inside prose, object with 'holdings' key.
+ */
+function extract_json_array(string $text): ?array {
+    if (trim($text) === '') return [];
+
+    // Strip markdown fences
+    $text = preg_replace('/^```(?:json)?\s*/m', '', $text);
+    $text = preg_replace('/^```\s*$/m', '', $text);
+    $text = trim($text);
+
+    // 1. Direct parse
+    $d = json_decode($text, true);
+    if (is_array($d)) return $d;
+
+    // 2. Find the outermost JSON array in the text
+    $depth = 0; $start = -1; $inStr = false; $esc = false;
+    for ($i = 0; $i < strlen($text); $i++) {
+        $c = $text[$i];
+        if ($esc) { $esc = false; continue; }
+        if ($c === '\\' && $inStr) { $esc = true; continue; }
+        if ($c === '"') { $inStr = !$inStr; continue; }
+        if ($inStr) continue;
+        if ($c === '[') { if ($depth === 0) $start = $i; $depth++; }
+        elseif ($c === ']') { $depth--; if ($depth === 0 && $start >= 0) {
+            $candidate = substr($text, $start, $i - $start + 1);
+            $parsed = json_decode($candidate, true);
+            if (is_array($parsed)) return $parsed;
+            $start = -1;
+        }}
+    }
+
+    // 3. Object with 'holdings' key
+    if (preg_match('/\{[\s\S]+\}/s', $text, $m)) {
+        $obj = json_decode($m[0], true);
+        if (isset($obj['holdings']) && is_array($obj['holdings'])) return $obj['holdings'];
+        if (isset($obj['data'])     && is_array($obj['data']))     return $obj['data'];
+    }
+
+    // 4. No holdings in document
+    if (preg_match('/no holdings|no data|not found|unable to extract|cannot extract/i', $text)) return [];
+
+    return null; // genuine parse failure
+}
+
 function call_claude_extraction(array $prompt): array {
     $payload = [
         'model'      => PRIMO_MODEL,
-        'max_tokens' => 4096,
+        'max_tokens' => 8000,           // increased for large statements
         'system'     => $prompt['system'],
         'messages'   => [['role' => 'user', 'content' => $prompt['user_content']]],
     ];
@@ -127,24 +177,35 @@ function call_claude_extraction(array $prompt): array {
         CURLOPT_POSTFIELDS     => json_encode($payload),
         CURLOPT_HTTPHEADER     => ['Content-Type: application/json', 'x-api-key: ' . CLAUDE_API_KEY, 'anthropic-version: 2023-06-01'],
         CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_SSL_VERIFYPEER => false,
         CURLOPT_TIMEOUT        => 120,
     ]);
     $response = curl_exec($ch);
     $err      = curl_error($ch);
     curl_close($ch);
 
-    if ($err) throw new Exception("Claude API error: $err");
+    if ($err) throw new Exception("Connection error: $err");
 
     $data = json_decode($response, true);
-    if (isset($data['error'])) throw new Exception("Claude: " . ($data['error']['message'] ?? 'Unknown error'));
+    if (isset($data['error'])) {
+        $msg = $data['error']['message'] ?? 'Unknown Claude error';
+        if (stripos($msg, 'password') !== false) throw new Exception("PDF is password protected. " . $msg);
+        throw new Exception("AI error: " . $msg);
+    }
 
-    $raw = trim($data['content'][0]['text'] ?? '[]');
-    $raw = preg_replace('/^```json\s*/m', '', $raw);
-    $raw = preg_replace('/^```\s*/m', '', $raw);
-    $raw = trim($raw);
+    $raw = trim($data['content'][0]['text'] ?? '');
+    error_log("Claude extraction response (first 300 chars): " . substr($raw, 0, 300));
 
-    $parsed = json_decode($raw, true);
-    if (!is_array($parsed)) throw new Exception("Could not parse AI response as JSON");
+    if (stripos($raw, 'password protected') !== false || stripos($raw, 'password-protected') !== false) {
+        throw new Exception("PDF is password protected. Please enter the correct password.");
+    }
+
+    $parsed = extract_json_array($raw);
+
+    if ($parsed === null) {
+        error_log("Claude extraction failed. Full response: " . substr($raw, 0, 1000));
+        throw new Exception("Could not extract holdings from this document. The statement format may not be supported, or the PDF may be image-based (scanned). Try a text-based PDF.");
+    }
 
     return $parsed;
 }

@@ -104,7 +104,7 @@ require_once '../includes/portal-header.php';
             <?php elseif ($cfg['fmt']==='yr' && $val): ?>
               <?= $val ?>yr+
             <?php elseif ($cfg['fmt']==='cr' && $val): ?>
-              ₹<?= number_format((float)$val, 0) ?>Cr
+              <?= format_inr((float)$val) ?>Cr
             <?php else: ?>
               <?= $val ? htmlspecialchars((string)$val, ENT_QUOTES,'UTF-8') : '—' ?>
             <?php endif; ?>

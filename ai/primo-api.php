@@ -75,26 +75,16 @@ $messages[] = ['role' => 'user', 'content' => $user_msg];
 $db->prepare("INSERT INTO primo_conversations (user_id, role, message, session_key) VALUES (:uid,'user',:msg,:sk)")
    ->execute([':uid' => $user_id, ':msg' => $user_msg, ':sk' => $session_key]);
 
-// Set SSE headers
-header('Content-Type: text/event-stream');
-header('Cache-Control: no-cache');
-header('X-Accel-Buffering: no');
-header('Access-Control-Allow-Origin: *');
+// Standard JSON response (no SSE streaming — works reliably on XAMPP/Windows/shared hosting)
+header('Content-Type: application/json');
 
-if (ob_get_level() > 0) ob_end_clean();
-ob_implicit_flush(true);
-
-// Call Claude API with streaming
+// Call Claude API (non-streaming — get full response at once)
 $api_payload = [
     'model'      => PRIMO_MODEL,
     'max_tokens' => PRIMO_MAX_TOKENS,
     'system'     => $system_prompt,
     'messages'   => $messages,
-    'stream'     => true,
 ];
-
-$full_response = '';
-$tokens_used   = 0;
 
 $ch = curl_init('https://api.anthropic.com/v1/messages');
 curl_setopt_array($ch, [
@@ -105,46 +95,35 @@ curl_setopt_array($ch, [
         'x-api-key: ' . CLAUDE_API_KEY,
         'anthropic-version: 2023-06-01',
     ],
-    CURLOPT_WRITEFUNCTION  => function($ch, $data) use (&$full_response, &$tokens_used) {
-        $lines = explode("\n", $data);
-        foreach ($lines as $line) {
-            $line = trim($line);
-            if (!str_starts_with($line, 'data: ')) continue;
-            $json  = substr($line, 6);
-            if ($json === '[DONE]') continue;
-            $event = json_decode($json, true);
-            if (!$event) continue;
-
-            if (($event['type'] ?? '') === 'content_block_delta') {
-                $chunk = $event['delta']['text'] ?? '';
-                if ($chunk !== '') {
-                    $full_response .= $chunk;
-                    echo 'data: ' . json_encode(['chunk' => $chunk]) . "\n\n";
-                    flush();
-                }
-            }
-            if (($event['type'] ?? '') === 'message_delta') {
-                $tokens_used = $event['usage']['output_tokens'] ?? 0;
-            }
-        }
-        return strlen($data);
-    },
-    CURLOPT_RETURNTRANSFER => false,
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_SSL_VERIFYPEER => false,
     CURLOPT_TIMEOUT        => 60,
 ]);
 
-curl_exec($ch);
-$curl_err = curl_error($ch);
+$response = curl_exec($ch);
+$curl_err  = curl_error($ch);
+$full_response = '';
+$tokens_used   = 0;
 curl_close($ch);
 
 if ($curl_err) {
-    echo 'data: ' . json_encode(['error' => 'AI service unavailable. Please try again.']) . "\n\n";
-    flush();
-} else {
-    // Save assistant response
-    $db->prepare("INSERT INTO primo_conversations (user_id, role, message, tokens_used, session_key) VALUES (:uid,'assistant',:msg,:tok,:sk)")
-       ->execute([':uid' => $user_id, ':msg' => $full_response, ':tok' => $tokens_used, ':sk' => $session_key]);
-
-    echo 'data: ' . json_encode(['done' => true, 'tokens' => $tokens_used]) . "\n\n";
-    flush();
+    exit(json_encode(['error' => 'AI service unavailable. Please try again.']));
 }
+
+$data = json_decode($response, true);
+if (isset($data['error'])) {
+    exit(json_encode(['error' => $data['error']['message'] ?? 'Claude API error.']));
+}
+
+$full_response = trim($data['content'][0]['text'] ?? '');
+$tokens_used   = $data['usage']['output_tokens'] ?? 0;
+
+if (!$full_response) {
+    exit(json_encode(['error' => 'Empty response from AI. Please try again.']));
+}
+
+// Save assistant response
+$db->prepare("INSERT INTO primo_conversations (user_id, role, message, tokens_used, session_key) VALUES (:uid,'assistant',:msg,:tok,:sk)")
+   ->execute([':uid' => $user_id, ':msg' => $full_response, ':tok' => $tokens_used, ':sk' => $session_key]);
+
+echo json_encode(['response' => $full_response, 'tokens' => $tokens_used]);

@@ -3,6 +3,7 @@ declare(strict_types=1);
 require_once '../includes/config.php';
 require_once '../includes/db.php';
 require_once '../includes/auth.php';
+require_once '../ai/fund-classifier.php';
 require_login();
 require_role('client');
 
@@ -116,11 +117,11 @@ require_once '../includes/portal-header.php';
 
 <!-- Stats -->
 <div class="stats-grid">
-  <div class="stat-box"><div class="stat-label">Total Invested</div><div class="stat-value neutral">₹<?= number_format($total_invested,0) ?></div></div>
-  <div class="stat-box"><div class="stat-label">Current Value</div><div class="stat-value neutral">₹<?= number_format($total_current,0) ?></div></div>
+  <div class="stat-box"><div class="stat-label">Total Invested</div><div class="stat-value neutral"><?= format_inr($total_invested) ?></div></div>
+  <div class="stat-box"><div class="stat-label">Current Value</div><div class="stat-value neutral"><?= format_inr($total_current) ?></div></div>
   <div class="stat-box">
     <div class="stat-label">Gain / Loss</div>
-    <div class="stat-value <?= $gain>=0?'positive':'negative' ?>"><?= $gain>=0?'+':'' ?>₹<?= number_format(abs($gain),0) ?></div>
+    <div class="stat-value <?= $gain>=0?'positive':'negative' ?>"><?= $gain>=0?'+':'' ?><?= format_inr(abs($gain)) ?></div>
     <div class="stat-sub"><?= $gain>=0?'+':'' ?><?= number_format($gain_pct,2) ?>%</div>
   </div>
   <div class="stat-box">
@@ -136,106 +137,464 @@ require_once '../includes/portal-header.php';
     <span id="form-toggle-icon" style="color:var(--lime);font-size:1.25rem"><?= ($edit_holding||$error) ? '−' : '+' ?></span>
   </div>
   <div id="holding-form" style="display:<?= ($edit_holding||$error) ? 'block' : 'none' ?>;margin-top:1.25rem">
-    <form method="POST" novalidate>
+    <form method="POST" novalidate id="add-form">
       <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrf_token(),ENT_QUOTES,'UTF-8') ?>">
       <input type="hidden" name="action" value="<?= $edit_holding ? 'edit_holding' : 'add_holding' ?>">
+      <input type="hidden" name="fund_type" id="hidden_fund_type" value="<?= htmlspecialchars($edit_holding['fund_type']??'equity',ENT_QUOTES,'UTF-8') ?>">
       <?php if ($edit_holding): ?><input type="hidden" name="holding_id" value="<?= $edit_holding['id'] ?>"><?php endif; ?>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Fund / Asset Name *</label>
-          <input class="form-input" type="text" name="fund_name" value="<?= htmlspecialchars($edit_holding['fund_name']??'_POST_fund_name'??'',ENT_QUOTES,'UTF-8') ?>" required placeholder="e.g. Mirae Asset Large Cap Fund">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Fund House</label>
-          <input class="form-input" type="text" name="fund_house" value="<?= htmlspecialchars($edit_holding['fund_house']??'',ENT_QUOTES,'UTF-8') ?>" placeholder="e.g. Mirae Asset">
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Fund Type</label>
-          <select class="form-select" name="fund_type" id="fund_type" onchange="toggleFdFields()">
-            <?php foreach ($fund_types as $t): ?>
-            <option value="<?= $t ?>" <?= ($edit_holding['fund_type']??'')===$t?'selected':'' ?>><?= ucfirst($t) ?></option>
-            <?php endforeach; ?>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Purchase Date</label>
-          <input class="form-input" type="date" name="purchase_date" value="<?= htmlspecialchars($edit_holding['purchase_date']??'',ENT_QUOTES,'UTF-8') ?>">
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Units Held</label>
-          <input class="form-input" type="number" name="units_held" step="0.0001" value="<?= $edit_holding['units_held']??'' ?>" placeholder="0.0000" oninput="calcValue()">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Average NAV / Price (₹)</label>
-          <input class="form-input" type="number" name="avg_nav" step="0.0001" value="<?= $edit_holding['avg_nav']??'' ?>" placeholder="0.0000" oninput="calcValue()">
+      <?php
+        // Determine initial asset_type for edit mode
+        $init_ft = $edit_holding['fund_type'] ?? '';
+        $init_asset = match($init_ft) {
+          'fd'                         => 'fd',
+          'nps'                        => 'nps',
+          'gold'                       => 'gold',
+          'other'                      => 'other',
+          'equity' => str_contains(strtolower($edit_holding['fund_name']??''), 'fund') ? 'mutual_fund' : 'stock',
+          default => 'mutual_fund',
+        };
+        if ($edit_holding && !str_contains(strtolower($edit_holding['fund_name']??''), 'fund') &&
+            in_array($edit_holding['fund_type']??'', ['equity'])) {
+            $init_asset = 'stock';
+        }
+      ?>
+
+      <!-- Bulk import tip -->
+      <div style="display:flex;align-items:flex-start;gap:0.75rem;background:rgba(141,198,63,0.07);border:1px solid rgba(141,198,63,0.2);border-radius:10px;padding:0.875rem 1rem;margin-bottom:1.25rem">
+        <span style="font-size:1.25rem;flex-shrink:0;margin-top:0.05rem">✦</span>
+        <div style="font-size:0.85rem;color:var(--text-secondary);line-height:1.6">
+          <strong style="color:var(--lime)">Adding multiple holdings?</strong>
+          Upload your <strong style="color:var(--cream)">CAS statement, NSDL demat statement, or broker PDF</strong> to
+          <a href="<?= SITE_URL ?>/portal/primo.php" style="color:var(--lime);font-weight:500;text-decoration:none">PrimoAI →</a>
+          and it will automatically extract and add all your holdings at once — no manual entry needed.
         </div>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Current NAV / Price (₹)</label>
-          <input class="form-input" type="number" name="current_nav" id="cur_nav" step="0.0001" value="<?= $edit_holding['current_nav']??'' ?>" placeholder="0.0000" oninput="calcValue()">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Invested Amount (₹)</label>
-          <input class="form-input" type="number" name="invested_amount" id="invested_amount" step="0.01" value="<?= $edit_holding['invested_amount']??'' ?>" placeholder="Auto-calculated">
-        </div>
-      </div>
+
+      <!-- ── STEP 1: Asset Type ─────────────────────────────── -->
       <div class="form-group">
-        <label class="form-label">Folio Number (optional)</label>
-        <input class="form-input" type="text" name="folio_number" value="<?= htmlspecialchars($edit_holding['folio_number']??'',ENT_QUOTES,'UTF-8') ?>" placeholder="e.g. 12345678" style="max-width:220px">
-      </div>
-
-      <!-- FD/NPS fields -->
-      <div id="fd-fields" style="display:none">
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Interest Rate (% p.a.)</label>
-            <input class="form-input" type="number" name="interest_rate" step="0.01" value="<?= $edit_holding['interest_rate']??'' ?>" placeholder="7.50">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Maturity Date</label>
-            <input class="form-input" type="date" name="maturity_date" value="<?= htmlspecialchars($edit_holding['maturity_date']??'',ENT_QUOTES,'UTF-8') ?>">
-          </div>
+        <label class="form-label" style="font-size:0.9rem;color:var(--cream);font-weight:600">Step 1 — Select Asset Type</label>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.6rem;margin-top:0.5rem;max-width:640px" id="asset-type-grid">
+          <?php
+          $asset_types = [
+            'mutual_fund' => ['🏦','Mutual Fund','SIP, ELSS, Debt, Index'],
+            'stock'       => ['📈','Stock / Share','NSE / BSE equities'],
+            'fd'          => ['🏛','Fixed Deposit','Bank & corp FDs'],
+            'nps'         => ['🎯','NPS','National Pension System'],
+            'gold'        => ['🥇','Gold / SGB','Physical, SGB, ETF'],
+            'other'       => ['📋','Other','PPF, EPFO, ULIP...'],
+          ];
+          foreach ($asset_types as $at_key => [$icon, $label, $hint]):
+            $active = ($init_asset === $at_key && $edit_holding) ? true : false;
+          ?>
+          <button type="button" class="asset-type-btn<?= $active?' active':'' ?>" data-type="<?= $at_key ?>"
+            onclick="selectAssetType('<?= $at_key ?>')"
+            style="border:1px solid var(--border);border-radius:10px;padding:0.875rem 0.5rem;background:var(--surface-2);cursor:pointer;text-align:center;transition:all 0.15s;display:flex;flex-direction:column;align-items:center;gap:0.25rem<?= $active?';border-color:var(--bright);background:rgba(76,175,80,0.1)':'' ?>">
+            <span style="font-size:1.5rem;line-height:1"><?= $icon ?></span>
+            <span style="font-size:0.82rem;font-weight:600;color:var(--cream);margin-top:0.2rem"><?= $label ?></span>
+            <span style="font-size:0.68rem;color:var(--text-muted);line-height:1.3;word-break:break-word"><?= $hint ?></span>
+          </button>
+          <?php endforeach; ?>
         </div>
       </div>
 
-      <!-- SIP fields -->
-      <div class="check-row" style="margin-bottom:0.75rem">
-        <input type="checkbox" id="sip_active" name="sip_active" <?= ($edit_holding['sip_active']??0)?'checked':'' ?> onchange="toggleSip()">
-        <label for="sip_active">SIP is active for this holding</label>
-      </div>
-      <div id="sip-fields" style="display:none">
-        <div class="form-row">
+      <!-- ── STEP 2: Sub-type + fields (shown after asset type selected) ── -->
+      <div id="step2-fields" style="display:<?= $edit_holding?'block':'none' ?>">
+        <div style="height:1px;background:var(--border);margin:1.25rem 0"></div>
+        <p class="page-eyebrow" style="margin-bottom:1rem">Step 2 — Enter Details</p>
+
+        <!-- ── Mutual Fund fields ── -->
+        <div class="asset-fields" id="fields-mutual_fund" style="display:none">
           <div class="form-group">
-            <label class="form-label">Monthly SIP Amount (₹)</label>
-            <input class="form-input" type="number" name="sip_amount" value="<?= $edit_holding['sip_amount']??'' ?>" placeholder="5000">
+            <label class="form-label">Fund Category</label>
+            <select class="form-select" id="mf_subtype" onchange="setMFType(this.value)">
+              <option value="equity"        <?= ($init_ft==='equity'&&$init_asset==='mutual_fund')?'selected':'' ?>>Equity Fund (Large/Mid/Small/Flexi Cap)</option>
+              <option value="elss"          <?= $init_ft==='elss'?'selected':'' ?>>ELSS / Tax Saver Fund (80C)</option>
+              <option value="hybrid"        <?= $init_ft==='hybrid'?'selected':'' ?>>Hybrid / Balanced Advantage Fund</option>
+              <option value="debt"          <?= $init_ft==='debt'?'selected':'' ?>>Debt Fund (Bond/Gilt/Short Duration)</option>
+              <option value="index"         <?= $init_ft==='index'?'selected':'' ?>>Index Fund / ETF</option>
+              <option value="gold"          <?= ($init_ft==='gold'&&$init_asset==='mutual_fund')?'selected':'' ?>>Gold Fund</option>
+              <option value="international" <?= $init_ft==='international'?'selected':'' ?>>International / Global Fund</option>
+              <option value="liquid"        <?= $init_ft==='liquid'?'selected':'' ?>>Liquid / Overnight / Money Market</option>
+            </select>
           </div>
-          <div class="form-group">
-            <label class="form-label">SIP Date (day of month)</label>
-            <input class="form-input" type="number" name="sip_date" min="1" max="28" value="<?= $edit_holding['sip_date']??'' ?>" placeholder="1">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Fund Name *</label>
+              <input class="form-input" type="text" name="fund_name" id="fn_mf" value="<?= ($init_asset==='mutual_fund'&&$edit_holding)?htmlspecialchars($edit_holding['fund_name']??'',ENT_QUOTES,'UTF-8'):'' ?>" placeholder="e.g. Mirae Asset Large Cap Fund – Growth" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fund House (AMC)</label>
+              <input class="form-input" type="text" name="fund_house" id="fh_mf" value="<?= ($init_asset==='mutual_fund'&&$edit_holding)?htmlspecialchars($edit_holding['fund_house']??'',ENT_QUOTES,'UTF-8'):'' ?>" placeholder="e.g. Mirae Asset">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Units Held</label>
+              <input class="form-input" type="number" name="units_held" id="u_mf" step="0.0001" value="<?= ($init_asset==='mutual_fund'&&$edit_holding)?($edit_holding['units_held']??''):'' ?>" placeholder="0.0000" oninput="calcMFValue()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Average NAV (₹)</label>
+              <input class="form-input" type="number" name="avg_nav" id="an_mf" step="0.0001" value="<?= ($init_asset==='mutual_fund'&&$edit_holding)?($edit_holding['avg_nav']??''):'' ?>" placeholder="0.0000" oninput="calcMFValue()">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Current NAV (₹)</label>
+              <input class="form-input" type="number" name="current_nav" id="cn_mf" step="0.0001" value="<?= ($init_asset==='mutual_fund'&&$edit_holding)?($edit_holding['current_nav']??''):'' ?>" placeholder="0.0000" oninput="calcMFValue()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Invested Amount (₹)</label>
+              <input class="form-input" type="number" name="invested_amount" id="ia_mf" step="0.01" value="<?= ($init_asset==='mutual_fund'&&$edit_holding)?($edit_holding['invested_amount']??''):'' ?>" placeholder="Auto-calculated">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">First Purchase Date</label>
+              <input class="form-input" type="date" name="purchase_date" id="pd_mf" value="<?= ($init_asset==='mutual_fund'&&$edit_holding)?htmlspecialchars($edit_holding['purchase_date']??'',ENT_QUOTES,'UTF-8'):'' ?>">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Folio Number (optional)</label>
+              <input class="form-input" type="text" name="folio_number" value="<?= ($init_asset==='mutual_fund'&&$edit_holding)?htmlspecialchars($edit_holding['folio_number']??'',ENT_QUOTES,'UTF-8'):'' ?>" placeholder="e.g. 1234567890">
+            </div>
+          </div>
+          <div class="check-row" style="margin-bottom:0.75rem">
+            <input type="checkbox" id="sip_active" name="sip_active" <?= ($edit_holding&&$edit_holding['sip_active']??0)?'checked':'' ?> onchange="toggleSip()">
+            <label for="sip_active" style="font-size:0.875rem">Active SIP running for this fund</label>
+          </div>
+          <div id="sip-fields" style="display:<?= ($edit_holding&&($edit_holding['sip_active']??0))?'flex':'none' ?>;gap:1rem;flex-wrap:wrap">
+            <div class="form-group" style="flex:1;min-width:160px">
+              <label class="form-label">Monthly SIP Amount (₹)</label>
+              <input class="form-input" type="number" name="sip_amount" value="<?= $edit_holding['sip_amount']??'' ?>" placeholder="5000">
+            </div>
+            <div class="form-group" style="flex:1;min-width:120px">
+              <label class="form-label">SIP Date (day 1–28)</label>
+              <input class="form-input" type="number" name="sip_date" min="1" max="28" value="<?= $edit_holding['sip_date']??'' ?>" placeholder="5">
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="form-group">
-        <label class="form-label">Notes</label>
-        <textarea class="form-textarea" name="notes" rows="2" placeholder="Any notes about this holding..."><?= htmlspecialchars($edit_holding['notes']??'',ENT_QUOTES,'UTF-8') ?></textarea>
-      </div>
+        <!-- ── Stock fields ── -->
+        <div class="asset-fields" id="fields-stock" style="display:none">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Company Name *</label>
+              <input class="form-input" type="text" name="fund_name" id="fn_stock" value="<?= ($init_asset==='stock'&&$edit_holding)?htmlspecialchars($edit_holding['fund_name']??'',ENT_QUOTES,'UTF-8'):'' ?>" placeholder="e.g. Reliance Industries Limited">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Ticker Symbol</label>
+              <input class="form-input" type="text" name="fund_house" id="fh_stock" value="<?= ($init_asset==='stock'&&$edit_holding)?htmlspecialchars($edit_holding['fund_house']??'',ENT_QUOTES,'UTF-8'):'' ?>" placeholder="e.g. RELIANCE" style="text-transform:uppercase">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Number of Shares *</label>
+              <input class="form-input" type="number" name="units_held" id="u_stock" step="1" value="<?= ($init_asset==='stock'&&$edit_holding)?($edit_holding['units_held']??''):'' ?>" placeholder="100" oninput="calcStockValue()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Avg Buy Price per Share (₹) *</label>
+              <input class="form-input" type="number" name="avg_nav" id="an_stock" step="0.01" value="<?= ($init_asset==='stock'&&$edit_holding)?($edit_holding['avg_nav']??''):'' ?>" placeholder="2450.00" oninput="calcStockValue()">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Current Market Price (₹)</label>
+              <input class="form-input" type="number" name="current_nav" id="cn_stock" step="0.01" value="<?= ($init_asset==='stock'&&$edit_holding)?($edit_holding['current_nav']??''):'' ?>" placeholder="2820.00" oninput="calcStockValue()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Total Invested (₹)</label>
+              <input class="form-input" type="number" name="invested_amount" id="ia_stock" step="0.01" value="<?= ($init_asset==='stock'&&$edit_holding)?($edit_holding['invested_amount']??''):'' ?>" placeholder="Auto-calculated">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">First Purchase Date</label>
+            <input class="form-input" type="date" name="purchase_date" id="pd_stock" value="<?= ($init_asset==='stock'&&$edit_holding)?htmlspecialchars($edit_holding['purchase_date']??'',ENT_QUOTES,'UTF-8'):'' ?>" style="max-width:220px">
+          </div>
+          <input type="hidden" name="folio_number" value="">
+          <input type="hidden" name="units_held" value="" id="u_stock_hidden">
+        </div>
 
-      <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
-        <button type="submit" class="btn-primary"><?= $edit_holding ? 'Update Holding' : 'Add to Portfolio' ?></button>
-        <?php if ($edit_holding): ?>
-          <a href="<?= SITE_URL ?>/portal/portfolio.php" class="btn-ghost">Cancel</a>
-        <?php endif; ?>
-      </div>
+        <!-- ── FD fields ── -->
+        <div class="asset-fields" id="fields-fd" style="display:none">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Bank / Institution *</label>
+              <input class="form-input" type="text" name="fund_name" id="fn_fd" value="<?= ($init_ft==='fd'&&$edit_holding)?htmlspecialchars($edit_holding['fund_name']??'',ENT_QUOTES,'UTF-8'):'' ?>" placeholder="e.g. SBI Fixed Deposit">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Bank Name</label>
+              <input class="form-input" type="text" name="fund_house" id="fh_fd" value="<?= ($init_ft==='fd'&&$edit_holding)?htmlspecialchars($edit_holding['fund_house']??'',ENT_QUOTES,'UTF-8'):'' ?>" placeholder="State Bank of India">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Principal Amount (₹) *</label>
+              <input class="form-input" type="number" name="invested_amount" id="ia_fd" step="0.01" value="<?= ($init_ft==='fd'&&$edit_holding)?($edit_holding['invested_amount']??''):'' ?>" placeholder="1,00,000">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Interest Rate (% p.a.) *</label>
+              <input class="form-input" type="number" name="interest_rate" step="0.01" value="<?= ($init_ft==='fd'&&$edit_holding)?($edit_holding['interest_rate']??''):'' ?>" placeholder="7.50">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">FD Start Date *</label>
+              <input class="form-input" type="date" name="purchase_date" id="pd_fd" value="<?= ($init_ft==='fd'&&$edit_holding)?htmlspecialchars($edit_holding['purchase_date']??'',ENT_QUOTES,'UTF-8'):'' ?>">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Maturity Date *</label>
+              <input class="form-input" type="date" name="maturity_date" value="<?= ($init_ft==='fd'&&$edit_holding)?htmlspecialchars($edit_holding['maturity_date']??'',ENT_QUOTES,'UTF-8'):'' ?>">
+            </div>
+          </div>
+          <div class="form-hint" style="font-size:0.8rem;color:var(--text-secondary);padding:0.6rem 0.875rem;background:var(--surface-2);border-radius:7px">
+            💡 Maturity value is auto-calculated using quarterly compounding. You can also enter it manually in <strong style="color:var(--cream)">Current Value</strong> if known.
+          </div>
+          <div class="form-group" style="margin-top:0.75rem">
+            <label class="form-label">Maturity Value (₹) <span style="color:var(--text-muted)">(optional — leave blank to auto-calculate)</span></label>
+            <input class="form-input" type="number" name="current_nav" step="0.01" value="<?= ($init_ft==='fd'&&$edit_holding)?($edit_holding['current_nav']??''):'' ?>" placeholder="Auto-calculated" style="max-width:260px">
+          </div>
+          <input type="hidden" name="units_held" value="1">
+          <input type="hidden" name="avg_nav" value="0">
+          <input type="hidden" name="folio_number" value="">
+        </div>
+
+        <!-- ── NPS fields ── -->
+        <div class="asset-fields" id="fields-nps" style="display:none">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Pension Fund Manager *</label>
+              <select class="form-select" name="fund_name" id="fn_nps">
+                <?php
+                $pfms = ['SBI Pension Funds','HDFC Pension Fund','ICICI Prudential Pension','Kotak Pension Fund','Aditya Birla Sun Life Pension','LIC Pension Fund','UTI Retirement Solutions','Tata Pension Fund'];
+                $cur_nps = ($init_ft==='nps'&&$edit_holding)?($edit_holding['fund_name']??''):'';
+                foreach ($pfms as $pfm): ?>
+                <option value="<?= htmlspecialchars($pfm,ENT_QUOTES,'UTF-8') ?>" <?= $cur_nps===$pfm?'selected':'' ?>><?= htmlspecialchars($pfm,ENT_QUOTES,'UTF-8') ?></option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tier</label>
+              <select class="form-select" name="fund_house">
+                <option value="Tier I" <?= ($edit_holding&&str_contains($edit_holding['fund_house']??'','I'))?'selected':'' ?>>Tier I (Retirement – Tax benefits)</option>
+                <option value="Tier II" <?= ($edit_holding&&str_contains($edit_holding['fund_house']??'','II'))?'selected':'' ?>>Tier II (Voluntary savings)</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Current Corpus (₹) *</label>
+              <input class="form-input" type="number" name="current_nav" step="0.01" value="<?= ($init_ft==='nps'&&$edit_holding)?($edit_holding['current_nav']??''):'' ?>" placeholder="2,50,000">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Total Contributed (₹)</label>
+              <input class="form-input" type="number" name="invested_amount" step="0.01" value="<?= ($init_ft==='nps'&&$edit_holding)?($edit_holding['invested_amount']??''):'' ?>" placeholder="2,00,000">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Contribution Start Date</label>
+            <input class="form-input" type="date" name="purchase_date" value="<?= ($init_ft==='nps'&&$edit_holding)?htmlspecialchars($edit_holding['purchase_date']??'',ENT_QUOTES,'UTF-8'):'' ?>" style="max-width:220px">
+          </div>
+          <input type="hidden" name="units_held" value="1">
+          <input type="hidden" name="avg_nav" value="0">
+          <input type="hidden" name="folio_number" value="">
+          <input type="hidden" name="maturity_date" value="">
+        </div>
+
+        <!-- ── Gold fields ── -->
+        <div class="asset-fields" id="fields-gold" style="display:none">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Gold Type</label>
+              <select class="form-select" name="fund_name" id="fn_gold">
+                <?php
+                $gold_types = ['Sovereign Gold Bond (SGB)','Physical Gold','Gold ETF','Gold Mutual Fund','Silver ETF','Digital Gold'];
+                $cur_gold = ($init_ft==='gold'&&$edit_holding)?($edit_holding['fund_name']??''):'';
+                foreach ($gold_types as $gt): ?>
+                <option value="<?= htmlspecialchars($gt,ENT_QUOTES,'UTF-8') ?>" <?= $cur_gold===$gt?'selected':'' ?>><?= $gt ?></option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Issuer / Custodian</label>
+              <input class="form-input" type="text" name="fund_house" value="<?= ($init_ft==='gold'&&$edit_holding)?htmlspecialchars($edit_holding['fund_house']??'',ENT_QUOTES,'UTF-8'):'' ?>" placeholder="RBI / Zerodha / Groww">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Quantity (grams or units)</label>
+              <input class="form-input" type="number" name="units_held" step="0.001" value="<?= ($init_ft==='gold'&&$edit_holding)?($edit_holding['units_held']??''):'' ?>" placeholder="50" oninput="calcGoldValue()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Purchase Price per gram/unit (₹)</label>
+              <input class="form-input" type="number" name="avg_nav" step="0.01" value="<?= ($init_ft==='gold'&&$edit_holding)?($edit_holding['avg_nav']??''):'' ?>" placeholder="6200" oninput="calcGoldValue()">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Current Price per gram/unit (₹)</label>
+              <input class="form-input" type="number" name="current_nav" step="0.01" value="<?= ($init_ft==='gold'&&$edit_holding)?($edit_holding['current_nav']??''):'' ?>" placeholder="7400" oninput="calcGoldValue()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Total Invested (₹)</label>
+              <input class="form-input" type="number" name="invested_amount" id="ia_gold" step="0.01" value="<?= ($init_ft==='gold'&&$edit_holding)?($edit_holding['invested_amount']??''):'' ?>" placeholder="Auto-calculated">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Purchase Date</label>
+              <input class="form-input" type="date" name="purchase_date" value="<?= ($init_ft==='gold'&&$edit_holding)?htmlspecialchars($edit_holding['purchase_date']??'',ENT_QUOTES,'UTF-8'):'' ?>">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Maturity Date <span style="color:var(--text-muted)">(SGB only)</span></label>
+              <input class="form-input" type="date" name="maturity_date" value="<?= ($init_ft==='gold'&&$edit_holding)?htmlspecialchars($edit_holding['maturity_date']??'',ENT_QUOTES,'UTF-8'):'' ?>">
+            </div>
+          </div>
+          <input type="hidden" name="folio_number" value="">
+        </div>
+
+        <!-- ── Other fields ── -->
+        <div class="asset-fields" id="fields-other" style="display:none">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Investment Name *</label>
+              <input class="form-input" type="text" name="fund_name" id="fn_other" value="<?= ($init_ft==='other'&&$edit_holding)?htmlspecialchars($edit_holding['fund_name']??'',ENT_QUOTES,'UTF-8'):'' ?>" placeholder="e.g. PPF, EPFO, ULIP, Real Estate">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Institution / Details</label>
+              <input class="form-input" type="text" name="fund_house" value="<?= ($init_ft==='other'&&$edit_holding)?htmlspecialchars($edit_holding['fund_house']??'',ENT_QUOTES,'UTF-8'):'' ?>" placeholder="e.g. SBI, LIC">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Amount Invested (₹) *</label>
+              <input class="form-input" type="number" name="invested_amount" step="0.01" value="<?= ($init_ft==='other'&&$edit_holding)?($edit_holding['invested_amount']??''):'' ?>" placeholder="5,00,000">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Current Value (₹)</label>
+              <input class="form-input" type="number" name="current_nav" step="0.01" value="<?= ($init_ft==='other'&&$edit_holding)?($edit_holding['current_nav']??''):'' ?>" placeholder="6,20,000">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Start Date</label>
+            <input class="form-input" type="date" name="purchase_date" value="<?= ($init_ft==='other'&&$edit_holding)?htmlspecialchars($edit_holding['purchase_date']??'',ENT_QUOTES,'UTF-8'):'' ?>" style="max-width:220px">
+          </div>
+          <input type="hidden" name="units_held" value="1">
+          <input type="hidden" name="avg_nav" value="0">
+          <input type="hidden" name="folio_number" value="">
+          <input type="hidden" name="maturity_date" value="">
+        </div>
+
+        <!-- ── Common: Notes + Submit ── -->
+        <div id="common-submit" style="margin-top:1.25rem">
+          <div class="form-group">
+            <label class="form-label">Notes <span style="color:var(--text-muted)">(optional)</span></label>
+            <textarea class="form-textarea" name="notes" rows="2" placeholder="Any additional notes..."><?= htmlspecialchars($edit_holding['notes']??'',ENT_QUOTES,'UTF-8') ?></textarea>
+          </div>
+          <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-top:0.75rem">
+            <button type="submit" class="btn-primary"><?= $edit_holding ? 'Update Holding' : 'Add to Portfolio →' ?></button>
+            <?php if ($edit_holding): ?>
+              <a href="<?= SITE_URL ?>/portal/portfolio.php" class="btn-ghost">Cancel</a>
+            <?php endif; ?>
+          </div>
+        </div>
+
+      </div><!-- /#step2-fields -->
     </form>
   </div>
 </div>
+
+<style>
+.asset-type-btn:hover { border-color:var(--mid)!important; background:var(--mid-pale)!important; }
+.asset-type-btn.active { border-color:var(--bright)!important; background:rgba(76,175,80,0.12)!important; }
+@media(max-width:600px){ #asset-type-grid{ grid-template-columns:repeat(2,1fr)!important; } }
+</style>
+
+<script>
+var currentAssetType = '<?= $init_asset ?>';
+
+function selectAssetType(type) {
+  currentAssetType = type;
+  // Update button styles
+  document.querySelectorAll('.asset-type-btn').forEach(b => {
+    var active = b.dataset.type === type;
+    b.style.borderColor = active ? 'var(--bright)' : '';
+    b.style.background  = active ? 'rgba(76,175,80,0.12)' : '';
+    b.classList.toggle('active', active);
+  });
+  // Show step 2
+  document.getElementById('step2-fields').style.display = 'block';
+  // Hide all field groups
+  document.querySelectorAll('.asset-fields').forEach(f => f.style.display = 'none');
+  // Show relevant group
+  var el = document.getElementById('fields-' + type);
+  if (el) el.style.display = 'block';
+  // Set hidden fund_type
+  var typeMap = {
+    mutual_fund: document.getElementById('mf_subtype')?.value || 'equity',
+    stock: 'equity', fd: 'fd', nps: 'nps', gold: 'gold', other: 'other'
+  };
+  document.getElementById('hidden_fund_type').value = typeMap[type] || 'equity';
+  // Scroll to step 2
+  setTimeout(() => document.getElementById('step2-fields').scrollIntoView({behavior:'smooth',block:'nearest'}), 100);
+}
+
+function setMFType(val) {
+  if (currentAssetType === 'mutual_fund') {
+    document.getElementById('hidden_fund_type').value = val;
+  }
+}
+
+function toggleSip() {
+  var sf = document.getElementById('sip-fields');
+  if (sf) sf.style.display = document.getElementById('sip_active').checked ? 'flex' : 'none';
+}
+
+function calcMFValue() {
+  var u = parseFloat(document.getElementById('u_mf')?.value)||0;
+  var a = parseFloat(document.getElementById('an_mf')?.value)||0;
+  var ia = document.getElementById('ia_mf');
+  if (u && a && ia) ia.value = (u * a).toFixed(2);
+}
+
+function calcStockValue() {
+  var u = parseFloat(document.getElementById('u_stock')?.value)||0;
+  var a = parseFloat(document.getElementById('an_stock')?.value)||0;
+  var ia = document.getElementById('ia_stock');
+  if (u && a && ia) ia.value = (u * a).toFixed(2);
+}
+
+function calcGoldValue() {
+  var fields = document.querySelectorAll('#fields-gold [name="units_held"]')[0];
+  var avgN   = document.querySelectorAll('#fields-gold [name="avg_nav"]')[0];
+  var ia     = document.getElementById('ia_gold');
+  if (fields && avgN && ia) {
+    var u = parseFloat(fields.value)||0, a = parseFloat(avgN.value)||0;
+    if (u && a) ia.value = (u * a).toFixed(2);
+  }
+}
+
+// On form submit, consolidate duplicate name fields
+document.getElementById('add-form').addEventListener('submit', function(e) {
+  // Disable all fund_name inputs except the active one
+  document.querySelectorAll('.asset-fields').forEach(function(sec) {
+    if (sec.style.display === 'none') {
+      sec.querySelectorAll('input,select,textarea').forEach(function(inp) {
+        inp.disabled = true;
+      });
+    }
+  });
+});
+
+<?php if ($edit_holding): ?>
+// Init edit mode
+selectAssetType('<?= $init_asset ?>');
+<?php if ($init_asset === 'mutual_fund'): ?>
+document.getElementById('hidden_fund_type').value = '<?= htmlspecialchars($edit_holding['fund_type']??'equity',ENT_QUOTES,'UTF-8') ?>';
+document.getElementById('mf_subtype').value = '<?= htmlspecialchars($edit_holding['fund_type']??'equity',ENT_QUOTES,'UTF-8') ?>';
+<?php endif; ?>
+if (<?= ($edit_holding['sip_active']??0) ? 'true' : 'false' ?>) toggleSip();
+<?php endif; ?>
+</script>
 
 <!-- Holdings table -->
 <?php if (empty($holdings)): ?>
@@ -270,12 +629,12 @@ require_once '../includes/portal-header.php';
             <div style="font-weight:500;color:var(--cream)"><?= htmlspecialchars($h['fund_name'],ENT_QUOTES,'UTF-8') ?></div>
             <div style="font-size:0.75rem;color:var(--text-secondary)"><?= htmlspecialchars($h['fund_house']??'',ENT_QUOTES,'UTF-8') ?></div>
           </td>
-          <td><span class="badge <?= $type_colours[$h['fund_type']]??'badge-muted' ?>"><?= ucfirst($h['fund_type']) ?></span></td>
+          <td><span class="badge <?= $type_colours[$h['fund_type']]??'badge-muted' ?>" style="white-space:nowrap"><?= htmlspecialchars(fund_type_display($h['fund_type'], $h['fund_name']), ENT_QUOTES, 'UTF-8') ?></span></td>
           <td style="font-family:'DM Mono',monospace;font-size:0.82rem"><?= number_format((float)$h['units_held'],4) ?></td>
           <td style="font-family:'DM Mono',monospace;font-size:0.82rem">₹<?= number_format((float)$h['avg_nav'],2) ?></td>
           <td style="font-family:'DM Mono',monospace;font-size:0.82rem">₹<?= number_format((float)$h['current_nav'],2) ?></td>
-          <td>₹<?= number_format((float)$h['invested_amount'],0) ?></td>
-          <td>₹<?= number_format((float)$h['current_value'],0) ?></td>
+          <td><?= format_inr((float)$h["invested_amount"]) ?></td>
+          <td><?= format_inr((float)$h["current_value"]) ?></td>
           <td style="color:<?= $ret>=0?'var(--bright)':'var(--danger)' ?>;font-family:'DM Mono',monospace;font-size:0.82rem">
             <?= $ret>=0?'+':'' ?><?= number_format($ret,2) ?>%
           </td>
@@ -312,22 +671,7 @@ function toggleForm() {
   f.style.display = open ? 'none' : 'block';
   i.textContent = open ? '+' : '−';
 }
-function calcValue() {
-  var units = parseFloat(document.querySelector('[name="units_held"]').value) || 0;
-  var avg   = parseFloat(document.querySelector('[name="avg_nav"]').value) || 0;
-  var inv   = document.getElementById('invested_amount');
-  if (units && avg) inv.value = (units * avg).toFixed(2);
-}
-function toggleFdFields() {
-  var t = document.getElementById('fund_type').value;
-  document.getElementById('fd-fields').style.display = (t === 'fd' || t === 'nps') ? 'block' : 'none';
-}
-function toggleSip() {
-  document.getElementById('sip-fields').style.display = document.getElementById('sip_active').checked ? 'block' : 'none';
-}
-// Init
-toggleFdFields();
-if (document.getElementById('sip_active').checked) toggleSip();
+// Old calc functions removed — handled by new asset-type-aware form above
 
 function sortTable(col) {
   var table = document.getElementById('holdings-table');

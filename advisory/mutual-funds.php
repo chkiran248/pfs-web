@@ -51,7 +51,7 @@ require_once '../includes/portal-header.php';
 <h1 class="page-title">Mutual Fund Recommendations</h1>
 
 <div class="disclaimer disclaimer--mf">
-  Mutual Fund investments are subject to market risks. Please read all scheme-related documents carefully before investing. Past performance is not indicative of future results. Prime Financials — AMFI Registered MF Distributor (ARN-<?= AMFI_ARN ?>).
+  Mutual Fund investments are subject to market risks. Please read all scheme-related documents carefully before investing. Past performance is not indicative of future results. Prime Financials — AMFI Registered MF Distributor (<?= AMFI_ARN ?>).
 </div>
 
 <!-- Filters -->

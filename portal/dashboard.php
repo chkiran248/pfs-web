@@ -85,18 +85,18 @@ require_once '../includes/portal-header.php';
 <div class="stats-grid">
   <div class="stat-box">
     <div class="stat-label">Total Invested</div>
-    <div class="stat-value neutral">₹<?= number_format($total_invested, 0) ?></div>
+    <div class="stat-value neutral"><?= format_inr($total_invested) ?></div>
     <div class="stat-sub"><?= count($allocation_rows) ?> fund type<?= count($allocation_rows) !== 1 ? 's' : '' ?></div>
   </div>
   <div class="stat-box">
     <div class="stat-label">Current Value</div>
-    <div class="stat-value neutral">₹<?= number_format($total_current, 0) ?></div>
+    <div class="stat-value neutral"><?= format_inr($total_current) ?></div>
     <div class="stat-sub">As of today</div>
   </div>
   <div class="stat-box">
     <div class="stat-label">Total Gain / Loss</div>
     <div class="stat-value <?= $gain >= 0 ? 'positive' : 'negative' ?>">
-      <?= $gain >= 0 ? '+' : '' ?>₹<?= number_format(abs($gain), 0) ?>
+      <?= $gain >= 0 ? '+' : '' ?><?= format_inr(abs($gain)) ?>
     </div>
     <div class="stat-sub"><?= $gain >= 0 ? '+' : '' ?><?= number_format($gain_pct, 2) ?>%</div>
   </div>
@@ -152,8 +152,8 @@ require_once '../includes/portal-header.php';
           <div style="width:<?= $pct ?>%;height:100%;background:var(--mid);border-radius:4px;transition:width 0.5s"></div>
         </div>
         <div style="display:flex;justify-content:space-between;margin-top:0.25rem;font-size:0.75rem;color:var(--text-secondary)">
-          <span>₹<?= number_format((float)$g['current_savings'], 0) ?> saved</span>
-          <span>₹<?= number_format((float)$g['target_amount'], 0) ?> by <?= $g['target_year'] ?></span>
+          <span><?= format_inr((float)$g['current_savings']) ?> saved</span>
+          <span><?= format_inr((float)$g['target_amount']) ?> by <?= $g['target_year'] ?></span>
         </div>
       </div>
       <?php endforeach; ?>
@@ -168,7 +168,7 @@ require_once '../includes/portal-header.php';
     <div style="display:flex;align-items:center;gap:1rem">
       <div style="font-size:2rem;color:var(--lime)">✦</div>
       <div>
-        <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:600;color:var(--cream);margin-bottom:0.2rem">Ask Primo</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:600;color:var(--cream);margin-bottom:0.2rem">Ask PrimoAI</div>
         <div style="font-size:0.85rem;color:var(--text-secondary)">Your AI assistant knows your portfolio. Ask anything.</div>
       </div>
     </div>
@@ -194,6 +194,7 @@ require_once '../includes/portal-header.php';
     <a href="<?= SITE_URL ?>/portal/insurance-checker.php"class="btn-outline btn-sm">⊝ Insurance</a>
     <a href="<?= SITE_URL ?>/portal/cashflow-modeler.php" class="btn-outline btn-sm">⊛ Cashflow</a>
     <a href="<?= SITE_URL ?>/portal/overlap-analyzer.php" class="btn-outline btn-sm">⊜ Overlap</a>
+    <a href="<?= SITE_URL ?>/portal/rebalancer.php"      class="btn-outline btn-sm">⚖ Rebalancer</a>
   </div>
 </div>
 

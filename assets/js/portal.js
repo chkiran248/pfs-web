@@ -2,6 +2,21 @@
    Prime Financials — Portal JS
    ============================================================ */
 
+// ── Global Indian currency formatter ─────────────────────────
+window.formatINR = function(n, decimals) {
+  if (n === null || n === undefined || isNaN(+n)) return '—';
+  return '₹' + Math.abs(+n).toLocaleString('en-IN', {
+    minimumFractionDigits: decimals || 0,
+    maximumFractionDigits: decimals || 0
+  });
+};
+window.formatINRShort = function(n) {
+  const abs = Math.abs(+n);
+  if (abs >= 10000000) return '₹' + (abs / 10000000).toFixed(2) + ' Cr';
+  if (abs >= 100000)   return '₹' + (abs / 100000).toFixed(2) + ' L';
+  return window.formatINR(n);
+};
+
 (function () {
   'use strict';
 

@@ -129,8 +129,8 @@ require_once '../includes/portal-header.php';
     <!-- Progress bar -->
     <div style="margin-bottom:0.4rem">
       <div style="display:flex;justify-content:space-between;font-size:0.78rem;color:var(--text-secondary);margin-bottom:0.3rem">
-        <span>₹<?= number_format((float)$g['current_savings'],0) ?> saved</span>
-        <span>₹<?= number_format((float)$g['target_amount'],0) ?> target</span>
+        <span><?= format_inr((float)$g["current_savings"]) ?> saved</span>
+        <span><?= format_inr((float)$g["target_amount"]) ?> target</span>
       </div>
       <div style="background:var(--surface-2);border-radius:6px;height:8px;overflow:hidden">
         <div style="width:<?= $pct ?>%;height:100%;background:linear-gradient(90deg,var(--forest),var(--bright));border-radius:6px;transition:width 0.6s"></div>
@@ -138,7 +138,7 @@ require_once '../includes/portal-header.php';
     </div>
 
     <div style="font-size:0.82rem;color:var(--text-secondary);margin-top:0.75rem">
-      Monthly SIP needed: <strong style="color:var(--lime)">₹<?= number_format($sip_needed,0) ?></strong>
+      Monthly SIP needed: <strong style="color:var(--lime)"><?= format_inr($sip_needed) ?></strong>
       <?php if ($g['expected_return']): ?> at <?= $g['expected_return'] ?>% p.a.<?php endif; ?>
     </div>
 
@@ -241,7 +241,7 @@ require_once '../includes/portal-header.php';
         <span style="font-size:1.5rem"><?= $goal_icons[$g['goal_type']]??'🎯' ?></span>
         <div>
           <div style="color:var(--cream);font-weight:500"><?= htmlspecialchars($g['goal_name'],ENT_QUOTES,'UTF-8') ?></div>
-          <div style="font-size:0.78rem;color:var(--gold)">₹<?= number_format((float)$g['target_amount'],0) ?> · Achieved ✓</div>
+          <div style="font-size:0.78rem;color:var(--gold)"><?= format_inr((float)$g["target_amount"]) ?> · Achieved ✓</div>
         </div>
       </div>
     </div>

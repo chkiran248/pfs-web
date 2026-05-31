@@ -84,7 +84,7 @@ function nav_link(string $href, string $icon, string $label, string $current): s
         <span class="sidebar-group-label">AI Assistant</span>
         <a href="<?= SITE_URL ?>/portal/primo.php"
            class="sidebar-link<?= $current_page==='primo'?' active':'' ?>">
-          <span class="icon">✦</span>Primo AI
+          <span class="icon">✦</span>PrimoAI
           <span class="sidebar-badge">NEW</span>
         </a>
       </div>
@@ -99,9 +99,10 @@ function nav_link(string $href, string $icon, string $label, string $current): s
       <!-- MY FINANCES -->
       <div class="sidebar-group">
         <span class="sidebar-group-label">My Finances</span>
-        <?= nav_link('/portal/portfolio.php',  '◈', 'Portfolio',  $current_page) ?>
-        <?= nav_link('/portal/goals.php',      '◉', 'Goals',      $current_page) ?>
-        <?= nav_link('/portal/fd-tracker.php', '◫', 'FD Tracker', $current_page) ?>
+        <?= nav_link('/portal/portfolio.php',   '◈', 'Portfolio',   $current_page) ?>
+        <?= nav_link('/portal/goals.php',       '◉', 'Goals',       $current_page) ?>
+        <?= nav_link('/portal/fd-tracker.php',  '◫', 'FD Tracker',  $current_page) ?>
+        <?= nav_link('/portal/rebalancer.php',  '⚖', 'Rebalancer',  $current_page) ?>
       </div>
 
       <!-- TOOLS -->

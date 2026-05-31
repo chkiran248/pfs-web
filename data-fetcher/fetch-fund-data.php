@@ -21,7 +21,7 @@ $stmt = $db->prepare("UPDATE fund_recommendations SET return_1yr=:r1, return_3yr
 function calc_cagr(array $nav_data, float $current_nav, int $days): ?float {
     $target = new DateTime("-{$days} days");
     foreach ($nav_data as $e) {
-        $d = DateTime::createFromFormat('d-M-Y', $e['date']);
+        $d = DateTime::createFromFormat('d-m-Y', $e['date']); // mfapi.in uses dd-mm-yyyy
         if (!$d) continue;
         if ($d <= $target) {
             $old = (float)$e['nav'];

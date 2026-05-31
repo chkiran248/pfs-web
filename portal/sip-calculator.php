@@ -174,9 +174,9 @@ require_once '../includes/portal-header.php';
           <?php foreach ($saved_plans as $p): ?>
           <tr>
             <td><?= htmlspecialchars($p['goal_name'] ?: 'SIP Plan', ENT_QUOTES, 'UTF-8') ?></td>
-            <td>₹<?= number_format((float)$p['monthly_sip'], 0) ?></td>
+            <td><?= format_inr((float)$p['monthly_sip']) ?></td>
             <td><?= $p['duration_years'] ?>yr</td>
-            <td style="color:var(--lime);font-family:'DM Mono',monospace">₹<?= number_format((float)$p['calculated_corpus'], 0) ?></td>
+            <td style="color:var(--lime);font-family:'DM Mono',monospace"><?= format_inr((float)$p['calculated_corpus']) ?></td>
           </tr>
           <?php endforeach; ?>
         </tbody>

@@ -37,6 +37,9 @@ if (!in_array($mime, ['application/pdf', 'text/csv', 'text/plain'])) {
     exit(json_encode(['success' => false, 'message' => 'Invalid file content type.']));
 }
 
+// PDF password (for protected statements like NSDL/CDSL/CAS)
+$pdf_password = trim($_POST['pdf_password'] ?? '');
+
 // Save file with UUID name
 if (!is_dir(UPLOAD_PATH)) mkdir(UPLOAD_PATH, 0755, true);
 $uuid_name = bin2hex(random_bytes(16)) . '.' . $ext;
@@ -46,12 +49,52 @@ if (!move_uploaded_file($file['tmp_name'], $dest_path)) {
     exit(json_encode(['success' => false, 'message' => 'Failed to save file. Check server permissions.']));
 }
 
-// Set higher execution time for large PDFs
+// Attempt to decrypt password-protected PDF if password provided
+if ($pdf_password && $ext === 'pdf') {
+    $decrypted = UPLOAD_PATH . bin2hex(random_bytes(8)) . '_dec.pdf';
+
+    // Try qpdf (available on Linux/Hostinger)
+    $qpdf = trim((string)(shell_exec('which qpdf 2>/dev/null') ?? ''));
+    if ($qpdf) {
+        $cmd = $qpdf . ' --password=' . escapeshellarg($pdf_password)
+             . ' --decrypt ' . escapeshellarg($dest_path)
+             . ' ' . escapeshellarg($decrypted) . ' 2>/dev/null';
+        exec($cmd, $out, $ret);
+        if ($ret === 0 && file_exists($decrypted)) {
+            @unlink($dest_path);
+            $dest_path = $decrypted;
+            $uuid_name = basename($decrypted);
+        }
+    } else {
+        // qpdf not available (Windows) — attempt via ghostscript
+        $gs = trim((string)(shell_exec('which gs 2>/dev/null') ?? ''));
+        if (!$gs && PHP_OS_FAMILY === 'Windows') {
+            $gs_paths = ['C:\\Program Files\\gs\\gs10.03.1\\bin\\gswin64c.exe',
+                         'C:\\Program Files (x86)\\gs\\gs10.03.1\\bin\\gswin32c.exe'];
+            foreach ($gs_paths as $p) { if (file_exists($p)) { $gs = $p; break; } }
+        }
+        if ($gs) {
+            $cmd = '"' . $gs . '" -dBATCH -dNOPAUSE -sDEVICE=pdfwrite'
+                 . ' -sPDFPassword=' . escapeshellarg($pdf_password)
+                 . ' -sOutputFile=' . escapeshellarg($decrypted)
+                 . ' ' . escapeshellarg($dest_path) . ' 2>/dev/null';
+            exec($cmd, $out, $ret);
+            if ($ret === 0 && file_exists($decrypted)) {
+                @unlink($dest_path);
+                $dest_path = $decrypted;
+                $uuid_name = basename($decrypted);
+            }
+        }
+        // If no tool available, we pass the file as-is and let Claude try;
+        // Claude will return password_protected error which we handle below.
+    }
+}
+
 set_time_limit(120);
 
 try {
-    $db->prepare("INSERT INTO documents (user_id,uploaded_by,doc_name,doc_type,file_path,file_original_name,file_size,file_mime,shared_with_client,shared_with_advisor) VALUES (:uid,:uid,:name,'other',:path,:orig,:size,:mime,1,1)")
-       ->execute([':uid'=>$user_id,':name'=>'AI Scan: '.htmlspecialchars($file['name'],ENT_QUOTES,'UTF-8'),':path'=>$uuid_name,':orig'=>$file['name'],':size'=>$file['size'],':mime'=>$mime]);
+    $db->prepare("INSERT INTO documents (user_id,uploaded_by,doc_name,doc_type,file_path,file_original_name,file_size,file_mime,shared_with_client,shared_with_advisor) VALUES (:uid,:by,:name,'other',:path,:orig,:size,:mime,1,1)")
+       ->execute([':uid'=>$user_id,':by'=>$user_id,':name'=>'AI Scan: '.htmlspecialchars($file['name'],ENT_QUOTES,'UTF-8'),':path'=>$uuid_name,':orig'=>$file['name'],':size'=>$file['size'],':mime'=>$mime]);
 
     $document_id = (int)$db->lastInsertId();
 
@@ -59,6 +102,16 @@ try {
        ->execute([':uid' => $user_id, ':did' => $document_id]);
 
     $result = parse_financial_document($dest_path, $file['name'], $user_id, $document_id);
+
+    // If Claude returned password-protected error, signal the UI to ask for password
+    if (!($result['success'] ?? false)) {
+        $msg = $result['message'] ?? '';
+        if (stripos($msg, 'password') !== false || stripos($msg, 'protected') !== false) {
+            $result['password_required'] = true;
+            $result['message'] = 'This PDF is password-protected. Please enter the password and try again.';
+        }
+    }
+
     echo json_encode($result);
 
 } catch (PDOException $e) {

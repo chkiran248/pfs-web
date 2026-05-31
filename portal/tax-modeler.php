@@ -24,7 +24,6 @@ require_once '../includes/portal-header.php';
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
       <div class="card-title" style="margin-bottom:0">Fund 1</div>
     </div>
-    <?php include __DIR__ . '/../includes/../portal/../tax-modeler-row.php'; // won't exist — inline below ?>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Fund Name</label><input class="form-input" type="text" name="fund_name[]" placeholder="e.g. Mirae Asset Large Cap Fund"></div>
       <div class="form-group"><label class="form-label">Fund Type</label>
