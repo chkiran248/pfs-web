@@ -3,8 +3,10 @@ declare(strict_types=1);
 require_once '../includes/config.php';
 require_once '../includes/db.php';
 require_once '../includes/auth.php';
+require_once '../includes/subscription.php';
 require_login();
 require_role('client');
+require_premium('overlap_analyzer');
 
 $db  = get_db();
 $uid = get_user_id();

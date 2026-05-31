@@ -3,8 +3,13 @@ declare(strict_types=1);
 require_once '../includes/config.php';
 require_once '../includes/db.php';
 require_once '../includes/auth.php';
+require_once '../includes/subscription.php';
 require_login();
 require_role('client');
+require_premium('primo_ai');
+
+$_primo_plan       = get_user_plan(get_user_id());
+$_primo_is_premium = in_array($_primo_plan, ['active_investor','premium']);
 
 $uid         = get_user_id();
 $db          = get_db();
@@ -154,12 +159,30 @@ require_once '../includes/portal-header.php';
   </div>
 
   <!-- Input area -->
+  <?php if (!$_primo_is_premium): ?>
+  <div style="padding:0.6rem 1.25rem;background:rgba(239,83,80,0.07);border-top:1px solid rgba(239,83,80,0.2);text-align:center;font-size:0.78rem;color:var(--text-secondary)">
+    🔒 PrimoAI requires an <strong style="color:var(--lime)">Active Investor</strong> or <strong style="color:var(--gold)">Prime Member</strong> plan.
+    <a href="<?= ONBOARDING_URL ?>?utm_source=primo_gate&utm_medium=portal" target="_blank" rel="noopener" style="color:var(--lime);margin:0 0.4rem">🚀 Invest — Get Free Access</a> ·
+    <a href="<?= SITE_URL ?>/portal/pricing.php" style="color:var(--lime)">View Plans →</a>
+  </div>
+  <?php endif; ?>
   <div class="primo-input-area">
     <button class="btn-ghost btn-sm" onclick="openScanModal()" title="Scan a financial document" style="flex-shrink:0;padding:0.55rem 0.75rem">📎</button>
     <textarea class="primo-textarea" id="primoInput"
               placeholder="Ask PrimoAI anything about your portfolio, goals, or finances…"
               rows="1"></textarea>
-    <button class="primo-send" id="primoSend" onclick="sendMessage()">Send ↑</button>
+    <button class="primo-send" id="primoSend" onclick="sendMessage()" <?= !$_primo_is_premium ? 'disabled' : '' ?>>Send ↑</button>
+  </div>
+
+  <!-- Footer strip -->
+  <div class="primo-footer-strip">
+    <a href="<?= ONBOARDING_URL ?>?utm_source=primo_footer&utm_medium=portal" target="_blank" rel="noopener">🚀 Start Investing</a>
+    <span class="sep">·</span>
+    <a href="<?= INSURANCE_URL ?>?utm_source=primo_footer&utm_medium=portal" target="_blank" rel="noopener">🛡 Get Insurance</a>
+    <span class="sep">·</span>
+    <a href="<?= CALENDLY_URL ?>" target="_blank" rel="noopener">📅 Book a Session</a>
+    <span class="sep">·</span>
+    <a href="https://wa.me/<?= WHATSAPP_NUM ?>" target="_blank" rel="noopener">💬 WhatsApp</a>
   </div>
 
 </div>

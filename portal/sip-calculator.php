@@ -269,4 +269,5 @@ document.addEventListener('DOMContentLoaded',function(){
 });
 </script>
 
+<div class="cta-bar"><div class="cta-bar__content"><div class="cta-bar__text"><span class="cta-bar__eyebrow">READY TO START?</span><span class="cta-bar__title">Start this SIP with Prime Financials in minutes</span></div><div class="cta-bar__actions"><a href="<?= ONBOARDING_URL ?>?utm_source=sip_calc&utm_medium=portal" target="_blank" rel="noopener" class="cta-btn cta-btn--primary">🚀 Start This SIP →</a><a href="https://wa.me/<?= WHATSAPP_NUM ?>?text=<?= urlencode('Hi, I calculated a SIP on primefin.in and would like to start.') ?>" target="_blank" rel="noopener" class="cta-btn cta-btn--whatsapp">💬 WhatsApp</a></div></div></div>
 <?php require_once '../includes/portal-footer.php'; ?>

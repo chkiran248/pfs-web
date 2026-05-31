@@ -182,3 +182,24 @@ document.addEventListener('DOMContentLoaded', calcTax);
 </script>
 
 <?php require_once '../includes/portal-footer.php'; ?>
+
+<?php
+// CTA bar injected by Phase 13
+$cta_sources = ['tax-calculator'=>'tax_calc','nps-projector'=>'nps_projector','insurance-checker'=>'insurance_checker'];
+$cta_titles  = ['tax-calculator'=>'Invest in ELSS and claim your 80C benefit this year','nps-projector'=>'Open your NPS account and start building your pension corpus','insurance-checker'=>'Get the right term and health cover — instantly online'];
+$cta_links   = ['tax-calculator'=>ONBOARDING_URL,'nps-projector'=>ONBOARDING_URL,'insurance-checker'=>INSURANCE_URL];
+$pg = basename($_SERVER['PHP_SELF'],'.php');
+if (isset($cta_sources[$pg])): ?>
+<div class="cta-bar" style="margin-top:1.5rem">
+  <div class="cta-bar__content">
+    <div class="cta-bar__text">
+      <span class="cta-bar__eyebrow">ACT NOW</span>
+      <span class="cta-bar__title"><?= htmlspecialchars($cta_titles[$pg]??'') ?></span>
+    </div>
+    <div class="cta-bar__actions">
+      <a href="<?= ($cta_links[$pg]??ONBOARDING_URL) ?>?utm_source=<?= $cta_sources[$pg] ?>&utm_medium=portal" target="_blank" rel="noopener" class="cta-btn cta-btn--primary">🚀 Get Started →</a>
+      <a href="https://wa.me/<?= WHATSAPP_NUM ?>" target="_blank" rel="noopener" class="cta-btn cta-btn--whatsapp">💬 WhatsApp</a>
+    </div>
+  </div>
+</div>
+<?php endif; ?>

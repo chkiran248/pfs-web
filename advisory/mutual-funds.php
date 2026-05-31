@@ -119,6 +119,7 @@ require_once '../includes/portal-header.php';
         <input type="hidden" name="fund_house" value="<?= htmlspecialchars($f['fund_house']??'', ENT_QUOTES,'UTF-8') ?>">
         <button type="submit" class="btn-outline btn-sm">★ Watchlist</button>
       </form>
+      <a href="<?= ONBOARDING_URL ?>?utm_source=mf_advisory&utm_medium=portal&fund=<?= urlencode($f['fund_name']) ?>" class="btn-outline btn-sm" target="_blank" rel="noopener">🚀 Invest →</a>
       <a href="https://wa.me/<?= WHATSAPP_NUM ?>?text=I+want+to+invest+in+<?= urlencode($f['fund_name']) ?>+recommended+on+primefin.in" class="btn-ghost btn-sm" target="_blank" rel="noopener">💬 Advisor</a>
     </div>
   </div>

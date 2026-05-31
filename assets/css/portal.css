@@ -879,6 +879,30 @@ h1, h2, h3, h4, h5 {
 .whatsapp-cta:hover { opacity:0.9; color:#fff; }
 .rc-error { color:#ef5350; font-size:0.875rem; padding:1.5rem; text-align:center; }
 
+/* ── CTA BARS ──────────────────────────────────────────── */
+.cta-bar { background:linear-gradient(135deg,var(--forest),var(--mid)); border-radius:12px; padding:1.25rem 1.5rem; margin:1.5rem 0; border:1px solid rgba(141,198,63,0.2); }
+.cta-bar__content { display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; }
+.cta-bar__eyebrow { font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.2em; color:var(--lime); display:block; text-transform:uppercase; }
+.cta-bar__title { font-family:'Cormorant Garamond',serif; font-size:1.05rem; color:#fff; font-weight:600; }
+.cta-bar__actions { display:flex; gap:0.75rem; flex-wrap:wrap; }
+.cta-btn { display:inline-flex; align-items:center; gap:0.4rem; padding:0.55rem 1.1rem; border-radius:6px; font-size:0.82rem; font-weight:500; text-decoration:none; white-space:nowrap; transition:all 0.2s; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; }
+.cta-btn--primary   { background:var(--lime); color:#0c1a0c; }
+.cta-btn--primary:hover { background:#a5d15f; transform:translateY(-1px); color:#0c1a0c; }
+.cta-btn--secondary { background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.3); }
+.cta-btn--secondary:hover { background:rgba(255,255,255,0.25); color:#fff; }
+.cta-btn--whatsapp  { background:#25d366; color:#fff; }
+.cta-btn--whatsapp:hover { background:#1da851; color:#fff; }
+.cta-inline { display:inline-flex; align-items:center; gap:0.5rem; background:var(--mid); color:#fff; padding:0.6rem 1.2rem; border-radius:8px; font-size:0.85rem; font-weight:500; text-decoration:none; transition:all 0.2s; }
+.cta-inline:hover { background:var(--bright); color:#fff; }
+.sticky-cta-bar { position:fixed; bottom:0; left:var(--sidebar-width); right:0; background:var(--surface-1); border-top:1px solid var(--border); padding:0.75rem 1.5rem; display:flex; align-items:center; gap:1rem; z-index:100; flex-wrap:wrap; font-size:0.85rem; color:var(--text-secondary); }
+@media(max-width:768px){ .sticky-cta-bar{ left:0; } }
+
+/* ── PRIMO FOOTER STRIP ──────────────────────────────────── */
+.primo-footer-strip { display:flex; align-items:center; justify-content:center; gap:0.75rem; flex-wrap:wrap; padding:0.6rem 1.5rem; border-top:1px solid var(--border-light); background:var(--surface-1); font-size:0.75rem; }
+.primo-footer-strip a { color:var(--text-muted); text-decoration:none; transition:color 0.2s; }
+.primo-footer-strip a:hover { color:var(--lime); }
+.primo-footer-strip .sep { color:var(--text-muted); opacity:0.4; }
+
 /* ── SIDEBAR BADGE ── */
 .sidebar-badge {
   font-family: 'DM Mono', monospace;

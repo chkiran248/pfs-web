@@ -3,6 +3,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/subscription.php';
 require_once __DIR__ . '/context-builder.php';
 
 // POST only
@@ -15,6 +16,16 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 if (!is_logged_in()) {
     http_response_code(401);
     exit(json_encode(['error' => 'Unauthorised']));
+}
+
+// Premium check — PrimoAI requires Active Investor or Prime plan
+if (!can_access(get_user_id(), 'primo_ai')) {
+    http_response_code(403);
+    exit(json_encode([
+        'error'           => '🔒 PrimoAI is a premium feature. Invest with Prime Financials to get free access, or enter a coupon code on the pricing page.',
+        'upgrade_url'     => SITE_URL . '/portal/pricing.php',
+        'onboarding_url'  => ONBOARDING_URL,
+    ]));
 }
 
 // CSRF check

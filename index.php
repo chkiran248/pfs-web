@@ -50,6 +50,7 @@ $meta_description = "Prime Financials delivers trusted financial intelligence ac
       <li><a href="#products">Products</a></li>
       <li><a href="#intelligence">Intelligence</a></li>
       <li><a href="#approach">Our Approach</a></li>
+      <li><a href="#pricing">Pricing</a></li>
       <li><a href="#about">About</a></li>
       <li class="nav__mobile-login"><a href="auth/login.php">Client Login →</a></li>
     </ul>
@@ -393,15 +394,164 @@ $meta_description = "Prime Financials delivers trusted financial intelligence ac
   </div>
 </section>
 
+<!-- PRICING -->
+<section class="pricing" id="pricing">
+  <div class="container">
+    <div class="section-header">
+      <p class="section-eyebrow">PLANS &amp; PRICING</p>
+      <h2 class="section-title">Start Free.<br /><em>Upgrade When Ready.</em></h2>
+      <p class="section-sub">Free forever for explorers. Free for life if you invest with us. Affordable for everyone else.</p>
+    </div>
+
+    <!-- Comparison Table -->
+    <div class="pc-wrap">
+
+      <!-- Plan headers -->
+      <div class="pc-header">
+        <div class="pc-label-col"></div>
+
+        <div class="pc-plan-col">
+          <p class="pc-eyebrow">FOR NEW USERS</p>
+          <h3 class="pc-plan-name">Explorer</h3>
+          <div class="pc-price"><span class="pc-amount">Free</span><span class="pc-period">forever</span></div>
+          <p class="pc-tagline">Start free. No card needed.</p>
+          <a href="/primefin_website/auth/register.php" class="btn btn--ghost pc-cta">Get Started →</a>
+        </div>
+
+        <div class="pc-plan-col pc-plan-col--featured">
+          <div class="pc-badge">MOST POPULAR</div>
+          <p class="pc-eyebrow">FOR INVESTORS</p>
+          <h3 class="pc-plan-name">Prime</h3>
+          <div class="pc-price"><span class="pc-amount" style="color:var(--lime)">Free</span><span class="pc-period">with coupon</span></div>
+          <p class="pc-tagline">Invest with us. Get premium free.</p>
+          <a href="https://www.assetplus.in/mfd/suryakiran" target="_blank" rel="noopener" class="btn btn--primary pc-cta">🚀 Start Investing →</a>
+          <p class="pc-sub-note">Already a client? <a href="/primefin_website/auth/login.php">Login &amp; enter coupon</a></p>
+        </div>
+
+        <div class="pc-plan-col">
+          <p class="pc-eyebrow">FOR SUBSCRIBERS</p>
+          <h3 class="pc-plan-name">Member</h3>
+          <div class="pc-price"><span class="pc-amount">₹499</span><span class="pc-period">/ month</span></div>
+          <p class="pc-tagline" style="color:var(--gold);font-family:'DM Mono',monospace;font-size:0.65rem">or ₹4,999/year — save 17%</p>
+          <a href="/primefin_website/auth/register.php?plan=member" class="btn btn--ghost pc-cta">Subscribe →</a>
+          <p class="pc-sub-note"><a href="https://calendly.com/primefin/financial-success" target="_blank" rel="noopener">📅 Book a free session first</a></p>
+        </div>
+      </div>
+
+      <!-- Category: Calculators -->
+      <div class="pc-category">📊 Calculators &amp; Tools</div>
+      <div class="pc-row"><div class="pc-label">SIP &amp; Goal Calculator</div><div class="pc-cell pc-yes">✓</div><div class="pc-cell pc-yes pc-cell--featured">✓</div><div class="pc-cell pc-yes">✓</div></div>
+      <div class="pc-row"><div class="pc-label">Tax Saving Calculator (80C, 80D, NPS)</div><div class="pc-cell pc-yes">✓</div><div class="pc-cell pc-yes pc-cell--featured">✓</div><div class="pc-cell pc-yes">✓</div></div>
+      <div class="pc-row"><div class="pc-label">NPS Retirement Projector</div><div class="pc-cell pc-yes">✓</div><div class="pc-cell pc-yes pc-cell--featured">✓</div><div class="pc-cell pc-yes">✓</div></div>
+      <div class="pc-row"><div class="pc-label">Insurance Coverage Checker</div><div class="pc-cell pc-yes">✓</div><div class="pc-cell pc-yes pc-cell--featured">✓</div><div class="pc-cell pc-yes">✓</div></div>
+      <div class="pc-row"><div class="pc-label">Risk Profile Quiz</div><div class="pc-cell pc-yes">✓</div><div class="pc-cell pc-yes pc-cell--featured">✓</div><div class="pc-cell pc-yes">✓</div></div>
+      <div class="pc-row"><div class="pc-label">Lifetime Cashflow Modeler</div><div class="pc-cell pc-no">✕</div><div class="pc-cell pc-yes pc-cell--featured">✓</div><div class="pc-cell pc-yes">✓</div></div>
+      <div class="pc-row"><div class="pc-label">Tax-Aware Switch Modeler</div><div class="pc-cell pc-no">✕</div><div class="pc-cell pc-yes pc-cell--featured">✓</div><div class="pc-cell pc-yes">✓</div></div>
+
+      <!-- Category: Portfolio -->
+      <div class="pc-category">📈 Portfolio &amp; Tracking</div>
+      <div class="pc-row"><div class="pc-label">Portfolio Holdings</div><div class="pc-cell pc-limit">Up to 5</div><div class="pc-cell pc-yes pc-cell--featured">Unlimited</div><div class="pc-cell pc-yes">Unlimited</div></div>
+      <div class="pc-row"><div class="pc-label">Portfolio Overlap Analyzer</div><div class="pc-cell pc-no">✕</div><div class="pc-cell pc-yes pc-cell--featured">✓</div><div class="pc-cell pc-yes">✓</div></div>
+      <div class="pc-row"><div class="pc-label">Portfolio Rebalancer (MF + Equity)</div><div class="pc-cell pc-no">✕</div><div class="pc-cell pc-yes pc-cell--featured">✓</div><div class="pc-cell pc-yes">✓</div></div>
+      <div class="pc-row"><div class="pc-label">FD Maturity Tracker</div><div class="pc-cell pc-no">✕</div><div class="pc-cell pc-yes pc-cell--featured">✓</div><div class="pc-cell pc-yes">✓</div></div>
+      <div class="pc-row"><div class="pc-label">Fund &amp; Stock Watchlists</div><div class="pc-cell pc-no">✕</div><div class="pc-cell pc-yes pc-cell--featured">✓</div><div class="pc-cell pc-yes">✓</div></div>
+
+      <!-- Category: Advisory -->
+      <div class="pc-category">💡 Advisory &amp; Research</div>
+      <div class="pc-row"><div class="pc-label">Stock Research &amp; Sector Tracker</div><div class="pc-cell pc-yes">✓</div><div class="pc-cell pc-yes pc-cell--featured">✓</div><div class="pc-cell pc-yes">✓</div></div>
+      <div class="pc-row"><div class="pc-label">MF Advisory — View</div><div class="pc-cell pc-yes">✓</div><div class="pc-cell pc-yes pc-cell--featured">✓</div><div class="pc-cell pc-yes">✓</div></div>
+      <div class="pc-row"><div class="pc-label">MF Advisory — Full Access</div><div class="pc-cell pc-no">✕</div><div class="pc-cell pc-yes pc-cell--featured">✓</div><div class="pc-cell pc-yes">✓</div></div>
+      <div class="pc-row"><div class="pc-label">Market Insights &amp; Model Portfolios</div><div class="pc-cell pc-yes">✓</div><div class="pc-cell pc-yes pc-cell--featured">✓</div><div class="pc-cell pc-yes">✓</div></div>
+
+      <!-- Category: AI & Documents -->
+      <div class="pc-category">✦ AI Assistant &amp; Documents</div>
+      <div class="pc-row"><div class="pc-label">Primo AI Financial Assistant</div><div class="pc-cell pc-no">✕</div><div class="pc-cell pc-yes pc-cell--featured">✓ Unlimited</div><div class="pc-cell pc-yes">✓ Unlimited</div></div>
+      <div class="pc-row"><div class="pc-label">AI Document Scanner (CAS, NSDL, Broker)</div><div class="pc-cell pc-no">✕</div><div class="pc-cell pc-yes pc-cell--featured">✓</div><div class="pc-cell pc-yes">✓</div></div>
+      <div class="pc-row"><div class="pc-label">Secure Document Vault</div><div class="pc-cell pc-no">✕</div><div class="pc-cell pc-yes pc-cell--featured">✓</div><div class="pc-cell pc-yes">✓</div></div>
+
+      <!-- Category: Support -->
+      <div class="pc-category">🎯 Support</div>
+      <div class="pc-row"><div class="pc-label">WhatsApp Advisor Access</div><div class="pc-cell pc-yes">✓</div><div class="pc-cell pc-yes pc-cell--featured">✓</div><div class="pc-cell pc-yes">✓</div></div>
+      <div class="pc-row"><div class="pc-label">Priority Advisor Support</div><div class="pc-cell pc-no">✕</div><div class="pc-cell pc-no pc-cell--featured">✕</div><div class="pc-cell pc-yes">✓</div></div>
+
+      <!-- Footer CTAs -->
+      <div class="pc-footer">
+        <div class="pc-label-col"></div>
+        <div class="pc-plan-col"><a href="/primefin_website/auth/register.php" class="btn btn--ghost pc-cta">Get Started Free →</a></div>
+        <div class="pc-plan-col pc-plan-col--featured"><a href="https://www.assetplus.in/mfd/suryakiran" target="_blank" rel="noopener" class="btn btn--primary pc-cta">🚀 Start Investing →</a></div>
+        <div class="pc-plan-col"><a href="/primefin_website/auth/register.php?plan=member" class="btn btn--ghost pc-cta">Subscribe →</a></div>
+      </div>
+
+    </div>
+
+    <!-- Bottom note -->
+    <div class="pricing-note">
+      <p>
+        💡 <strong>The smartest way to get Prime:</strong>
+        Start your SIPs through Prime Financials via
+        <a href="https://www.assetplus.in/mfd/suryakiran"
+           target="_blank" rel="noopener">AssetPlus</a>
+        — your advisor shares a coupon code and all premium features
+        are yours, free for life.
+        <a href="https://wa.me/919980001338?text=Hi%2C+I+want+to+invest+with+Prime+Financials+and+get+the+Prime+plan."
+           target="_blank" rel="noopener">
+          WhatsApp us to get started →
+        </a>
+      </p>
+    </div>
+
+  </div>
+</section>
+
 <!-- CONTACT -->
 <section class="contact" id="contact">
   <div class="container contact__inner">
     <div class="contact__content">
       <p class="section-eyebrow">GET STARTED</p>
       <h2 class="section-title">Open Your<br /><em>Prime Financials</em></h2>
-      <p class="contact__sub">A 30-minute discovery call is all it takes to begin. No obligations, no product push — just clarity on where your wealth stands and where it should go.</p>
-      <div class="contact__info">
-        <a href="https://primefin.in" class="contact-link">🌐 primefin.in</a>
+      <p class="contact__sub">Join thousands of investors who trust Prime Financials for their wealth journey. Start free in 2 minutes — no obligations, no product push.</p>
+
+      <!-- PRIMARY CTA — Sign Up -->
+      <a href="/primefin_website/auth/register.php" class="contact-cta-primary">
+        🚀 Create Your Free Account
+        <span class="contact-cta-sub">Takes 2 minutes · No card required</span>
+      </a>
+
+      <!-- SECONDARY CTAs -->
+      <div class="contact-cta-group">
+        <a href="https://wa.me/919980001338?text=Hi%2C+I+visited+primefin.in+and+would+like+to+know+more."
+           target="_blank" rel="noopener"
+           class="contact-cta-secondary contact-cta-secondary--whatsapp">
+          💬 WhatsApp Us
+        </a>
+        <a href="https://calendly.com/primefin/financial-success"
+           target="_blank" rel="noopener"
+           class="contact-cta-secondary">
+          📅 Book a Free Session
+        </a>
+      </div>
+
+      <!-- DIVIDER -->
+      <div class="contact-divider">
+        <span>or invest directly</span>
+      </div>
+
+      <!-- TERTIARY — Direct investing + insurance -->
+      <div class="contact-cta-group">
+        <a href="https://www.assetplus.in/mfd/suryakiran"
+           target="_blank" rel="noopener"
+           class="contact-cta-tertiary">
+          📈 Start Investing
+        </a>
+        <a href="https://insurance.assetplus.in/137538"
+           target="_blank" rel="noopener"
+           class="contact-cta-tertiary">
+          🛡 Get Insurance
+        </a>
+      </div>
+
+      <!-- Contact details — subtle at bottom -->
+      <div class="contact__info contact__info--subtle">
         <a href="tel:+919980001338" class="contact-link">📞 +91 9980001338</a>
         <a href="mailto:support@primefin.in" class="contact-link">✉ support@primefin.in</a>
       </div>

@@ -3,6 +3,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/subscription.php';
 
 // Determine current page for sidebar active state
 $current_page = basename($_SERVER['PHP_SELF'], '.php');
@@ -23,6 +24,10 @@ if (!empty($_SESSION['flash'])) {
 // User initials for avatar
 $name_parts = explode(' ', get_user_name());
 $initials = strtoupper(substr($name_parts[0], 0, 1) . (isset($name_parts[1]) ? substr($name_parts[1], 0, 1) : ''));
+
+// Plan badge for header
+$_hdr_plan = get_user_plan(get_user_id());
+$_hdr_pc   = get_plan_config($_hdr_plan);
 
 // Helper: sidebar link builder
 function nav_link(string $href, string $icon, string $label, string $current): string {
@@ -66,7 +71,7 @@ function nav_link(string $href, string $icon, string $label, string $current): s
   <aside class="portal-sidebar" id="sidebar">
 
     <div class="sidebar-logo">
-      <a href="<?= SITE_URL ?>/portal/dashboard.php">
+      <a href="<?= SITE_URL ?>">
         <img src="<?= SITE_URL ?>/logo.png" alt="Prime Financials"
              width="32" height="32"
              style="width:32px;height:32px;object-fit:contain;border-radius:6px;flex-shrink:0;mix-blend-mode:lighten;display:block" />
@@ -94,6 +99,7 @@ function nav_link(string $href, string $icon, string $label, string $current): s
         <span class="sidebar-group-label">Overview</span>
         <?= nav_link('/portal/dashboard.php', '⬡', 'Dashboard', $current_page) ?>
         <?= nav_link('/portal/profile.php',   '◎', 'My Profile', $current_page) ?>
+        <?= nav_link('/portal/pricing.php',   '✦', 'Plans & Pricing', $current_page) ?>
       </div>
 
       <!-- MY FINANCES -->
@@ -153,6 +159,7 @@ function nav_link(string $href, string $icon, string $label, string $current): s
         <div class="header-user">
           <div class="user-avatar"><?= htmlspecialchars($initials, ENT_QUOTES, 'UTF-8') ?></div>
           <span class="user-name"><?= htmlspecialchars(get_user_name(), ENT_QUOTES, 'UTF-8') ?></span>
+          <span style="font-family:'DM Mono',monospace;font-size:0.58rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;padding:0.18rem 0.5rem;border-radius:12px;border:1px solid <?= $_hdr_pc['border'] ?>;background:<?= $_hdr_pc['bg'] ?>;color:<?= $_hdr_pc['colour'] ?>"><?= $_hdr_pc['icon'] ?> <?= $_hdr_pc['label'] ?></span>
         </div>
 
         <form method="POST" action="<?= SITE_URL ?>/auth/logout.php" style="display:inline;margin:0">

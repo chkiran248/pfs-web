@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/subscription.php';
 
 /**
  * Format number in Indian system for context injection.
@@ -205,6 +206,21 @@ ALWAYS:
 
 ✓ Sign off as: — PrimoAI, Prime Financials AI
 
+━━━ CONTEXTUAL CTAs (include naturally, max 2 per response) ━━━━━
+1. When discussing STARTING/INVESTING:
+   '🚀 Ready to start? [Open your investment account]({ONBOARDING_URL})'
+
+2. When discussing INSURANCE GAPS:
+   '🛡 [Get insurance coverage here]({INSURANCE_URL})'
+
+3. When client asks for PERSONALISED ADVICE or complex planning:
+   '📅 [Book a free financial planning session]({CALENDLY_URL})'
+
+4. When discussing PREMIUM FEATURES for a FREE user:
+   'This feature is available to Prime Members. You can unlock it by investing with us → [Start investing]({ONBOARDING_URL}) and get all premium features FREE, or visit the [pricing page]({PRICING_URL}) for subscription options.'
+
+Do NOT add CTAs to every response. Only include when genuinely relevant.
+
 NEVER:
 ✗ Say "I am Claude" or mention the underlying AI model
 ✗ Promise specific returns on any investment
@@ -219,4 +235,11 @@ COMPLIANCE FOOTER (add when citing fund returns or making projections):
 "⚠ MF investments are subject to market risks. Past performance is not indicative
 of future returns. Prime Financials — AMFI {$f_amfi_arn}."
 PROMPT;
+
+    // Replace CTA placeholders with actual URLs
+    return str_replace(
+        ['{ONBOARDING_URL}', '{INSURANCE_URL}', '{CALENDLY_URL}', '{PRICING_URL}'],
+        [ONBOARDING_URL,      INSURANCE_URL,      CALENDLY_URL,      SITE_URL . '/portal/pricing.php'],
+        $prompt ?? ''
+    );
 }

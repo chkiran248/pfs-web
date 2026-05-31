@@ -3,11 +3,14 @@ declare(strict_types=1);
 require_once '../includes/config.php';
 require_once '../includes/db.php';
 require_once '../includes/auth.php';
+require_once '../includes/subscription.php';
 require_login();
 require_role('client');
 
 $db      = get_db();
 $uid     = get_user_id();
+$plan    = get_user_plan($uid);
+$pc      = get_plan_config($plan);
 
 // ── User + profile ────────────────────────────────────────
 $stmt = $db->prepare("SELECT full_name, last_login FROM users WHERE id = :uid");
@@ -65,21 +68,58 @@ require_once '../includes/portal-header.php';
 ?>
 
 <!-- Welcome bar -->
-<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;margin-bottom:2rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border)">
+<div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;margin-bottom:1.5rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border)">
   <div>
     <p class="page-eyebrow">Overview</p>
-    <h1 class="page-title" style="margin-bottom:0"><?= $greeting ?>, <?= htmlspecialchars($user_data['full_name'], ENT_QUOTES, 'UTF-8') ?>!</h1>
+    <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap">
+      <h1 class="page-title" style="margin-bottom:0"><?= $greeting ?>, <?= htmlspecialchars($user_data['full_name'], ENT_QUOTES, 'UTF-8') ?>!</h1>
+      <span style="display:inline-flex;align-items:center;gap:0.3rem;font-family:'DM Mono',monospace;font-size:0.62rem;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;padding:0.28rem 0.65rem;border-radius:20px;border:1px solid <?= $pc['border'] ?>;background:<?= $pc['bg'] ?>;color:<?= $pc['colour'] ?>;vertical-align:middle">
+        <?= $pc['icon'] ?> <?= $pc['label'] ?>
+      </span>
+    </div>
+    <div style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--text-muted);margin-top:0.3rem;letter-spacing:0.06em">
+      <?php if ($user_data['last_login']): ?>Last login: <?= date('d M Y, g:i a', strtotime($user_data['last_login'])) ?> · <?php endif; ?>
+      Risk: <?= $user_data['risk_profile'] ? ucfirst($user_data['risk_profile']) : 'Not assessed' ?>
+    </div>
   </div>
-  <div style="text-align:right;font-size:0.8rem;color:var(--text-secondary)">
-    <?php if ($user_data['last_login']): ?>
-      Last login: <?= date('d M Y, g:i a', strtotime($user_data['last_login'])) ?><br>
-    <?php endif; ?>
-    Risk Profile:
-    <span class="badge <?= $user_data['risk_profile'] ? 'badge-green' : 'badge-muted' ?>">
-      <?= $user_data['risk_profile'] ? ucfirst($user_data['risk_profile']) : 'Not set' ?>
-    </span>
+  <?php if ($plan === 'free'): ?>
+  <a href="<?= SITE_URL ?>/portal/pricing.php"
+     style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--lime);letter-spacing:0.08em;text-decoration:none;border:1px solid rgba(141,198,63,0.25);padding:0.35rem 0.85rem;border-radius:4px;transition:all 0.2s;white-space:nowrap"
+     onmouseover="this.style.background='rgba(141,198,63,0.1)'" onmouseout="this.style.background=''">↑ Upgrade plan</a>
+  <?php endif; ?>
+</div>
+
+<?php if ($plan === 'free'): ?>
+<!-- Upgrade nudge for free users -->
+<div style="background:linear-gradient(135deg,var(--surface-1),rgba(27,94,42,0.1));border:1px solid rgba(141,198,63,0.2);border-radius:12px;padding:1.1rem 1.25rem;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem">
+  <div>
+    <div style="font-weight:600;color:var(--cream);font-size:0.9rem;margin-bottom:0.15rem">Unlock the full Prime Financials platform</div>
+    <div style="font-size:0.8rem;color:var(--text-secondary)">Get PrimoAI, Rebalancer, Document Scanner &amp; more — free when you invest with us.</div>
+  </div>
+  <div style="display:flex;gap:0.6rem;flex-wrap:wrap;flex-shrink:0">
+    <a href="<?= ONBOARDING_URL ?>?utm_source=dashboard_nudge&utm_medium=portal" target="_blank" rel="noopener"
+       style="background:var(--lime);color:#0c1a0c;padding:0.5rem 1rem;border-radius:6px;font-size:0.82rem;font-weight:700;text-decoration:none;white-space:nowrap">🚀 Invest — Get Premium Free</a>
+    <a href="<?= SITE_URL ?>/portal/pricing.php"
+       style="background:transparent;border:1px solid var(--border);color:var(--text-secondary);padding:0.5rem 0.875rem;border-radius:6px;font-size:0.82rem;text-decoration:none;white-space:nowrap">View Plans</a>
   </div>
 </div>
+<?php endif; ?>
+
+<?php
+// Insurance nudge if no insurance in portfolio
+$ins_check = $db->prepare("SELECT COUNT(*) FROM portfolio_entries WHERE user_id=:uid AND (fund_type='other' OR LOWER(fund_name) LIKE '%insurance%' OR LOWER(fund_name) LIKE '%term%' OR LOWER(fund_name) LIKE '%policy%')");
+$ins_check->execute([':uid'=>$uid]);
+$has_insurance = (int)$ins_check->fetchColumn() > 0;
+if (!$has_insurance):
+?><div style="background:linear-gradient(135deg,rgba(201,168,76,0.08),rgba(27,94,42,0.06));border:1px solid rgba(201,168,76,0.2);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+  <span style="font-size:1.6rem;flex-shrink:0">🛡</span>
+  <div style="flex:1;min-width:180px">
+    <div style="font-weight:600;color:var(--cream);font-size:0.875rem;margin-bottom:0.1rem">Protect your wealth</div>
+    <div style="font-size:0.78rem;color:var(--text-secondary)">No insurance detected in your portfolio. A term cover is essential to protect your family's financial future.</div>
+  </div>
+  <a href="<?= INSURANCE_URL ?>?utm_source=dashboard_insurance&utm_medium=portal" target="_blank" rel="noopener"
+     style="background:var(--gold);color:#0c1a0c;padding:0.5rem 1rem;border-radius:6px;font-size:0.82rem;font-weight:600;text-decoration:none;white-space:nowrap;flex-shrink:0">Get Covered →</a>
+</div><?php endif; ?>
 
 <!-- Stat boxes -->
 <div class="stats-grid">

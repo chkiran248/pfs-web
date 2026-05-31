@@ -3,8 +3,10 @@ declare(strict_types=1);
 require_once '../includes/config.php';
 require_once '../includes/db.php';
 require_once '../includes/auth.php';
+require_once '../includes/subscription.php';
 require_login();
 require_role('client');
+require_premium('tax_modeler');
 
 $page_title = 'Tax Switch Modeler — Prime Financials';
 require_once '../includes/portal-header.php';

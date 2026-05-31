@@ -3,8 +3,10 @@ declare(strict_types=1);
 require_once '../includes/config.php';
 require_once '../includes/db.php';
 require_once '../includes/auth.php';
+require_once '../includes/subscription.php';
 require_login();
 require_role('client');
+require_premium('rebalancer');
 
 $user_id = get_user_id();
 $db      = get_db();
@@ -185,6 +187,8 @@ require_once '../includes/portal-header.php';
 
 <script>
 const MF_URL = '<?= SITE_URL ?>/ai/rebalance-mf.php';
+const ONBOARDING_URL = '<?= ONBOARDING_URL ?>';
+const CALENDLY_URL   = '<?= CALENDLY_URL ?>';
 const EQ_URL = '<?= SITE_URL ?>/ai/rebalance-equity.php';
 const WA_NUM = '<?= WHATSAPP_NUM ?>';
 const CSRF   = document.querySelector('meta[name="csrf-token"]').content;
@@ -300,7 +304,7 @@ function renderMF(d, el) {
   }
 
   h += `<p class="rb-disclaimer">${e(d.disclaimer||'')}</p>`;
-  h += `<a href="https://wa.me/${WA_NUM}?text=${encodeURIComponent('Hi, I ran the Prime Financials MF Rebalancer and want to discuss the recommendations.')}" class="rb-wa-btn" target="_blank" rel="noopener">💬 Discuss with Your Advisor</a>`;
+  h += `<a href="https://wa.me/${WA_NUM}?text=${encodeURIComponent('Hi, I ran the Prime Financials MF Rebalancer and want to discuss the recommendations.')}" class="rb-wa-btn" target="_blank" rel="noopener">💬 Discuss with Advisor</a>`;
   el.innerHTML = h;
 }
 
@@ -362,7 +366,7 @@ function renderEQ(d, el) {
   }
 
   h += `<div class="disclaimer disclaimer--stock" style="font-size:0.75rem">${e(d.disclaimer||'')}</div>`;
-  h += `<a href="https://wa.me/${WA_NUM}?text=${encodeURIComponent('Hi, I reviewed my equity portfolio on Prime Financials and want to discuss the analysis.')}" class="rb-wa-btn" target="_blank" rel="noopener">💬 Discuss with Your Advisor</a>`;
+  h += `<a href="https://wa.me/${WA_NUM}?text=${encodeURIComponent('Hi, I reviewed my equity portfolio on Prime Financials and want to discuss the analysis.')}" class="rb-wa-btn" target="_blank" rel="noopener">💬 Discuss with Advisor</a>`;
   el.innerHTML = h;
 }
 </script>

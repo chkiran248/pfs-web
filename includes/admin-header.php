@@ -68,6 +68,7 @@ function admin_link(string $href, string $icon, string $label, string $current):
       </div>
       <div class="sidebar-group">
         <span class="sidebar-group-label">System</span>
+        <?= admin_link('/admin/coupons.php',     '🎟', 'Coupon Codes',  $admin_current) ?>
         <?= admin_link('/admin/data-status.php', '◈', 'Data Pipeline',  $admin_current) ?>
       </div>
       <div class="sidebar-group" style="margin-top:auto;padding-top:1rem;border-top:1px solid var(--border-light)">
