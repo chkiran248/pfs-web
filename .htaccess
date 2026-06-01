@@ -5,15 +5,15 @@ Options -Indexes
 
 # ── REWRITE ENGINE ────────────────────────────────────────
 RewriteEngine On
-RewriteBase /primefin_website/
+RewriteBase /
 
-# Redirect www to non-www (update domain as needed)
-# RewriteCond %{HTTP_HOST} ^www\.primefin\.in [NC]
-# RewriteRule ^(.*)$ https://primefin.in/$1 [L,R=301]
+# Redirect www to non-www
+RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+RewriteRule ^ https://%1%{REQUEST_URI} [R=301,L]
 
 # Force HTTPS
-# RewriteCond %{HTTPS} off
-# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
 
 # Clean URLs — remove .php extension
 RewriteCond %{REQUEST_FILENAME} !-d
@@ -26,6 +26,9 @@ RewriteRule ^([^\.]+)$ $1.php [NC,L]
   Header set X-Frame-Options "SAMEORIGIN"
   Header set X-XSS-Protection "1; mode=block"
   Header set Referrer-Policy "strict-origin-when-cross-origin"
+  Header set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+  Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://api.anthropic.com https://api.mfapi.in https://www.amfiindia.com; frame-ancestors 'none';"
 </IfModule>
 
 # ── PERFORMANCE / CACHING ─────────────────────────────────
@@ -46,8 +49,8 @@ RewriteRule ^([^\.]+)$ $1.php [NC,L]
 </IfModule>
 
 # ── ERROR PAGES ──────────────────────────────────────────
-ErrorDocument 404 /primefin_website/404.php
-ErrorDocument 500 /primefin_website/500.php
+ErrorDocument 404 /404.php
+ErrorDocument 500 /500.php
 
 # ── PROTECT SENSITIVE FILES ───────────────────────────────
 <FilesMatch "\.(htaccess|htpasswd|ini|log|sh|sql)$">
