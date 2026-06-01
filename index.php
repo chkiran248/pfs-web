@@ -1,6 +1,14 @@
 <?php
+session_start();
+
 $page_title = "Prime Financials | Data is Our Power";
 $meta_description = "Prime Financials delivers trusted financial intelligence across Mutual Funds, NPS, Insurance, and Fixed Deposits — built for every Indian investor's journey.";
+
+// Generate CSRF token for contact form
+if (empty($_SESSION['contact_csrf'])) {
+    $_SESSION['contact_csrf'] = bin2hex(random_bytes(32));
+}
+$contact_csrf = $_SESSION['contact_csrf'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -8,7 +16,7 @@ $meta_description = "Prime Financials delivers trusted financial intelligence ac
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title><?php echo $page_title; ?></title>
-  <meta name="description" content="<?php echo $meta_description; ?>" />
+  <meta name="description" content="<?php echo htmlspecialchars($meta_description, ENT_QUOTES, 'UTF-8'); ?>" />
   <meta property="og:title" content="Prime Financials | Data is Our Power" />
   <meta property="og:description" content="Trusted financial intelligence for every Indian investor." />
   <meta property="og:url" content="https://primefin.in" />
@@ -424,7 +432,7 @@ $meta_description = "Prime Financials delivers trusted financial intelligence ac
           <h3 class="pc-plan-name">Prime</h3>
           <div class="pc-price"><span class="pc-amount" style="color:var(--lime)">Free</span><span class="pc-period">with coupon</span></div>
           <p class="pc-tagline">Invest with us. Get premium free.</p>
-          <a href="https://www.assetplus.in/mfd/suryakiran" target="_blank" rel="noopener" class="btn btn--primary pc-cta">🚀 Start Investing →</a>
+          <a href="https://www.assetplus.in/mfd/suryakiran" target="_blank" rel="noopener noreferrer" class="btn btn--primary pc-cta">🚀 Start Investing →</a>
           <p class="pc-sub-note">Already a client? <a href="/primefin_website/auth/login.php">Login &amp; enter coupon</a></p>
         </div>
 
@@ -434,7 +442,7 @@ $meta_description = "Prime Financials delivers trusted financial intelligence ac
           <div class="pc-price"><span class="pc-amount">₹499</span><span class="pc-period">/ month</span></div>
           <p class="pc-tagline" style="color:var(--gold);font-family:'DM Mono',monospace;font-size:0.65rem">or ₹4,999/year — save 17%</p>
           <a href="/primefin_website/auth/register.php?plan=member" class="btn btn--ghost pc-cta">Subscribe →</a>
-          <p class="pc-sub-note"><a href="https://calendly.com/primefin/financial-success" target="_blank" rel="noopener">📅 Book a free session first</a></p>
+          <p class="pc-sub-note"><a href="https://calendly.com/primefin/financial-success" target="_blank" rel="noopener noreferrer">📅 Book a free session first</a></p>
         </div>
       </div>
 
@@ -478,7 +486,7 @@ $meta_description = "Prime Financials delivers trusted financial intelligence ac
       <div class="pc-footer">
         <div class="pc-label-col"></div>
         <div class="pc-plan-col"><a href="/primefin_website/auth/register.php" class="btn btn--ghost pc-cta">Get Started Free →</a></div>
-        <div class="pc-plan-col pc-plan-col--featured"><a href="https://www.assetplus.in/mfd/suryakiran" target="_blank" rel="noopener" class="btn btn--primary pc-cta">🚀 Start Investing →</a></div>
+        <div class="pc-plan-col pc-plan-col--featured"><a href="https://www.assetplus.in/mfd/suryakiran" target="_blank" rel="noopener noreferrer" class="btn btn--primary pc-cta">🚀 Start Investing →</a></div>
         <div class="pc-plan-col"><a href="/primefin_website/auth/register.php?plan=member" class="btn btn--ghost pc-cta">Subscribe →</a></div>
       </div>
 
@@ -490,11 +498,11 @@ $meta_description = "Prime Financials delivers trusted financial intelligence ac
         💡 <strong>The smartest way to get Prime:</strong>
         Start your SIPs through Prime Financials via
         <a href="https://www.assetplus.in/mfd/suryakiran"
-           target="_blank" rel="noopener">AssetPlus</a>
+           target="_blank" rel="noopener noreferrer">AssetPlus</a>
         — your advisor shares a coupon code and all premium features
         are yours, free for life.
         <a href="https://wa.me/919980001338?text=Hi%2C+I+want+to+invest+with+Prime+Financials+and+get+the+Prime+plan."
-           target="_blank" rel="noopener">
+           target="_blank" rel="noopener noreferrer">
           WhatsApp us to get started →
         </a>
       </p>
@@ -520,12 +528,12 @@ $meta_description = "Prime Financials delivers trusted financial intelligence ac
       <!-- SECONDARY CTAs -->
       <div class="contact-cta-group">
         <a href="https://wa.me/919980001338?text=Hi%2C+I+visited+primefin.in+and+would+like+to+know+more."
-           target="_blank" rel="noopener"
+           target="_blank" rel="noopener noreferrer"
            class="contact-cta-secondary contact-cta-secondary--whatsapp">
           💬 WhatsApp Us
         </a>
         <a href="https://calendly.com/primefin/financial-success"
-           target="_blank" rel="noopener"
+           target="_blank" rel="noopener noreferrer"
            class="contact-cta-secondary">
           📅 Book a Free Session
         </a>
@@ -539,12 +547,12 @@ $meta_description = "Prime Financials delivers trusted financial intelligence ac
       <!-- TERTIARY — Direct investing + insurance -->
       <div class="contact-cta-group">
         <a href="https://www.assetplus.in/mfd/suryakiran"
-           target="_blank" rel="noopener"
+           target="_blank" rel="noopener noreferrer"
            class="contact-cta-tertiary">
           📈 Start Investing
         </a>
         <a href="https://insurance.assetplus.in/137538"
-           target="_blank" rel="noopener"
+           target="_blank" rel="noopener noreferrer"
            class="contact-cta-tertiary">
           🛡 Get Insurance
         </a>
@@ -557,6 +565,7 @@ $meta_description = "Prime Financials delivers trusted financial intelligence ac
       </div>
     </div>
     <form class="contact-form" method="POST" action="contact.php">
+        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($contact_csrf, ENT_QUOTES, 'UTF-8'); ?>">
       <div class="form-group">
         <label for="name">Full Name</label>
         <input type="text" id="name" name="name" placeholder="Your name" required />
