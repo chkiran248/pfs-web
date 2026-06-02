@@ -29,16 +29,16 @@ $initials = strtoupper(substr($name_parts[0], 0, 1) . (isset($name_parts[1]) ? s
 $_hdr_plan = get_user_plan(get_user_id());
 $_hdr_pc   = get_plan_config($_hdr_plan);
 
-// Helper: sidebar link builder
+// Helper: sidebar link builder — $icon is a Phosphor icon name e.g. 'house'
 function nav_link(string $href, string $icon, string $label, string $current): string {
-    $page = basename($href, '.php');
+    $page   = basename($href, '.php');
     $active = ($current === $page) ? ' active' : '';
-    $url = SITE_URL . $href;
+    $url    = SITE_URL . $href;
     return sprintf(
-        '<a href="%s" class="sidebar-link%s"><span class="icon">%s</span>%s</a>',
+        '<a href="%s" class="sidebar-link%s"><i class="ph ph-%s sidebar-icon"></i><span>%s</span></a>',
         htmlspecialchars($url, ENT_QUOTES, 'UTF-8'),
         $active,
-        $icon,
+        htmlspecialchars($icon, ENT_QUOTES, 'UTF-8'),
         htmlspecialchars($label, ENT_QUOTES, 'UTF-8')
     );
 }
@@ -56,6 +56,9 @@ function nav_link(string $href, string $icon, string $label, string $current): s
 
   <!-- Portal CSS -->
   <link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/portal.css" />
+
+  <!-- Phosphor Icons -->
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" />
 
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
@@ -89,7 +92,7 @@ function nav_link(string $href, string $icon, string $label, string $current): s
         <span class="sidebar-group-label">AI Assistant</span>
         <a href="<?= SITE_URL ?>/portal/primo.php"
            class="sidebar-link<?= $current_page==='primo'?' active':'' ?>">
-          <span class="icon">✦</span>PrimoAI
+          <i class="ph ph-sparkle sidebar-icon"></i><span>PrimoAI</span>
           <span class="sidebar-badge">NEW</span>
         </a>
       </div>
@@ -97,48 +100,48 @@ function nav_link(string $href, string $icon, string $label, string $current): s
       <!-- OVERVIEW -->
       <div class="sidebar-group">
         <span class="sidebar-group-label">Overview</span>
-        <?= nav_link('/portal/dashboard.php', '⬡', 'Dashboard', $current_page) ?>
-        <?= nav_link('/portal/profile.php',   '◎', 'My Profile', $current_page) ?>
-        <?= nav_link('/portal/pricing.php',   '✦', 'Plans & Pricing', $current_page) ?>
+        <?= nav_link('/portal/dashboard.php', 'house',      'Dashboard',      $current_page) ?>
+        <?= nav_link('/portal/profile.php',   'user-circle','My Profile',      $current_page) ?>
+        <?= nav_link('/portal/pricing.php',   'tag',        'Plans & Pricing', $current_page) ?>
       </div>
 
       <!-- MY FINANCES -->
       <div class="sidebar-group">
         <span class="sidebar-group-label">My Finances</span>
-        <?= nav_link('/portal/portfolio.php',   '◈', 'Portfolio',   $current_page) ?>
-        <?= nav_link('/portal/goals.php',       '◉', 'Goals',       $current_page) ?>
-        <?= nav_link('/portal/fd-tracker.php',  '◫', 'FD Tracker',  $current_page) ?>
-        <?= nav_link('/portal/rebalancer.php',  '⚖', 'Rebalancer',  $current_page) ?>
+        <?= nav_link('/portal/portfolio.php',   'chart-pie',  'Portfolio',  $current_page) ?>
+        <?= nav_link('/portal/goals.php',       'target',     'Goals',      $current_page) ?>
+        <?= nav_link('/portal/fd-tracker.php',  'bank',       'FD Tracker', $current_page) ?>
+        <?= nav_link('/portal/rebalancer.php',  'scales',     'Rebalancer', $current_page) ?>
       </div>
 
       <!-- TOOLS -->
       <div class="sidebar-group">
         <span class="sidebar-group-label">Tools</span>
-        <?= nav_link('/portal/calculators.php', '⊕', 'Calculators', $current_page) ?>
+        <?= nav_link('/portal/calculators.php', 'calculator', 'Calculators', $current_page) ?>
       </div>
 
       <!-- ADVISORY -->
       <div class="sidebar-group">
         <span class="sidebar-group-label">Advisory</span>
-        <?= nav_link('/advisory/mutual-funds.php',      '◆', 'Mutual Funds',      $current_page) ?>
-        <?= nav_link('/advisory/fund-compare.php',      '◇', 'Fund Compare',      $current_page) ?>
-        <?= nav_link('/advisory/stocks.php',            '◃', 'Stock Research',    $current_page) ?>
-        <?= nav_link('/advisory/sector-tracker.php',    '▹', 'Sector Tracker',    $current_page) ?>
-        <?= nav_link('/advisory/model-portfolios.php',  '▤', 'Model Portfolios',  $current_page) ?>
-        <?= nav_link('/advisory/insights.php',          '▦', 'Market Insights',   $current_page) ?>
+        <?= nav_link('/advisory/mutual-funds.php',     'trend-up',         'Mutual Funds',     $current_page) ?>
+        <?= nav_link('/advisory/fund-compare.php',     'arrows-left-right','Fund Compare',     $current_page) ?>
+        <?= nav_link('/advisory/stocks.php',           'magnifying-glass', 'Stock Research',   $current_page) ?>
+        <?= nav_link('/advisory/sector-tracker.php',   'compass',          'Sector Tracker',   $current_page) ?>
+        <?= nav_link('/advisory/model-portfolios.php', 'briefcase',        'Model Portfolios', $current_page) ?>
+        <?= nav_link('/advisory/insights.php',         'newspaper',        'Market Insights',  $current_page) ?>
       </div>
 
       <!-- WATCHLISTS -->
       <div class="sidebar-group">
         <span class="sidebar-group-label">Watchlists</span>
-        <?= nav_link('/portal/fund-watchlist.php',  '★', 'Fund Watchlist',  $current_page) ?>
-        <?= nav_link('/portal/stock-watchlist.php', '☆', 'Stock Watchlist', $current_page) ?>
+        <?= nav_link('/portal/fund-watchlist.php',  'star',           'Fund Watchlist',  $current_page) ?>
+        <?= nav_link('/portal/stock-watchlist.php', 'chart-line-up',  'Stock Watchlist', $current_page) ?>
       </div>
 
       <!-- DOCUMENTS -->
       <div class="sidebar-group">
         <span class="sidebar-group-label">Documents</span>
-        <?= nav_link('/portal/documents.php', '▣', 'My Documents', $current_page) ?>
+        <?= nav_link('/portal/documents.php', 'folder-open', 'My Documents', $current_page) ?>
       </div>
 
     </nav>

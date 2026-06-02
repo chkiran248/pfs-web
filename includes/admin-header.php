@@ -13,8 +13,9 @@ function admin_link(string $href, string $icon, string $label, string $current):
     $page   = basename($href, '.php');
     $active = ($current === $page) ? ' active' : '';
     $url    = SITE_URL . $href;
-    return sprintf('<a href="%s" class="sidebar-link%s"><span class="icon">%s</span>%s</a>',
-        htmlspecialchars($url, ENT_QUOTES, 'UTF-8'), $active, $icon,
+    return sprintf('<a href="%s" class="sidebar-link%s"><i class="ph ph-%s sidebar-icon"></i><span>%s</span></a>',
+        htmlspecialchars($url, ENT_QUOTES, 'UTF-8'), $active,
+        htmlspecialchars($icon, ENT_QUOTES, 'UTF-8'),
         htmlspecialchars($label, ENT_QUOTES, 'UTF-8'));
 }
 ?>
@@ -27,6 +28,7 @@ function admin_link(string $href, string $icon, string $label, string $current):
   <title><?= htmlspecialchars($page_title ?? 'Admin — Prime Financials', ENT_QUOTES, 'UTF-8') ?></title>
   <script>(function(){var t=localStorage.getItem('pv-theme');if(t==='light')document.documentElement.setAttribute('data-theme','light');})()</script>
   <link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/portal.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css"/>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
 </head>
 <body>
@@ -48,28 +50,28 @@ function admin_link(string $href, string $icon, string $label, string $current):
     <nav class="sidebar-nav">
       <div class="sidebar-group">
         <span class="sidebar-group-label">Overview</span>
-        <?= admin_link('/admin/dashboard.php',           '⬡', 'Dashboard',          $admin_current) ?>
+        <?= admin_link('/admin/dashboard.php', 'squares-four', 'Dashboard', $admin_current) ?>
       </div>
       <div class="sidebar-group">
         <span class="sidebar-group-label">Clients</span>
-        <?= admin_link('/admin/clients.php',             '◎', 'All Clients',         $admin_current) ?>
-        <?= admin_link('/admin/leads.php',               '◉', 'Leads',               $admin_current) ?>
+        <?= admin_link('/admin/clients.php', 'users',    'All Clients', $admin_current) ?>
+        <?= admin_link('/admin/leads.php',   'user-plus','Leads',       $admin_current) ?>
       </div>
       <div class="sidebar-group">
         <span class="sidebar-group-label">Advisory Content</span>
-        <?= admin_link('/admin/fund-recommendations.php','◆', 'Fund Recommendations', $admin_current) ?>
-        <?= admin_link('/admin/stock-research.php',      '◃', 'Stock Research',       $admin_current) ?>
-        <?= admin_link('/admin/model-portfolios.php',    '▤', 'Model Portfolios',     $admin_current) ?>
-        <?= admin_link('/admin/insights.php',            '▦', 'Market Insights',      $admin_current) ?>
+        <?= admin_link('/admin/fund-recommendations.php','trend-up',  'Fund Recommendations', $admin_current) ?>
+        <?= admin_link('/admin/stock-research.php',      'chart-bar', 'Stock Research',       $admin_current) ?>
+        <?= admin_link('/admin/model-portfolios.php',    'briefcase', 'Model Portfolios',     $admin_current) ?>
+        <?= admin_link('/admin/insights.php',            'newspaper', 'Market Insights',      $admin_current) ?>
       </div>
       <div class="sidebar-group">
         <span class="sidebar-group-label">Documents</span>
-        <?= admin_link('/admin/documents.php',   '▣', 'Send Documents', $admin_current) ?>
+        <?= admin_link('/admin/documents.php',   'paper-plane-tilt', 'Send Documents', $admin_current) ?>
       </div>
       <div class="sidebar-group">
         <span class="sidebar-group-label">System</span>
-        <?= admin_link('/admin/coupons.php',     '🎟', 'Coupon Codes',  $admin_current) ?>
-        <?= admin_link('/admin/data-status.php', '◈', 'Data Pipeline',  $admin_current) ?>
+        <?= admin_link('/admin/coupons.php',     'ticket',   'Coupon Codes',  $admin_current) ?>
+        <?= admin_link('/admin/data-status.php', 'database', 'Data Pipeline', $admin_current) ?>
       </div>
       <div class="sidebar-group" style="margin-top:auto;padding-top:1rem;border-top:1px solid var(--border-light)">
         <span class="sidebar-group-label">Client Portal</span>
