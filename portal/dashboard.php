@@ -46,6 +46,86 @@ if ($avg_days > 0 && $total_invested > 0 && $total_current > 0) {
     $xirr  = (pow($total_current / $total_invested, 1 / $years) - 1) * 100;
 }
 
+// ── Retirement Income (6% SWR on investable corpus) ──────
+$protection_only_types = ['Term Insurance','Health Insurance','Critical Illness','Personal Accident'];
+
+$stmt_ret = $db->prepare("SELECT fund_type, fund_name, units_held, current_value, folio_number FROM portfolio_entries WHERE user_id = :uid");
+$stmt_ret->execute([':uid' => $uid]);
+$ret_holdings = $stmt_ret->fetchAll();
+
+$investable_corpus = 0.0;
+$crypto_raw = []; // [index => ['name','units','stored_value']]
+
+foreach ($ret_holdings as $h) {
+    $ftype = $h['fund_type'] ?? '';
+    $cval  = (float)($h['current_value'] ?? 0);
+
+    if ($ftype === 'insurance') {
+        $policy_type = trim($h['folio_number'] ?? '');
+        if (!in_array($policy_type, $protection_only_types)) {
+            $investable_corpus += $cval; // Endowment/ULIP/Whole Life/Money Back — has maturity value
+        }
+    } elseif ($ftype === 'crypto') {
+        $crypto_raw[] = ['name' => trim($h['fund_name'] ?? ''), 'units' => (float)($h['units_held'] ?? 0), 'stored' => $cval];
+        $investable_corpus += $cval; // add stored first; may be replaced by live price below
+    } else {
+        $investable_corpus += $cval;
+    }
+}
+
+// Live crypto prices via CoinGecko (cached 30 min in session)
+if (!empty($crypto_raw)) {
+    $coin_map = [
+        'bitcoin'=>'bitcoin','btc'=>'bitcoin',
+        'ethereum'=>'ethereum','eth'=>'ethereum',
+        'tether'=>'tether','usdt'=>'tether',
+        'bnb'=>'binancecoin','binance coin'=>'binancecoin',
+        'solana'=>'solana','sol'=>'solana',
+        'xrp'=>'ripple','ripple'=>'ripple',
+        'cardano'=>'cardano','ada'=>'cardano',
+        'polygon'=>'matic-network','matic'=>'matic-network','pol'=>'matic-network',
+        'dogecoin'=>'dogecoin','doge'=>'dogecoin',
+        'shiba inu'=>'shiba-inu','shib'=>'shiba-inu',
+        'polkadot'=>'polkadot','dot'=>'polkadot',
+        'litecoin'=>'litecoin','ltc'=>'litecoin',
+        'chainlink'=>'chainlink','link'=>'chainlink',
+        'avalanche'=>'avalanche-2','avax'=>'avalanche-2',
+        'usd coin'=>'usd-coin','usdc'=>'usd-coin',
+        'uniswap'=>'uniswap','uni'=>'uniswap',
+        'pepe'=>'pepe','wif'=>'dogwifhat',
+    ];
+    $mapped = [];
+    foreach ($crypto_raw as $i => $c) {
+        $key = strtolower($c['name']);
+        $mapped[$i] = $coin_map[$key] ?? null;
+    }
+    $ids = array_filter(array_unique(array_values($mapped)));
+    if ($ids) {
+        $ck = 'cgp_' . md5(implode(',', $ids));
+        $live = (isset($_SESSION[$ck], $_SESSION[$ck.'_ts']) && (time() - $_SESSION[$ck.'_ts']) < 1800)
+            ? $_SESSION[$ck] : null;
+        if (!$live) {
+            $url = 'https://api.coingecko.com/api/v3/simple/price?ids=' . implode(',', $ids) . '&vs_currencies=inr';
+            $ctx = stream_context_create(['http'=>['timeout'=>3,'header'=>"User-Agent: PrimeFinancials/1.0\r\n"]]);
+            $raw = @file_get_contents($url, false, $ctx);
+            if ($raw) { $live = json_decode($raw, true); $_SESSION[$ck] = $live; $_SESSION[$ck.'_ts'] = time(); }
+        }
+        if ($live) {
+            foreach ($crypto_raw as $i => $c) {
+                $cg_id = $mapped[$i] ?? null;
+                if ($cg_id && isset($live[$cg_id]['inr'])) {
+                    $live_value = $c['units'] * $live[$cg_id]['inr'];
+                    $investable_corpus -= $c['stored']; // remove stored estimate
+                    $investable_corpus += $live_value;  // replace with live value
+                }
+            }
+        }
+    }
+    unset($crypto_raw, $coin_map, $mapped, $ids);
+}
+
+$retire_monthly = $investable_corpus * 0.06 / 12;
+
 // ── Goals ─────────────────────────────────────────────────
 $stmt = $db->prepare("SELECT * FROM goals WHERE user_id = :uid AND status = 'active' ORDER BY target_year ASC LIMIT 3");
 $stmt->execute([':uid' => $uid]);
@@ -120,6 +200,45 @@ if (!$has_insurance):
   <a href="<?= INSURANCE_URL ?>?utm_source=dashboard_insurance&utm_medium=portal" target="_blank" rel="noopener"
      style="background:var(--gold);color:#0c1a0c;padding:0.5rem 1rem;border-radius:6px;font-size:0.82rem;font-weight:600;text-decoration:none;white-space:nowrap;flex-shrink:0">Get Covered →</a>
 </div><?php endif; ?>
+
+<!-- ── Retirement Income Card ─────────────────────────────── -->
+<div style="margin-bottom:1.5rem;background:linear-gradient(135deg,var(--surface-1),rgba(46,133,64,0.06));border:1px solid rgba(201,168,76,0.25);border-radius:12px;padding:1.5rem 1.75rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1.5rem">
+  <div>
+    <div style="font-family:'DM Mono',monospace;font-size:0.58rem;color:var(--lime);letter-spacing:0.22em;text-transform:uppercase;margin-bottom:0.6rem;display:flex;align-items:center;gap:0.4rem">
+      <i class="bi bi-sunrise"></i> Your Monthly Income
+    </div>
+    <?php if ($investable_corpus > 0): ?>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:3.6rem;font-weight:700;color:var(--gold);line-height:1;margin-bottom:0.45rem">
+        <?= format_inr($retire_monthly) ?><span style="font-size:1.3rem;font-weight:400;color:var(--text-secondary);margin-left:0.3rem">/month</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap">
+        <span style="font-size:0.82rem;color:var(--text-secondary)">If You Retire Today &nbsp;·&nbsp; 6% Safe Withdrawal Rate</span>
+        <!-- Tooltip -->
+        <span style="position:relative;display:inline-flex;align-items:center" class="retire-tip-wrap">
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:rgba(46,133,64,0.2);border:1px solid rgba(46,133,64,0.35);color:var(--lime);font-size:0.55rem;font-family:'DM Mono',monospace;cursor:default;line-height:1">?</span>
+          <span class="retire-tip-box" style="position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:0.7rem 0.9rem;font-size:0.72rem;color:var(--text-secondary);line-height:1.6;width:260px;pointer-events:none;z-index:300;font-family:'DM Sans',sans-serif;white-space:normal">
+            Calculated at <strong style="color:var(--cream)">6% Safe Withdrawal Rate</strong> on your <strong style="color:var(--cream)"><?= format_inr($investable_corpus) ?></strong> investable portfolio.<br><br>
+            <strong style="color:var(--cream)">Excluded:</strong> Term Insurance, Health Insurance, Critical Illness & Personal Accident policies (no maturity value).<br><br>
+            Crypto values use live INR prices via CoinGecko (30-min cache).
+            <span style="position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--border)"></span>
+          </span>
+        </span>
+      </div>
+    <?php else: ?>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--text-muted);margin-bottom:0.3rem">Add holdings to see your retirement income</div>
+      <div style="font-size:0.82rem;color:var(--text-secondary)">If You Retire Today &nbsp;·&nbsp; Safe Withdrawal Rate on total investable assets</div>
+    <?php endif; ?>
+  </div>
+  <div style="flex-shrink:0">
+    <a href="<?= SITE_URL ?>/portal/cashflow-modeler.php" style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--lime);letter-spacing:0.08em;text-decoration:none;border:1px solid rgba(141,198,63,0.25);padding:0.45rem 1rem;border-radius:4px;white-space:nowrap;display:inline-flex;align-items:center;gap:0.4rem;transition:background 0.2s" onmouseover="this.style.background='rgba(141,198,63,0.1)'" onmouseout="this.style.background=''">
+      <i class="bi bi-graph-up-arrow"></i> Full Retirement Planner →
+    </a>
+  </div>
+</div>
+<style>
+.retire-tip-wrap .retire-tip-box{opacity:0;transition:opacity 0.18s,transform 0.18s;transform:translateX(-50%) translateY(4px)}
+.retire-tip-wrap:hover .retire-tip-box{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
 
 <!-- Stat boxes -->
 <div class="stats-grid">

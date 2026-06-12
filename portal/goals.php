@@ -11,7 +11,7 @@ $uid = get_user_id();
 $error = '';
 
 $goal_types = ['retirement','education','home','marriage','vehicle','emergency','custom'];
-$goal_icons = ['retirement'=>'🏦','education'=>'🎓','home'=>'🏠','marriage'=>'💍','vehicle'=>'🚗','emergency'=>'🆘','custom'=>'🎯'];
+$goal_icons = ['retirement'=>'bi-bank','education'=>'bi-mortarboard','home'=>'bi-house','marriage'=>'bi-heart','vehicle'=>'bi-car-front','emergency'=>'bi-shield-exclamation','custom'=>'bi-star'];
 
 // ── Add / Edit ─────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['action']??'', ['add_goal','edit_goal'])) {
@@ -105,7 +105,7 @@ require_once '../includes/portal-header.php';
 <!-- Active Goals -->
 <?php if (empty($active_goals)): ?>
 <div class="portal-card" style="text-align:center;padding:3rem;color:var(--text-secondary)">
-  <div style="font-size:3rem;margin-bottom:1rem">🎯</div>
+  <i class="bi bi-bullseye" style="font-size:3rem;color:var(--lime);display:block;margin-bottom:1rem"></i>
   <p style="margin-bottom:1rem">No active goals yet. Set your first financial goal below.</p>
 </div>
 <?php else: ?>
@@ -119,7 +119,7 @@ require_once '../includes/portal-header.php';
   <div class="portal-card">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem">
       <div>
-        <div style="font-size:1.5rem;margin-bottom:0.3rem"><?= $icon ?></div>
+        <i class="bi <?= htmlspecialchars($icon,ENT_QUOTES,'UTF-8') ?>" style="font-size:1.5rem;color:var(--lime);display:block;margin-bottom:0.3rem"></i>
         <div style="font-weight:600;color:var(--cream);font-family:'Cormorant Garamond',serif;font-size:1.15rem"><?= htmlspecialchars($g['goal_name'],ENT_QUOTES,'UTF-8') ?></div>
         <div style="font-size:0.75rem;color:var(--text-secondary)"><?= $yrs ?> year<?= $yrs!==1?'s':'' ?> to go · <?= $g['target_year'] ?></div>
       </div>
@@ -187,7 +187,7 @@ require_once '../includes/portal-header.php';
           <label class="form-label">Goal Type</label>
           <select class="form-select" name="goal_type">
             <?php foreach ($goal_types as $t): ?>
-            <option value="<?= $t ?>" <?= ($edit_goal['goal_type']??'')===$t?'selected':'' ?>><?= $goal_icons[$t] ?> <?= ucfirst($t) ?></option>
+            <option value="<?= $t ?>" <?= ($edit_goal['goal_type']??'')===$t?'selected':'' ?>><?= ucfirst($t) ?></option>
             <?php endforeach; ?>
           </select>
         </div>
@@ -233,12 +233,12 @@ require_once '../includes/portal-header.php';
 <!-- Achieved goals -->
 <?php if (!empty($achieved_goals)): ?>
 <div style="margin-top:2rem">
-  <h2 class="section-header">Achieved Goals 🏆</h2>
+  <h2 class="section-header">Achieved Goals</h2>
   <div class="grid-2">
     <?php foreach ($achieved_goals as $g): ?>
     <div class="portal-card" style="opacity:0.7;border-color:var(--gold)">
       <div style="display:flex;gap:0.75rem;align-items:center">
-        <span style="font-size:1.5rem"><?= $goal_icons[$g['goal_type']]??'🎯' ?></span>
+        <i class="bi <?= htmlspecialchars($goal_icons[$g['goal_type']]??'bi-star',ENT_QUOTES,'UTF-8') ?>" style="font-size:1.5rem;color:var(--gold)"></i>
         <div>
           <div style="color:var(--cream);font-weight:500"><?= htmlspecialchars($g['goal_name'],ENT_QUOTES,'UTF-8') ?></div>
           <div style="font-size:0.78rem;color:var(--gold)"><?= format_inr((float)$g["target_amount"]) ?> · Achieved ✓</div>

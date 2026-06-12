@@ -35,7 +35,7 @@ function nav_link(string $href, string $icon, string $label, string $current): s
     $active = ($current === $page) ? ' active' : '';
     $url    = SITE_URL . $href;
     return sprintf(
-        '<a href="%s" class="sidebar-link%s"><i class="ph ph-%s sidebar-icon"></i><span>%s</span></a>',
+        '<a href="%s" class="sidebar-link%s"><i class="bi bi-%s sidebar-icon"></i><span>%s</span></a>',
         htmlspecialchars($url, ENT_QUOTES, 'UTF-8'),
         $active,
         htmlspecialchars($icon, ENT_QUOTES, 'UTF-8'),
@@ -57,8 +57,8 @@ function nav_link(string $href, string $icon, string $label, string $current): s
   <!-- Portal CSS -->
   <link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/portal.css" />
 
-  <!-- Phosphor Icons -->
-  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" />
+  <!-- Bootstrap Icons (local) -->
+  <link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/bootstrap-icons.min.css" />
 
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
@@ -92,7 +92,7 @@ function nav_link(string $href, string $icon, string $label, string $current): s
         <span class="sidebar-group-label">AI Assistant</span>
         <a href="<?= SITE_URL ?>/portal/primo.php"
            class="sidebar-link<?= $current_page==='primo'?' active':'' ?>">
-          <i class="ph ph-sparkle sidebar-icon"></i><span>PrimoAI</span>
+          <i class="bi bi-stars sidebar-icon"></i><span>PrimoAI</span>
           <span class="sidebar-badge">NEW</span>
         </a>
       </div>
@@ -100,18 +100,18 @@ function nav_link(string $href, string $icon, string $label, string $current): s
       <!-- OVERVIEW -->
       <div class="sidebar-group">
         <span class="sidebar-group-label">Overview</span>
-        <?= nav_link('/portal/dashboard.php', 'house',      'Dashboard',      $current_page) ?>
-        <?= nav_link('/portal/profile.php',   'user-circle','My Profile',      $current_page) ?>
-        <?= nav_link('/portal/pricing.php',   'tag',        'Plans & Pricing', $current_page) ?>
+        <?= nav_link('/portal/dashboard.php', 'house',         'Dashboard',      $current_page) ?>
+        <?= nav_link('/portal/profile.php',   'person-circle','My Profile',     $current_page) ?>
+        <?= nav_link('/portal/pricing.php',   'tag',          'Plans & Pricing',$current_page) ?>
       </div>
 
       <!-- MY FINANCES -->
       <div class="sidebar-group">
         <span class="sidebar-group-label">My Finances</span>
-        <?= nav_link('/portal/portfolio.php',   'chart-pie',  'Portfolio',  $current_page) ?>
-        <?= nav_link('/portal/goals.php',       'target',     'Goals',      $current_page) ?>
-        <?= nav_link('/portal/fd-tracker.php',  'bank',       'FD Tracker', $current_page) ?>
-        <?= nav_link('/portal/rebalancer.php',  'scales',     'Rebalancer', $current_page) ?>
+        <?= nav_link('/portal/portfolio.php',   'pie-chart',       'Portfolio',  $current_page) ?>
+        <?= nav_link('/portal/goals.php',       'bullseye',        'Goals',      $current_page) ?>
+        <?= nav_link('/portal/fd-tracker.php',  'bank',            'FD Tracker', $current_page) ?>
+        <?= nav_link('/portal/rebalancer.php',  'arrow-left-right','Rebalancer', $current_page) ?>
       </div>
 
       <!-- TOOLS -->
@@ -123,25 +123,25 @@ function nav_link(string $href, string $icon, string $label, string $current): s
       <!-- ADVISORY -->
       <div class="sidebar-group">
         <span class="sidebar-group-label">Advisory</span>
-        <?= nav_link('/advisory/mutual-funds.php',     'trend-up',         'Mutual Funds',     $current_page) ?>
-        <?= nav_link('/advisory/fund-compare.php',     'arrows-left-right','Fund Compare',     $current_page) ?>
-        <?= nav_link('/advisory/stocks.php',           'magnifying-glass', 'Stock Research',   $current_page) ?>
-        <?= nav_link('/advisory/sector-tracker.php',   'compass',          'Sector Tracker',   $current_page) ?>
-        <?= nav_link('/advisory/model-portfolios.php', 'briefcase',        'Model Portfolios', $current_page) ?>
-        <?= nav_link('/advisory/insights.php',         'newspaper',        'Market Insights',  $current_page) ?>
+        <?= nav_link('/advisory/mutual-funds.php',     'graph-up-arrow',  'Mutual Funds',     $current_page) ?>
+        <?= nav_link('/advisory/fund-compare.php',     'bar-chart-steps', 'Fund Compare',     $current_page) ?>
+        <?= nav_link('/advisory/stocks.php',           'search',          'Stock Research',   $current_page) ?>
+        <?= nav_link('/advisory/sector-tracker.php',   'compass',         'Sector Tracker',   $current_page) ?>
+        <?= nav_link('/advisory/model-portfolios.php', 'briefcase',       'Model Portfolios', $current_page) ?>
+        <?= nav_link('/advisory/insights.php',         'newspaper',       'Market Insights',  $current_page) ?>
       </div>
 
       <!-- WATCHLISTS -->
       <div class="sidebar-group">
         <span class="sidebar-group-label">Watchlists</span>
-        <?= nav_link('/portal/fund-watchlist.php',  'star',           'Fund Watchlist',  $current_page) ?>
-        <?= nav_link('/portal/stock-watchlist.php', 'chart-line-up',  'Stock Watchlist', $current_page) ?>
+        <?= nav_link('/portal/fund-watchlist.php',  'star',     'Fund Watchlist',  $current_page) ?>
+        <?= nav_link('/portal/stock-watchlist.php', 'graph-up', 'Stock Watchlist', $current_page) ?>
       </div>
 
       <!-- DOCUMENTS -->
       <div class="sidebar-group">
         <span class="sidebar-group-label">Documents</span>
-        <?= nav_link('/portal/documents.php', 'folder-open', 'My Documents', $current_page) ?>
+        <?= nav_link('/portal/documents.php', 'folder2-open', 'My Documents', $current_page) ?>
       </div>
 
     </nav>

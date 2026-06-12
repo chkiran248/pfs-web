@@ -112,7 +112,7 @@ require_once '../includes/portal-header.php';
     <div class="rb-card-header">
       <div class="rb-card-title-row">
         <div class="rb-card-title">
-          <div class="rb-card-icon">🔄</div>
+          <div class="rb-card-icon"><i class="bi bi-arrow-repeat" style="color:var(--lime)"></i></div>
           <div>
             <div class="rb-card-name">Mutual Fund Rebalancer</div>
             <div class="rb-card-sub">AMFI-compliant advisory</div>
@@ -129,7 +129,7 @@ require_once '../includes/portal-header.php';
     <div class="rb-body" id="mfBody">
       <?php if (!$mf_count): ?>
         <div class="rb-empty">
-          <div style="font-size:2rem;margin-bottom:0.5rem">📭</div>
+          <i class="bi bi-inbox" style="font-size:2rem;color:var(--lime);display:block;margin-bottom:0.5rem"></i>
           <p>No mutual fund holdings found.</p>
           <a href="<?= SITE_URL ?>/portal/portfolio.php">Add holdings manually →</a>
           <a href="<?= SITE_URL ?>/portal/primo.php">Upload CAS statement via PrimoAI →</a>
@@ -148,7 +148,7 @@ require_once '../includes/portal-header.php';
     <div class="rb-card-header">
       <div class="rb-card-title-row">
         <div class="rb-card-title">
-          <div class="rb-card-icon">📊</div>
+          <div class="rb-card-icon"><i class="bi bi-graph-up" style="color:var(--lime)"></i></div>
           <div>
             <div class="rb-card-name">Equity Portfolio Analyser</div>
             <div class="rb-card-sub">Research &amp; educational view</div>
@@ -169,7 +169,7 @@ require_once '../includes/portal-header.php';
     <div class="rb-body" id="eqBody">
       <?php if (!$eq_count): ?>
         <div class="rb-empty">
-          <div style="font-size:2rem;margin-bottom:0.5rem">📭</div>
+          <i class="bi bi-inbox" style="font-size:2rem;color:var(--lime);display:block;margin-bottom:0.5rem"></i>
           <p>No equity stock holdings found.</p>
           <a href="<?= SITE_URL ?>/portal/portfolio.php">Add stock holdings →</a>
           <a href="<?= SITE_URL ?>/portal/primo.php">Upload broker statement via PrimoAI →</a>

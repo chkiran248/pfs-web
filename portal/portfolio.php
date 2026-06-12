@@ -147,10 +147,14 @@ require_once '../includes/portal-header.php';
         // Determine initial asset_type for edit mode
         $init_ft = $edit_holding['fund_type'] ?? '';
         $init_asset = match($init_ft) {
-          'fd'                         => 'fd',
-          'nps'                        => 'nps',
-          'gold'                       => 'gold',
-          'other'                      => 'other',
+          'fd'          => 'fd',
+          'nps'         => 'nps',
+          'gold'        => 'gold',
+          'other'       => 'other',
+          'insurance'   => 'insurance',
+          'pms'         => 'pms',
+          'aif'         => 'aif',
+          'crypto'      => 'crypto',
           'equity' => str_contains(strtolower($edit_holding['fund_name']??''), 'fund') ? 'mutual_fund' : 'stock',
           default => 'mutual_fund',
         };
@@ -174,15 +178,19 @@ require_once '../includes/portal-header.php';
       <!-- ── STEP 1: Asset Type ─────────────────────────────── -->
       <div class="form-group">
         <label class="form-label" style="font-size:0.9rem;color:var(--cream);font-weight:600">Step 1 — Select Asset Type</label>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.6rem;margin-top:0.5rem;max-width:640px" id="asset-type-grid">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.6rem;margin-top:0.5rem" id="asset-type-grid">
           <?php
           $asset_types = [
-            'mutual_fund' => ['🏦','Mutual Fund','SIP, ELSS, Debt, Index'],
-            'stock'       => ['📈','Stock / Share','NSE / BSE equities'],
-            'fd'          => ['🏛','Fixed Deposit','Bank & corp FDs'],
-            'nps'         => ['🎯','NPS','National Pension System'],
-            'gold'        => ['🥇','Gold / SGB','Physical, SGB, ETF'],
-            'other'       => ['📋','Other','PPF, EPFO, ULIP...'],
+            'mutual_fund' => ['bi-graph-up-arrow',  'Mutual Fund',   'SIP, ELSS, Debt, Index'],
+            'stock'       => ['bi-bar-chart-line',   'Stock / Share', 'NSE / BSE equities'],
+            'fd'          => ['bi-bank',             'Fixed Deposit', 'Bank & corp FDs'],
+            'nps'         => ['bi-shield-check',     'NPS',           'National Pension System'],
+            'gold'        => ['bi-gem',              'Gold / SGB',    'Physical, SGB, ETF'],
+            'insurance'   => ['bi-heart-pulse',      'Insurance',     'Term, ULIP, Health, LIC'],
+            'pms'         => ['bi-briefcase',        'PMS',           'Portfolio Mgmt Service'],
+            'aif'         => ['bi-layers',           'AIF',           'Category I, II & III'],
+            'crypto'      => ['bi-currency-bitcoin', 'Crypto',        'BTC, ETH, Altcoins'],
+            'other'       => ['bi-grid',             'Other',         'PPF, EPFO, ULIP, Real Estate'],
           ];
           foreach ($asset_types as $at_key => [$icon, $label, $hint]):
             $active = ($init_asset === $at_key && $edit_holding) ? true : false;
@@ -190,7 +198,7 @@ require_once '../includes/portal-header.php';
           <button type="button" class="asset-type-btn<?= $active?' active':'' ?>" data-type="<?= $at_key ?>"
             onclick="selectAssetType('<?= $at_key ?>')"
             style="border:1px solid var(--border);border-radius:10px;padding:0.875rem 0.5rem;background:var(--surface-2);cursor:pointer;text-align:center;transition:all 0.15s;display:flex;flex-direction:column;align-items:center;gap:0.25rem<?= $active?';border-color:var(--bright);background:rgba(76,175,80,0.1)':'' ?>">
-            <span style="font-size:1.5rem;line-height:1"><?= $icon ?></span>
+            <i class="bi <?= htmlspecialchars($icon,ENT_QUOTES,'UTF-8') ?>" style="font-size:1.5rem;color:var(--lime);line-height:1"></i>
             <span style="font-size:0.82rem;font-weight:600;color:var(--cream);margin-top:0.2rem"><?= $label ?></span>
             <span style="font-size:0.68rem;color:var(--text-muted);line-height:1.3;word-break:break-word"><?= $hint ?></span>
           </button>
@@ -452,6 +460,172 @@ require_once '../includes/portal-header.php';
           <input type="hidden" name="folio_number" value="">
         </div>
 
+        <!-- ── Insurance fields ── -->
+        <div class="asset-fields" id="fields-insurance" style="display:none">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Policy Name *</label>
+              <input class="form-input" type="text" name="fund_name" id="fn_insurance" value="<?= ($init_ft==='insurance'&&$edit_holding)?htmlspecialchars($edit_holding['fund_name']??'',ENT_QUOTES,'UTF-8'):'' ?>" placeholder="e.g. LIC Jeevan Anand, HDFC Click 2 Protect">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Insurer / Company</label>
+              <input class="form-input" type="text" name="fund_house" id="fh_insurance" value="<?= ($init_ft==='insurance'&&$edit_holding)?htmlspecialchars($edit_holding['fund_house']??'',ENT_QUOTES,'UTF-8'):'' ?>" placeholder="e.g. LIC, HDFC Life, SBI Life">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Policy Type</label>
+              <select class="form-select" name="folio_number" id="fo_insurance">
+                <?php
+                $ins_types = ['Term Insurance','Whole Life','Endowment','ULIP','Health Insurance','Critical Illness','Personal Accident','Money Back'];
+                $cur_ins = ($init_ft==='insurance'&&$edit_holding)?($edit_holding['folio_number']??''):'';
+                foreach ($ins_types as $it): ?>
+                <option value="<?= htmlspecialchars($it,ENT_QUOTES,'UTF-8') ?>" <?= $cur_ins===$it?'selected':'' ?>><?= $it ?></option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Annual Premium (₹) *</label>
+              <input class="form-input" type="number" name="invested_amount" id="ia_insurance" step="0.01" value="<?= ($init_ft==='insurance'&&$edit_holding)?($edit_holding['invested_amount']??''):'' ?>" placeholder="25,000">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Sum Assured / Coverage (₹) *</label>
+              <input class="form-input" type="number" name="current_nav" id="cn_insurance" step="0.01" value="<?= ($init_ft==='insurance'&&$edit_holding)?($edit_holding['current_nav']??''):'' ?>" placeholder="1,00,00,000">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Policy Start Date</label>
+              <input class="form-input" type="date" name="purchase_date" value="<?= ($init_ft==='insurance'&&$edit_holding)?htmlspecialchars($edit_holding['purchase_date']??'',ENT_QUOTES,'UTF-8'):'' ?>">
+            </div>
+          </div>
+          <div class="form-group" style="max-width:260px">
+            <label class="form-label">Policy End / Maturity Date</label>
+            <input class="form-input" type="date" name="maturity_date" value="<?= ($init_ft==='insurance'&&$edit_holding)?htmlspecialchars($edit_holding['maturity_date']??'',ENT_QUOTES,'UTF-8'):'' ?>">
+          </div>
+          <input type="hidden" name="units_held" value="1">
+          <input type="hidden" name="avg_nav" value="0">
+        </div>
+
+        <!-- ── PMS fields ── -->
+        <div class="asset-fields" id="fields-pms" style="display:none">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Portfolio Name *</label>
+              <input class="form-input" type="text" name="fund_name" id="fn_pms" value="<?= ($init_ft==='pms'&&$edit_holding)?htmlspecialchars($edit_holding['fund_name']??'',ENT_QUOTES,'UTF-8'):'' ?>" placeholder="e.g. Motilal Oswal Value PMS">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Portfolio Manager</label>
+              <input class="form-input" type="text" name="fund_house" id="fh_pms" value="<?= ($init_ft==='pms'&&$edit_holding)?htmlspecialchars($edit_holding['fund_house']??'',ENT_QUOTES,'UTF-8'):'' ?>" placeholder="e.g. Motilal Oswal, ASK, Marcellus">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Amount Invested (₹) *</label>
+              <input class="form-input" type="number" name="invested_amount" step="0.01" value="<?= ($init_ft==='pms'&&$edit_holding)?($edit_holding['invested_amount']??''):'' ?>" placeholder="50,00,000">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Current Portfolio Value (₹)</label>
+              <input class="form-input" type="number" name="current_nav" step="0.01" value="<?= ($init_ft==='pms'&&$edit_holding)?($edit_holding['current_nav']??''):'' ?>" placeholder="62,00,000">
+            </div>
+          </div>
+          <div class="form-group" style="max-width:220px">
+            <label class="form-label">Investment Start Date</label>
+            <input class="form-input" type="date" name="purchase_date" value="<?= ($init_ft==='pms'&&$edit_holding)?htmlspecialchars($edit_holding['purchase_date']??'',ENT_QUOTES,'UTF-8'):'' ?>">
+          </div>
+          <input type="hidden" name="units_held" value="1">
+          <input type="hidden" name="avg_nav" value="0">
+          <input type="hidden" name="folio_number" value="">
+          <input type="hidden" name="maturity_date" value="">
+        </div>
+
+        <!-- ── AIF fields ── -->
+        <div class="asset-fields" id="fields-aif" style="display:none">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Fund Name *</label>
+              <input class="form-input" type="text" name="fund_name" id="fn_aif" value="<?= ($init_ft==='aif'&&$edit_holding)?htmlspecialchars($edit_holding['fund_name']??'',ENT_QUOTES,'UTF-8'):'' ?>" placeholder="e.g. IIFL Special Opportunities Fund">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fund Manager / House</label>
+              <input class="form-input" type="text" name="fund_house" value="<?= ($init_ft==='aif'&&$edit_holding)?htmlspecialchars($edit_holding['fund_house']??'',ENT_QUOTES,'UTF-8'):'' ?>" placeholder="e.g. IIFL, Kotak, Edelweiss">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">AIF Category</label>
+              <select class="form-select" name="folio_number">
+                <?php
+                $aif_cats = ['Category I – Venture Capital / Angel / SME / Social','Category II – Private Equity / Debt / Real Estate','Category III – Hedge Funds / Long-Short Equity'];
+                $cur_aif = ($init_ft==='aif'&&$edit_holding)?($edit_holding['folio_number']??''):'';
+                foreach ($aif_cats as $ac): ?>
+                <option value="<?= htmlspecialchars($ac,ENT_QUOTES,'UTF-8') ?>" <?= $cur_aif===$ac?'selected':'' ?>><?= $ac ?></option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Amount Committed (₹) *</label>
+              <input class="form-input" type="number" name="invested_amount" step="0.01" value="<?= ($init_ft==='aif'&&$edit_holding)?($edit_holding['invested_amount']??''):'' ?>" placeholder="1,00,00,000">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Current NAV / Value (₹)</label>
+              <input class="form-input" type="number" name="current_nav" step="0.01" value="<?= ($init_ft==='aif'&&$edit_holding)?($edit_holding['current_nav']??''):'' ?>" placeholder="1,15,00,000">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Investment Date</label>
+              <input class="form-input" type="date" name="purchase_date" value="<?= ($init_ft==='aif'&&$edit_holding)?htmlspecialchars($edit_holding['purchase_date']??'',ENT_QUOTES,'UTF-8'):'' ?>">
+            </div>
+          </div>
+          <input type="hidden" name="units_held" value="1">
+          <input type="hidden" name="avg_nav" value="0">
+          <input type="hidden" name="maturity_date" value="">
+        </div>
+
+        <!-- ── Crypto fields ── -->
+        <div class="asset-fields" id="fields-crypto" style="display:none">
+          <div style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:8px;padding:0.65rem 0.875rem;margin-bottom:1rem;font-size:0.8rem;color:var(--gold)">
+            ⚠ Crypto assets are tracked for portfolio awareness only. Prime Financials does not provide any advice on cryptocurrency investments.
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Coin / Token *</label>
+              <input class="form-input" type="text" name="fund_name" id="fn_crypto" value="<?= ($init_ft==='crypto'&&$edit_holding)?htmlspecialchars($edit_holding['fund_name']??'',ENT_QUOTES,'UTF-8'):'' ?>" placeholder="e.g. Bitcoin, Ethereum, USDT">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Exchange / Wallet</label>
+              <input class="form-input" type="text" name="fund_house" value="<?= ($init_ft==='crypto'&&$edit_holding)?htmlspecialchars($edit_holding['fund_house']??'',ENT_QUOTES,'UTF-8'):'' ?>" placeholder="e.g. CoinDCX, WazirX, Binance">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Quantity Held *</label>
+              <input class="form-input" type="number" name="units_held" id="u_crypto" step="0.00000001" value="<?= ($init_ft==='crypto'&&$edit_holding)?($edit_holding['units_held']??''):'' ?>" placeholder="0.05" oninput="calcCryptoValue()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Avg Buy Price (₹ per coin)</label>
+              <input class="form-input" type="number" name="avg_nav" id="an_crypto" step="0.01" value="<?= ($init_ft==='crypto'&&$edit_holding)?($edit_holding['avg_nav']??''):'' ?>" placeholder="30,00,000" oninput="calcCryptoValue()">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Current Price (₹ per coin)</label>
+              <input class="form-input" type="number" name="current_nav" id="cn_crypto" step="0.01" value="<?= ($init_ft==='crypto'&&$edit_holding)?($edit_holding['current_nav']??''):'' ?>" placeholder="55,00,000" oninput="calcCryptoValue()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Total Invested (₹)</label>
+              <input class="form-input" type="number" name="invested_amount" id="ia_crypto" step="0.01" value="<?= ($init_ft==='crypto'&&$edit_holding)?($edit_holding['invested_amount']??''):'' ?>" placeholder="Auto-calculated">
+            </div>
+          </div>
+          <div class="form-group" style="max-width:220px">
+            <label class="form-label">Purchase Date</label>
+            <input class="form-input" type="date" name="purchase_date" value="<?= ($init_ft==='crypto'&&$edit_holding)?htmlspecialchars($edit_holding['purchase_date']??'',ENT_QUOTES,'UTF-8'):'' ?>">
+          </div>
+          <input type="hidden" name="folio_number" value="">
+          <input type="hidden" name="maturity_date" value="">
+        </div>
+
         <!-- ── Other fields ── -->
         <div class="asset-fields" id="fields-other" style="display:none">
           <div class="form-row">
@@ -506,7 +680,8 @@ require_once '../includes/portal-header.php';
 <style>
 .asset-type-btn:hover { border-color:var(--mid)!important; background:var(--mid-pale)!important; }
 .asset-type-btn.active { border-color:var(--bright)!important; background:rgba(76,175,80,0.12)!important; }
-@media(max-width:600px){ #asset-type-grid{ grid-template-columns:repeat(2,1fr)!important; } }
+@media(max-width:768px){ #asset-type-grid{ grid-template-columns:repeat(3,1fr)!important; } }
+@media(max-width:500px){ #asset-type-grid{ grid-template-columns:repeat(2,1fr)!important; } }
 </style>
 
 <script>
@@ -531,7 +706,8 @@ function selectAssetType(type) {
   // Set hidden fund_type
   var typeMap = {
     mutual_fund: document.getElementById('mf_subtype')?.value || 'equity',
-    stock: 'equity', fd: 'fd', nps: 'nps', gold: 'gold', other: 'other'
+    stock: 'equity', fd: 'fd', nps: 'nps', gold: 'gold',
+    insurance: 'insurance', pms: 'pms', aif: 'aif', crypto: 'crypto', other: 'other'
   };
   document.getElementById('hidden_fund_type').value = typeMap[type] || 'equity';
   // Scroll to step 2
@@ -571,6 +747,13 @@ function calcGoldValue() {
     var u = parseFloat(fields.value)||0, a = parseFloat(avgN.value)||0;
     if (u && a) ia.value = (u * a).toFixed(2);
   }
+}
+
+function calcCryptoValue() {
+  var u  = parseFloat(document.getElementById('u_crypto')?.value)||0;
+  var a  = parseFloat(document.getElementById('an_crypto')?.value)||0;
+  var ia = document.getElementById('ia_crypto');
+  if (u && a && ia) ia.value = (u * a).toFixed(2);
 }
 
 // On form submit, consolidate duplicate name fields
