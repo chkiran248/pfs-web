@@ -1,12 +1,16 @@
-<?php
+﻿<?php
 declare(strict_types=1);
 require_once '../includes/config.php';
 require_once '../includes/db.php';
 require_once '../includes/auth.php';
+require_once '../includes/mf-api.php';
 require_login();
 require_role('client');
 
 $db  = get_db();
+
+// Auto-refresh stale fund NAV data (up to 5 funds, once per 24h)
+mf_maybe_refresh($db);
 $uid = get_user_id();
 $error = '';
 
@@ -100,12 +104,27 @@ require_once '../includes/portal-header.php';
       <span class="badge <?= $risk_badge[$f['risk_level']]??'badge-muted' ?>"><?= ucfirst(str_replace('_',' ',$f['risk_level']??'')) ?></span>
       <?php if ($f['min_horizon_yrs']): ?><span class="badge badge-muted"><?= $f['min_horizon_yrs'] ?>yr+</span><?php endif; ?>
     </div>
+    <!-- Live NAV -->
+    <?php if ($f['current_nav']): ?>
+    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:0.6rem">
+      <div>
+        <div style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--lime);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:2px">Current NAV</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:600;color:var(--cream)">&#8377;<?= number_format((float)$f['current_nav'], 4) ?></div>
+      </div>
+      <?php if ($f['last_data_refresh']): ?>
+      <div style="text-align:right">
+        <span style="font-family:'DM Mono',monospace;font-size:0.58rem;color:var(--bright);background:rgba(76,175,80,0.1);border:1px solid rgba(76,175,80,0.2);padding:0.2rem 0.5rem;border-radius:10px">&#9679; Live</span>
+        <div style="font-size:0.65rem;color:var(--text-muted);margin-top:3px"><?= date('d M Y', strtotime($f['last_data_refresh'])) ?></div>
+      </div>
+      <?php endif; ?>
+    </div>
+    <?php endif; ?>
     <!-- Returns -->
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;background:var(--surface-2);border-radius:8px;padding:0.75rem;margin-bottom:0.75rem">
-      <?php foreach (['return_1yr'=>'1yr','return_3yr'=>'3yr','return_5yr'=>'5yr'] as $col=>$label): ?>
+      <?php foreach (['return_1yr'=>'1yr CAGR','return_3yr'=>'3yr CAGR','return_5yr'=>'5yr CAGR'] as $col=>$label): ?>
       <div style="text-align:center">
         <div style="font-size:0.62rem;color:var(--text-muted);font-family:'DM Mono',monospace"><?= $label ?></div>
-        <div style="font-family:'DM Mono',monospace;color:<?= $f[$col]?'var(--bright)':'var(--text-muted)' ?>;font-size:0.9rem"><?= $f[$col]?$f[$col].'%':'—' ?></div>
+        <div style="font-family:'DM Mono',monospace;color:<?= $f[$col]?'var(--bright)':'var(--text-muted)' ?>;font-size:0.9rem"><?= $f[$col]?round((float)$f[$col],2).'%':'—' ?></div>
       </div>
       <?php endforeach; ?>
     </div>
@@ -162,3 +181,5 @@ document.addEventListener('DOMContentLoaded',calcElss);
 </script>
 
 <?php require_once '../includes/portal-footer.php'; ?>
+
+

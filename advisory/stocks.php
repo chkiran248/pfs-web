@@ -1,12 +1,14 @@
-<?php
+﻿<?php
 declare(strict_types=1);
 require_once '../includes/config.php';
 require_once '../includes/db.php';
 require_once '../includes/auth.php';
+require_once '../includes/stock-api.php';
 require_login();
 require_role('client');
 
 $db = get_db();
+stock_maybe_refresh($db);
 
 $sector = trim($_GET['sector'] ?? '');
 $cap    = trim($_GET['cap'] ?? '');
@@ -72,6 +74,9 @@ require_once '../includes/portal-header.php';
       <?php if ($s['market_cap_type']): ?><span class="badge badge-green"><?= $cap_labels[$s['market_cap_type']]??$s['market_cap_type'] ?></span><?php endif; ?>
     </div>
     <div style="font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:600;color:var(--cream);margin-bottom:0.3rem"><?= htmlspecialchars($s['company_name'],ENT_QUOTES,'UTF-8') ?></div>
+    <?php if ($s['current_price']): ?>
+    <div style="margin-bottom:0.4rem"><?= stock_price_badge((float)$s['current_price'],(float)$s['price_change_pct']) ?></div>
+    <?php endif; ?>
     <?php if ($s['report_title']): ?><div style="font-style:italic;color:var(--text-secondary);font-size:0.875rem;margin-bottom:0.5rem"><?= htmlspecialchars($s['report_title'],ENT_QUOTES,'UTF-8') ?></div><?php endif; ?>
     <?php if ($s['analyst_view']): ?><div style="font-size:0.82rem;color:var(--text-secondary);line-height:1.6;margin-bottom:0.75rem"><?= htmlspecialchars(mb_substr($s['analyst_view'],0,120),ENT_QUOTES,'UTF-8') ?><?= strlen($s['analyst_view'])>120?'…':'' ?></div><?php endif; ?>
     <div style="display:flex;justify-content:space-between;align-items:center">
@@ -86,3 +91,4 @@ require_once '../includes/portal-header.php';
 <?php endif; ?>
 
 <?php require_once '../includes/portal-footer.php'; ?>
+

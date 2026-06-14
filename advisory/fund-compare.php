@@ -1,12 +1,14 @@
-<?php
+﻿<?php
 declare(strict_types=1);
 require_once '../includes/config.php';
 require_once '../includes/db.php';
 require_once '../includes/auth.php';
+require_once '../includes/mf-api.php';
 require_login();
 require_role('client');
 
 $db = get_db();
+mf_maybe_refresh($db);
 $ids = array_filter([
     (int)($_GET['f1'] ?? 0),
     (int)($_GET['f2'] ?? 0),
@@ -69,6 +71,7 @@ require_once '../includes/portal-header.php';
       <tbody>
         <?php
         $rows = [
+            'Current NAV'    => ['col'=>'current_nav','fmt'=>'nav'],
             'Fund House'     => ['col'=>'fund_house','fmt'=>'text'],
             'Category'       => ['col'=>'category','fmt'=>'text'],
             'Risk Level'     => ['col'=>'risk_level','fmt'=>'badge'],
@@ -151,3 +154,4 @@ document.addEventListener('DOMContentLoaded', function(){
 <?php endif; ?>
 
 <?php require_once '../includes/portal-footer.php'; ?>
+

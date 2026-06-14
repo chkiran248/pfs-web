@@ -1,143 +1,344 @@
-<?php
+﻿<?php
 declare(strict_types=1);
 require_once '../includes/config.php';
 require_once '../includes/db.php';
 require_once '../includes/auth.php';
+require_once '../includes/mf-api.php';
 require_login();
 require_role('admin');
 
 $db = get_db();
-$error = '';
 
-// Save
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action']??'') === 'save_fund') {
-    if (!verify_csrf($_POST['csrf_token']??'')) { $error = 'Invalid request.'; }
-    else {
-        $fid = (int)($_POST['fund_id']??0);
-        $goal_types = implode(',', array_filter($_POST['goal_types']??[]));
-        $d = [
-            ':fn'=>trim($_POST['fund_name']??''), ':fh'=>trim($_POST['fund_house']??''),
-            ':cat'=>trim($_POST['category']??''), ':sub'=>trim($_POST['sub_category']??'')?:null,
-            ':risk'=>$_POST['risk_level']??'moderate', ':hor'=>(int)($_POST['min_horizon_yrs']??1),
-            ':goals'=>$goal_types, ':why'=>trim($_POST['why_recommended']??'')?:null,
-            ':feat'=>trim($_POST['key_features']??'')?:null,
-            ':exp'=>(float)($_POST['expense_ratio']??0)?:null, ':aum'=>(float)($_POST['aum_cr']??0)?:null,
-            ':r1'=>(float)($_POST['return_1yr']??0)?:null, ':r3'=>(float)($_POST['return_3yr']??0)?:null, ':r5'=>(float)($_POST['return_5yr']??0)?:null,
-            ':featured'=>isset($_POST['is_featured'])?1:0, ':active'=>isset($_POST['is_active'])?1:0,
-        ];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!verify_csrf($_POST['csrf_token'] ?? '')) {
+        $_SESSION['flash'] = ['type'=>'error','message'=>'Invalid request.'];
+        header('Location: ' . SITE_URL . '/admin/fund-recommendations.php'); exit;
+    }
+    $action = $_POST['action'] ?? '';
+    if ($action === 'add' || $action === 'edit') {
+        $id         = (int)($_POST['id'] ?? 0);
+        $fund_name  = trim($_POST['fund_name'] ?? '');
+        $scheme_code= trim($_POST['scheme_code'] ?? '') ?: null;
+        $fund_house = trim($_POST['fund_house'] ?? '');
+        $category   = trim($_POST['category'] ?? '');
+        $sub_cat    = trim($_POST['sub_category'] ?? '') ?: null;
+        $risk       = $_POST['risk_level'] ?? 'moderate';
+        $horizon    = max(1,(int)($_POST['min_horizon_yrs'] ?? 3));
+        $goals      = implode(',', array_filter($_POST['goal_types'] ?? []));
+        $why        = trim($_POST['why_recommended'] ?? '') ?: null;
+        $features   = trim($_POST['key_features'] ?? '') ?: null;
+        $exp_r      = ($_POST['expense_ratio'] ?? '') !== '' ? (float)$_POST['expense_ratio'] : null;
+        $aum        = ($_POST['aum_cr'] ?? '') !== '' ? (float)$_POST['aum_cr'] : null;
+        $featured   = isset($_POST['is_featured']) ? 1 : 0;
+        $active     = isset($_POST['is_active'])   ? 1 : 0;
+        if (!$fund_name || !$fund_house || !$category) {
+            $_SESSION['flash'] = ['type'=>'error','message'=>'Fund name, house, and category are required.'];
+            header('Location: ' . SITE_URL . '/admin/fund-recommendations.php'); exit;
+        }
         try {
-            if ($fid) {
-                $d[':id']=$fid;
-                $db->prepare("UPDATE fund_recommendations SET fund_name=:fn,fund_house=:fh,category=:cat,sub_category=:sub,risk_level=:risk,min_horizon_yrs=:hor,goal_types=:goals,why_recommended=:why,key_features=:feat,expense_ratio=:exp,aum_cr=:aum,return_1yr=:r1,return_3yr=:r3,return_5yr=:r5,is_featured=:featured,is_active=:active,updated_at=NOW() WHERE id=:id")->execute($d);
+            if ($action === 'add') {
+                $stmt = $db->prepare("INSERT INTO fund_recommendations (fund_name,scheme_code,fund_house,category,sub_category,risk_level,min_horizon_yrs,goal_types,why_recommended,key_features,expense_ratio,aum_cr,is_featured,is_active) VALUES (:fn,:sc,:fh,:cat,:sub,:risk,:hor,:goals,:why,:feat,:exp,:aum,:isFeat,:isAct)");
+                $stmt->execute([':fn'=>$fund_name,':sc'=>$scheme_code,':fh'=>$fund_house,':cat'=>$category,':sub'=>$sub_cat,':risk'=>$risk,':hor'=>$horizon,':goals'=>$goals,':why'=>$why,':feat'=>$features,':exp'=>$exp_r,':aum'=>$aum,':isFeat'=>$featured,':isAct'=>$active]);
+                $new_id = (int)$db->lastInsertId();
+                if ($scheme_code) mf_refresh_fund($new_id, $scheme_code, $db);
+                $_SESSION['flash'] = ['type'=>'success','message'=>'Fund added' . ($scheme_code ? ' — NAV fetched from MFAPI.in.' : '.')];
             } else {
-                $db->prepare("INSERT INTO fund_recommendations (fund_name,fund_house,category,sub_category,risk_level,min_horizon_yrs,goal_types,why_recommended,key_features,expense_ratio,aum_cr,return_1yr,return_3yr,return_5yr,is_featured,is_active) VALUES (:fn,:fh,:cat,:sub,:risk,:hor,:goals,:why,:feat,:exp,:aum,:r1,:r3,:r5,:featured,:active)")->execute($d);
+                $stmt = $db->prepare("UPDATE fund_recommendations SET fund_name=:fn,scheme_code=:sc,fund_house=:fh,category=:cat,sub_category=:sub,risk_level=:risk,min_horizon_yrs=:hor,goal_types=:goals,why_recommended=:why,key_features=:feat,expense_ratio=:exp,aum_cr=:aum,is_featured=:isFeat,is_active=:isAct WHERE id=:id");
+                $stmt->execute([':fn'=>$fund_name,':sc'=>$scheme_code,':fh'=>$fund_house,':cat'=>$category,':sub'=>$sub_cat,':risk'=>$risk,':hor'=>$horizon,':goals'=>$goals,':why'=>$why,':feat'=>$features,':exp'=>$exp_r,':aum'=>$aum,':isFeat'=>$featured,':isAct'=>$active,':id'=>$id]);
+                if ($scheme_code) mf_refresh_fund($id, $scheme_code, $db);
+                $_SESSION['flash'] = ['type'=>'success','message'=>'Fund updated' . ($scheme_code ? ' — NAV refreshed.' : '.')];
             }
-            $_SESSION['flash'] = ['type'=>'success','message'=>'Fund recommendation saved.']; header('Location: '.SITE_URL.'/admin/fund-recommendations.php'); exit;
-        } catch(PDOException $e){ error_log($e->getMessage()); $error='Could not save.'; }
+        } catch (PDOException $e) {
+            error_log($e->getMessage());
+            $_SESSION['flash'] = ['type'=>'error','message'=>'Database error. Please try again.'];
+        }
+        header('Location: ' . SITE_URL . '/admin/fund-recommendations.php'); exit;
+    } elseif ($action === 'delete') {
+        $id = (int)($_POST['id'] ?? 0);
+        try {
+            $db->prepare("DELETE FROM fund_recommendations WHERE id=:id")->execute([':id'=>$id]);
+            $_SESSION['flash'] = ['type'=>'success','message'=>'Fund removed.'];
+        } catch (PDOException $e) {
+            error_log($e->getMessage());
+            $_SESSION['flash'] = ['type'=>'error','message'=>'Could not delete.'];
+        }
+        header('Location: ' . SITE_URL . '/admin/fund-recommendations.php'); exit;
+    } elseif ($action === 'refresh_nav') {
+        $id = (int)($_POST['id'] ?? 0);
+        $s2 = $db->prepare("SELECT scheme_code FROM fund_recommendations WHERE id=:id");
+        $s2->execute([':id'=>$id]);
+        $sc = $s2->fetchColumn();
+        if ($sc && mf_refresh_fund($id, (string)$sc, $db)) {
+            $_SESSION['flash'] = ['type'=>'success','message'=>'NAV refreshed from MFAPI.in.'];
+        } else {
+            $_SESSION['flash'] = ['type'=>'error','message'=>'NAV refresh failed — check the scheme code.'];
+        }
+        header('Location: ' . SITE_URL . '/admin/fund-recommendations.php'); exit;
+    } elseif ($action === 'refresh_all') {
+        $s3 = $db->prepare("SELECT id, scheme_code FROM fund_recommendations WHERE is_active=1 AND scheme_code IS NOT NULL AND scheme_code != ''");
+        $s3->execute();
+        $count = 0;
+        foreach ($s3->fetchAll(PDO::FETCH_ASSOC) as $f) {
+            if (mf_refresh_fund((int)$f['id'], $f['scheme_code'], $db)) $count++;
+        }
+        $_SESSION['flash'] = ['type'=>'success','message'=>"Refreshed NAV for {$count} fund(s)."];
+        header('Location: ' . SITE_URL . '/admin/fund-recommendations.php'); exit;
     }
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action']??'') === 'toggle_active') {
-    if (verify_csrf($_POST['csrf_token']??'')) { $db->prepare("UPDATE fund_recommendations SET is_active=1-is_active WHERE id=:id")->execute([':id'=>(int)($_POST['fund_id']??0)]); header('Location: '.SITE_URL.'/admin/fund-recommendations.php'); exit; }
+$edit_fund = null;
+if (isset($_GET['edit'])) {
+    $es = $db->prepare("SELECT * FROM fund_recommendations WHERE id=:id");
+    $es->execute([':id'=>(int)$_GET['edit']]);
+    $edit_fund = $es->fetch(PDO::FETCH_ASSOC) ?: null;
 }
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action']??'') === 'delete_fund') {
-    if (verify_csrf($_POST['csrf_token']??'')) { $db->prepare("DELETE FROM fund_recommendations WHERE id=:id")->execute([':id'=>(int)($_POST['fund_id']??0)]); $_SESSION['flash']=['type'=>'success','message'=>'Deleted.']; header('Location: '.SITE_URL.'/admin/fund-recommendations.php'); exit; }
-}
+$fs = $db->query("SELECT * FROM fund_recommendations ORDER BY is_featured DESC, is_active DESC, fund_name ASC");
+$all_funds = $fs->fetchAll(PDO::FETCH_ASSOC);
 
-$edit = null;
-if (isset($_GET['edit'])) { $stmt=$db->prepare("SELECT * FROM fund_recommendations WHERE id=:id"); $stmt->execute([':id'=>(int)$_GET['edit']]); $edit=$stmt->fetch(); }
-$is_new = isset($_GET['new']) || isset($_GET['edit']);
-
-$funds = $db->query("SELECT * FROM fund_recommendations ORDER BY is_featured DESC, fund_name")->fetchAll();
-$goal_opts = ['retirement','education','wealth','tax_saving','emergency','custom'];
-$risk_opts  = ['low','moderate','high','very_high'];
 $risk_badge = ['low'=>'badge-green','moderate'=>'badge-gold','high'=>'badge-gold','very_high'=>'badge-muted'];
+$risk_opts  = ['low'=>'Low','moderate'=>'Moderate','high'=>'High','very_high'=>'Very High'];
+$goal_opts  = ['retirement'=>'Retirement','education'=>'Education','wealth'=>'Wealth Creation','tax_saving'=>'Tax Saving (ELSS)','emergency'=>'Emergency','custom'=>'Custom'];
+$cat_opts   = ['Large Cap','Mid Cap','Small Cap','Flexi Cap','ELSS','Debt','Hybrid','Index','Sectoral / Thematic','Liquid / Overnight'];
 
-$page_title = 'Fund Recommendations — Prime Financials Admin';
-require_once '../includes/admin-header.php';
+$page_title = 'Fund Recommendations — Admin';
+$ef         = $edit_fund;
+$is_edit    = $ef !== null;
+require_once '../includes/portal-header.php';
 ?>
 
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
-  <div><p class="page-eyebrow">Advisory Content</p><h1 class="page-title" style="margin-bottom:0">Fund Recommendations</h1></div>
-  <a href="?new=1" class="btn-primary btn-sm">+ Add Fund</a>
-</div>
+<p class="page-eyebrow">Admin · Advisory</p>
+<h1 class="page-title">Fund Recommendations</h1>
+<p class="page-subtitle">Curate the mutual funds shown to clients. Scheme codes pull live NAV + CAGR returns from MFAPI.in daily.</p>
 
-<?php if ($error): ?><div class="flash-error"><?= htmlspecialchars($error,ENT_QUOTES,'UTF-8') ?></div><?php endif; ?>
-
-<!-- Add/Edit form -->
-<?php if ($is_new): ?>
-<div class="portal-card" style="margin-bottom:1.5rem">
-  <div class="card-title"><?= $edit ? 'Edit Fund' : 'Add New Fund Recommendation' ?></div>
-  <form method="POST" novalidate>
-    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrf_token(),ENT_QUOTES,'UTF-8') ?>">
-    <input type="hidden" name="action" value="save_fund">
-    <?php if ($edit): ?><input type="hidden" name="fund_id" value="<?= $edit['id'] ?>"><?php endif; ?>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">Fund Name *</label><input class="form-input" type="text" name="fund_name" value="<?= htmlspecialchars($edit['fund_name']??'',ENT_QUOTES,'UTF-8') ?>" required></div>
-      <div class="form-group"><label class="form-label">Fund House *</label><input class="form-input" type="text" name="fund_house" value="<?= htmlspecialchars($edit['fund_house']??'',ENT_QUOTES,'UTF-8') ?>"></div>
-    </div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">Category *</label><input class="form-input" type="text" name="category" value="<?= htmlspecialchars($edit['category']??'',ENT_QUOTES,'UTF-8') ?>" placeholder="e.g. Large Cap Equity"></div>
-      <div class="form-group"><label class="form-label">Sub Category</label><input class="form-input" type="text" name="sub_category" value="<?= htmlspecialchars($edit['sub_category']??'',ENT_QUOTES,'UTF-8') ?>"></div>
-    </div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">Risk Level</label><select class="form-select" name="risk_level"><?php foreach ($risk_opts as $r): ?><option value="<?= $r ?>" <?= ($edit['risk_level']??'')===$r?'selected':'' ?>><?= ucfirst(str_replace('_',' ',$r)) ?></option><?php endforeach; ?></select></div>
-      <div class="form-group"><label class="form-label">Min Horizon (years)</label><input class="form-input" type="number" name="min_horizon_yrs" value="<?= $edit['min_horizon_yrs']??1 ?>" min="1"></div>
-    </div>
-    <div class="form-group"><label class="form-label">Goal Types (select all that apply)</label><div style="display:flex;flex-wrap:wrap;gap:0.75rem;margin-top:0.4rem"><?php foreach ($goal_opts as $g): $checked=($edit&&str_contains($edit['goal_types']??'',$g))||(!$edit); ?><label class="check-row"><input type="checkbox" name="goal_types[]" value="<?= $g ?>" <?= $checked?'checked':'' ?>><?= ucfirst(str_replace('_',' ',$g)) ?></label><?php endforeach; ?></div></div>
-    <div class="form-group"><label class="form-label">Why Recommended</label><textarea class="form-textarea" name="why_recommended" rows="3"><?= htmlspecialchars($edit['why_recommended']??'',ENT_QUOTES,'UTF-8') ?></textarea></div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">1yr Return (%)</label><input class="form-input" type="number" name="return_1yr" step="0.01" value="<?= $edit['return_1yr']??'' ?>"></div>
-      <div class="form-group"><label class="form-label">3yr Return (%)</label><input class="form-input" type="number" name="return_3yr" step="0.01" value="<?= $edit['return_3yr']??'' ?>"></div>
-      <div class="form-group"><label class="form-label">5yr Return (%)</label><input class="form-input" type="number" name="return_5yr" step="0.01" value="<?= $edit['return_5yr']??'' ?>"></div>
-    </div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">Expense Ratio (%)</label><input class="form-input" type="number" name="expense_ratio" step="0.001" value="<?= $edit['expense_ratio']??'' ?>"></div>
-      <div class="form-group"><label class="form-label">AUM (₹ Cr)</label><input class="form-input" type="number" name="aum_cr" value="<?= $edit['aum_cr']??'' ?>"></div>
-    </div>
-    <div style="display:flex;gap:1.5rem;margin-bottom:1rem">
-      <label class="check-row"><input type="checkbox" name="is_featured" <?= ($edit['is_featured']??0)?'checked':'' ?>> ★ Featured</label>
-      <label class="check-row"><input type="checkbox" name="is_active" <?= ($edit?($edit['is_active']??1):1)?'checked':'' ?>> Active</label>
-    </div>
-    <div style="display:flex;gap:0.75rem">
-      <button type="submit" class="btn-primary">Save Fund</button>
-      <a href="<?= SITE_URL ?>/admin/fund-recommendations.php" class="btn-ghost">Cancel</a>
-    </div>
+<div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;margin-bottom:1.5rem">
+  <button class="btn-primary" onclick="openModal()"><i class="bi bi-plus-lg"></i> Add Fund</button>
+  <form method="POST" style="display:inline">
+    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
+    <input type="hidden" name="action" value="refresh_all">
+    <button type="submit" class="btn-outline"><i class="bi bi-arrow-clockwise"></i> Refresh All NAV</button>
   </form>
+  <span style="font-size:0.8rem;color:var(--text-secondary);margin-left:auto">
+    <?= count($all_funds) ?> funds · Data via <a href="https://mfapi.in" target="_blank" rel="noopener" style="color:var(--lime)">MFAPI.in</a>
+  </span>
 </div>
-<?php endif; ?>
 
-<!-- List -->
-<div class="portal-card" style="padding:0">
-  <div class="table-wrapper" style="border:none;border-radius:12px">
+<div class="portal-card" style="padding:0;overflow:hidden">
+  <div class="table-wrapper" style="border:none">
     <table class="portal-table">
-      <thead><tr><th>Fund</th><th>Category</th><th>Risk</th><th>1yr</th><th>3yr</th><th>5yr</th><th>Featured</th><th>Active</th><th>Actions</th></tr></thead>
+      <thead><tr>
+        <th>Fund</th><th>Scheme Code</th><th>Category / Risk</th>
+        <th style="text-align:right">Current NAV</th>
+        <th style="text-align:right">1yr</th><th style="text-align:right">3yr</th><th style="text-align:right">5yr</th>
+        <th>Refreshed</th><th>Status</th><th>Actions</th>
+      </tr></thead>
       <tbody>
-        <?php if (empty($funds)): ?><tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--text-secondary)">No fund recommendations yet. Add one above.</td></tr>
-        <?php else: ?>
-        <?php foreach ($funds as $f): ?>
+        <?php if (empty($all_funds)): ?>
+        <tr><td colspan="10" style="text-align:center;padding:3rem;color:var(--text-secondary)">No funds yet. Click <strong>Add Fund</strong> to get started.</td></tr>
+        <?php endif; ?>
+        <?php foreach ($all_funds as $f):
+          $is_stale = !$f['last_data_refresh'] || strtotime($f['last_data_refresh']) < strtotime('-25 hours');
+          $has_code = !empty($f['scheme_code']);
+        ?>
         <tr>
-          <td><div style="font-weight:500;color:var(--cream)"><?= htmlspecialchars($f['fund_name'],ENT_QUOTES,'UTF-8') ?></div><div style="font-size:0.75rem;color:var(--text-secondary)"><?= htmlspecialchars($f['fund_house'],ENT_QUOTES,'UTF-8') ?></div></td>
-          <td style="font-size:0.82rem"><?= htmlspecialchars($f['category'],ENT_QUOTES,'UTF-8') ?></td>
-          <td><span class="badge <?= $risk_badge[$f['risk_level']]??'badge-muted' ?>"><?= ucfirst(str_replace('_',' ',$f['risk_level'])) ?></span></td>
-          <td style="font-family:'DM Mono',monospace;font-size:0.82rem"><?= $f['return_1yr']?$f['return_1yr'].'%':'—' ?></td>
-          <td style="font-family:'DM Mono',monospace;font-size:0.82rem"><?= $f['return_3yr']?$f['return_3yr'].'%':'—' ?></td>
-          <td style="font-family:'DM Mono',monospace;font-size:0.82rem"><?= $f['return_5yr']?$f['return_5yr'].'%':'—' ?></td>
-          <td><?= $f['is_featured']?'★':'' ?></td>
-          <td><span class="badge <?= $f['is_active']?'badge-green':'badge-muted' ?>"><?= $f['is_active']?'Active':'Inactive' ?></span></td>
+          <td>
+            <div style="font-weight:500;color:var(--cream)"><?= htmlspecialchars($f['fund_name'], ENT_QUOTES, 'UTF-8') ?><?php if ($f['is_featured']): ?> <span class="badge badge-gold">★</span><?php endif; ?></div>
+            <div style="font-size:0.75rem;color:var(--text-secondary)"><?= htmlspecialchars($f['fund_house'] ?? '', ENT_QUOTES, 'UTF-8') ?></div>
+          </td>
+          <td>
+            <?php if ($has_code): ?>
+              <span style="font-family:'DM Mono',monospace;font-size:0.8rem;color:var(--lime)"><?= htmlspecialchars($f['scheme_code'], ENT_QUOTES, 'UTF-8') ?></span>
+            <?php else: ?>
+              <span style="color:var(--danger);font-size:0.75rem"><i class="bi bi-exclamation-triangle"></i> Not set</span>
+            <?php endif; ?>
+          </td>
+          <td>
+            <span class="badge badge-muted"><?= htmlspecialchars($f['category'] ?? '', ENT_QUOTES, 'UTF-8') ?></span><br>
+            <span class="badge <?= $risk_badge[$f['risk_level']] ?? 'badge-muted' ?>" style="margin-top:3px"><?= ucfirst(str_replace('_', ' ', $f['risk_level'] ?? '')) ?></span>
+          </td>
+          <td style="text-align:right;font-family:'DM Mono',monospace;color:var(--cream)"><?= $f['current_nav'] ? '&#8377;'.number_format((float)$f['current_nav'], 4) : '&mdash;' ?></td>
+          <td style="text-align:right;font-family:'DM Mono',monospace;color:<?= $f['return_1yr'] !== null ? 'var(--bright)' : 'var(--text-muted)' ?>"><?= $f['return_1yr'] !== null ? round((float)$f['return_1yr'],2).'%' : '&mdash;' ?></td>
+          <td style="text-align:right;font-family:'DM Mono',monospace;color:<?= $f['return_3yr'] !== null ? 'var(--bright)' : 'var(--text-muted)' ?>"><?= $f['return_3yr'] !== null ? round((float)$f['return_3yr'],2).'%' : '&mdash;' ?></td>
+          <td style="text-align:right;font-family:'DM Mono',monospace;color:<?= $f['return_5yr'] !== null ? 'var(--bright)' : 'var(--text-muted)' ?>"><?= $f['return_5yr'] !== null ? round((float)$f['return_5yr'],2).'%' : '&mdash;' ?></td>
+          <td style="font-size:0.75rem;color:<?= $is_stale ? 'var(--danger)' : 'var(--bright)' ?>;font-family:'DM Mono',monospace"><?= $f['last_data_refresh'] ? date('d M, H:i', strtotime($f['last_data_refresh'])) : 'Never' ?></td>
+          <td><span class="badge <?= $f['is_active'] ? 'badge-green' : 'badge-muted' ?>"><?= $f['is_active'] ? 'Active' : 'Hidden' ?></span></td>
           <td>
             <div style="display:flex;gap:0.4rem">
-              <a href="?edit=<?= $f['id'] ?>" class="btn-ghost btn-sm">Edit</a>
-              <form method="POST" style="display:inline"><input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrf_token(),ENT_QUOTES,'UTF-8') ?>"><input type="hidden" name="action" value="toggle_active"><input type="hidden" name="fund_id" value="<?= $f['id'] ?>"><button type="submit" class="btn-outline btn-sm"><?= $f['is_active']?'Deactivate':'Activate' ?></button></form>
-              <form method="POST" style="display:inline"><input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrf_token(),ENT_QUOTES,'UTF-8') ?>"><input type="hidden" name="action" value="delete_fund"><input type="hidden" name="fund_id" value="<?= $f['id'] ?>"><button type="submit" class="btn-danger btn-sm" onclick="return confirm('Delete?')">Del</button></form>
+              <a href="?edit=<?= $f['id'] ?>" class="btn-ghost btn-sm"><i class="bi bi-pencil"></i></a>
+              <?php if ($has_code): ?>
+              <form method="POST" style="display:inline">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
+                <input type="hidden" name="action" value="refresh_nav">
+                <input type="hidden" name="id" value="<?= $f['id'] ?>">
+                <button type="submit" class="btn-ghost btn-sm" title="Refresh NAV"><i class="bi bi-arrow-clockwise"></i></button>
+              </form>
+              <?php endif; ?>
+              <form method="POST" style="display:inline" onsubmit="return confirm('Remove this fund?')">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="id" value="<?= $f['id'] ?>">
+                <button type="submit" class="btn-danger btn-sm"><i class="bi bi-trash"></i></button>
+              </form>
             </div>
           </td>
         </tr>
         <?php endforeach; ?>
-        <?php endif; ?>
       </tbody>
     </table>
   </div>
 </div>
 
-<?php require_once '../includes/admin-footer.php'; ?>
+<div class="portal-card" style="margin-top:1.25rem;background:rgba(46,133,64,0.04);border-color:rgba(46,133,64,0.15)">
+  <div style="display:flex;gap:0.75rem;align-items:flex-start">
+    <i class="bi bi-info-circle" style="color:var(--lime);font-size:1.1rem;flex-shrink:0;margin-top:2px"></i>
+    <div style="font-size:0.85rem;color:var(--text-secondary);line-height:1.7">
+      <strong style="color:var(--cream)">Finding Scheme Codes:</strong> Use the fund search in the Add Fund form — it searches MFAPI.in live and auto-fills the code.
+      Always use the <strong style="color:var(--cream)">Direct Plan – Growth</strong> variant for correct CAGR calculation.
+    </div>
+  </div>
+</div>
+
+<!-- ADD / EDIT MODAL -->
+<div id="fundModal" style="display:<?= $is_edit ? 'flex' : 'none' ?>;position:fixed;inset:0;background:rgba(7,14,7,0.88);backdrop-filter:blur(5px);z-index:9000;align-items:flex-start;justify-content:center;padding:1.5rem 1rem;overflow-y:auto">
+  <div style="background:var(--surface-1);border:1px solid var(--border);border-radius:16px;width:100%;max-width:660px;padding:2rem;margin:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
+      <h2 style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:var(--cream)"><?= $is_edit ? 'Edit' : 'Add' ?> Fund Recommendation</h2>
+      <button onclick="closeModal()" style="background:none;border:none;color:var(--text-secondary);font-size:1.5rem;cursor:pointer;line-height:1">&times;</button>
+    </div>
+    <form method="POST" autocomplete="off">
+      <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
+      <input type="hidden" name="action" value="<?= $is_edit ? 'edit' : 'add' ?>">
+      <?php if ($is_edit): ?><input type="hidden" name="id" value="<?= (int)$ef['id'] ?>"><?php endif; ?>
+      <?php if (!$is_edit): ?>
+      <div class="form-group" style="position:relative">
+        <label class="form-label">Search Fund <span style="color:var(--lime);font-size:0.7rem;font-weight:400">— type 3+ chars to search MFAPI.in live</span></label>
+        <input type="text" id="fundSearch" class="form-input" placeholder="e.g. Parag Parikh Flexi Cap Direct Growth" autocomplete="off" spellcheck="false" />
+        <div id="fundSuggestions" style="display:none;position:absolute;left:0;right:0;top:calc(100% + 2px);background:var(--surface-1);border:1px solid var(--border);border-radius:8px;max-height:280px;overflow-y:auto;z-index:200;box-shadow:0 8px 28px rgba(0,0,0,0.4)"></div>
+      </div>
+      <?php endif; ?>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Fund Name *</label>
+          <input type="text" name="fund_name" id="inp_fund_name" class="form-input" required value="<?= htmlspecialchars($ef['fund_name'] ?? '', ENT_QUOTES, 'UTF-8') ?>" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">AMFI Scheme Code <span style="color:var(--lime);font-size:0.68rem;font-weight:400">(for live NAV)</span></label>
+          <input type="text" name="scheme_code" id="inp_scheme_code" class="form-input" placeholder="e.g. 122639" value="<?= htmlspecialchars($ef['scheme_code'] ?? '', ENT_QUOTES, 'UTF-8') ?>" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Fund House *</label>
+          <input type="text" name="fund_house" id="inp_fund_house" class="form-input" required value="<?= htmlspecialchars($ef['fund_house'] ?? '', ENT_QUOTES, 'UTF-8') ?>" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Category *</label>
+          <input type="text" name="category" class="form-input" list="cat_list" required value="<?= htmlspecialchars($ef['category'] ?? '', ENT_QUOTES, 'UTF-8') ?>" />
+          <datalist id="cat_list"><?php foreach ($cat_opts as $c): ?><option value="<?= htmlspecialchars($c, ENT_QUOTES, 'UTF-8') ?>"><?php endforeach; ?></datalist>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Risk Level</label>
+          <select name="risk_level" class="form-select">
+            <?php foreach ($risk_opts as $v => $l): ?><option value="<?= $v ?>" <?= ($ef['risk_level'] ?? 'moderate') === $v ? 'selected' : '' ?>><?= $l ?></option><?php endforeach; ?>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Min Investment Horizon (years)</label>
+          <input type="number" name="min_horizon_yrs" class="form-input" min="1" max="30" value="<?= (int)($ef['min_horizon_yrs'] ?? 3) ?>" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Suitable Goals</label>
+        <div style="display:flex;flex-wrap:wrap;gap:0.6rem;margin-top:0.25rem">
+          <?php $sel_goals = explode(',', $ef['goal_types'] ?? ''); ?>
+          <?php foreach ($goal_opts as $v => $l): ?>
+          <label style="display:flex;align-items:center;gap:0.35rem;font-size:0.85rem;cursor:pointer;color:var(--text-secondary)">
+            <input type="checkbox" name="goal_types[]" value="<?= $v ?>" <?= in_array($v, $sel_goals, true) ? 'checked' : '' ?>>
+            <?= htmlspecialchars($l, ENT_QUOTES, 'UTF-8') ?>
+          </label>
+          <?php endforeach; ?>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Expense Ratio (%)</label>
+          <input type="number" name="expense_ratio" step="0.001" class="form-input" placeholder="0.500" value="<?= $ef['expense_ratio'] ?? '' ?>" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">AUM (&#8377; Crore)</label>
+          <input type="number" name="aum_cr" step="1" class="form-input" placeholder="5000" value="<?= $ef['aum_cr'] ?? '' ?>" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Why We Recommend This Fund</label>
+        <textarea name="why_recommended" class="form-textarea" rows="3" placeholder="Explain to clients why this fund suits their goals..."><?= htmlspecialchars($ef['why_recommended'] ?? '', ENT_QUOTES, 'UTF-8') ?></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Key Features / Differentiators</label>
+        <textarea name="key_features" class="form-textarea" rows="2" placeholder="e.g. Consistent alpha, low turnover, experienced fund manager..."><?= htmlspecialchars($ef['key_features'] ?? '', ENT_QUOTES, 'UTF-8') ?></textarea>
+      </div>
+      <div style="display:flex;gap:2rem;margin-bottom:1.5rem">
+        <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.875rem;color:var(--text-secondary)">
+          <input type="checkbox" name="is_featured" <?= ($ef['is_featured'] ?? 0) ? 'checked' : '' ?>>
+          <span><strong style="color:var(--cream)">Featured</strong> — shown at top</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.875rem;color:var(--text-secondary)">
+          <input type="checkbox" name="is_active" <?= ($ef['is_active'] ?? 1) ? 'checked' : '' ?>>
+          <span><strong style="color:var(--cream)">Active</strong> — visible to clients</span>
+        </label>
+      </div>
+      <div style="display:flex;gap:0.75rem">
+        <button type="submit" class="btn-primary"><i class="bi bi-<?= $is_edit ? 'check-lg' : 'plus-lg' ?>"></i> <?= $is_edit ? 'Save Changes' : 'Add Fund' ?></button>
+        <?php if ($is_edit): ?><a href="<?= SITE_URL ?>/admin/fund-recommendations.php" class="btn-ghost">Cancel</a>
+        <?php else: ?><button type="button" class="btn-ghost" onclick="closeModal()">Cancel</button><?php endif; ?>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openModal()  { document.getElementById('fundModal').style.display = 'flex'; }
+function closeModal() { document.getElementById('fundModal').style.display = 'none'; }
+document.getElementById('fundModal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+(function() {
+  var searchEl  = document.getElementById('fundSearch');
+  var suggestEl = document.getElementById('fundSuggestions');
+  var inpName   = document.getElementById('inp_fund_name');
+  var inpCode   = document.getElementById('inp_scheme_code');
+  var inpHouse  = document.getElementById('inp_fund_house');
+  if (!searchEl) return;
+  var timer;
+  searchEl.addEventListener('input', function() {
+    clearTimeout(timer);
+    var q = this.value.trim();
+    if (q.length < 3) { suggestEl.style.display = 'none'; return; }
+    timer = setTimeout(function() {
+      fetch('<?= SITE_URL ?>/ai/mf-search.php?q=' + encodeURIComponent(q))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (!data.length) { suggestEl.style.display = 'none'; return; }
+          suggestEl.innerHTML = data.map(function(d) {
+            var ne = d.schemeName.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+            var he = d.fundHouse.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+            var na = d.schemeName.replace(/"/g,'&quot;');
+            var ha = d.fundHouse.replace(/"/g,'&quot;');
+            return '<div class="mfs" data-code="'+d.schemeCode+'" data-name="'+na+'" data-house="'+ha+'" style="padding:0.7rem 1rem;cursor:pointer;border-bottom:1px solid var(--border-light)"><div style="color:var(--cream);font-size:0.875rem">'+ne+'</div><div style="font-size:0.7rem;color:var(--text-secondary);margin-top:2px;font-family:\'DM Mono\',monospace">'+he+' &middot; Code: '+d.schemeCode+'</div></div>';
+          }).join('');
+          suggestEl.style.display = 'block';
+          suggestEl.querySelectorAll('.mfs').forEach(function(el) {
+            el.addEventListener('mouseenter', function() { this.style.background='var(--mid-pale)'; });
+            el.addEventListener('mouseleave', function() { this.style.background=''; });
+            el.addEventListener('click', function() {
+              inpName.value=this.dataset.name; inpCode.value=this.dataset.code; inpHouse.value=this.dataset.house;
+              searchEl.value=this.dataset.name; suggestEl.style.display='none';
+            });
+          });
+        }).catch(function() { suggestEl.style.display='none'; });
+    }, 350);
+  });
+  document.addEventListener('click', function(e) { if (!searchEl.contains(e.target) && !suggestEl.contains(e.target)) suggestEl.style.display='none'; });
+})();
+</script>
+
+<?php require_once '../includes/portal-footer.php'; ?>
