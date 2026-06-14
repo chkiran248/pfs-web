@@ -47,7 +47,7 @@ function nav_link(string $href, string $icon, string $label, string $current): s
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="csrf-token" content="<?= htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8') ?>" />
   <title><?= htmlspecialchars($page_title ?? 'Prime Financials', ENT_QUOTES, 'UTF-8') ?></title>
 
@@ -64,6 +64,80 @@ function nav_link(string $href, string $icon, string $label, string $current): s
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
 </head>
 <body>
+
+<!-- ── SESSION IDLE TIMEOUT MODAL ──────────────────────────── -->
+<div id="idle-overlay" style="display:none;position:fixed;inset:0;background:rgba(7,14,7,0.85);backdrop-filter:blur(6px);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:var(--surface-1);border:1px solid rgba(201,168,76,0.3);border-radius:16px;padding:2.5rem 2rem;max-width:360px;width:90%;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,0.5)">
+    <div style="width:56px;height:56px;border-radius:50%;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.25);display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem">
+      <i class="bi bi-shield-lock" style="font-size:1.5rem;color:var(--gold)"></i>
+    </div>
+    <div style="font-family:'DM Mono',monospace;font-size:0.58rem;color:var(--lime);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:0.5rem">Session Security</div>
+    <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--cream);margin:0 0 0.5rem">Still there?</h3>
+    <p style="font-size:0.82rem;color:var(--text-secondary);line-height:1.6;margin:0 0 1.25rem">You've been inactive for a while. Your session will expire in</p>
+    <div id="idle-countdown" style="font-family:'Cormorant Garamond',serif;font-size:3.5rem;font-weight:700;color:var(--gold);line-height:1;margin-bottom:1.5rem">60</div>
+    <div style="display:flex;flex-direction:column;gap:0.6rem">
+      <button onclick="idleKeepAlive()" style="width:100%;padding:0.75rem;background:var(--mid);border:none;border-radius:8px;color:#fff;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;transition:background 0.2s" onmouseover="this.style.background='var(--bright)'" onmouseout="this.style.background='var(--mid)'">
+        <i class="bi bi-check-circle" style="margin-right:0.4rem"></i>Yes, keep me logged in
+      </button>
+      <a href="<?= SITE_URL ?>/auth/logout.php" style="width:100%;padding:0.65rem;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text-secondary);font-family:'DM Sans',sans-serif;font-size:0.82rem;text-decoration:none;display:block;transition:all 0.2s" onmouseover="this.style.borderColor='rgba(201,168,76,0.3)';this.style.color='var(--cream)'" onmouseout="this.style.borderColor='';this.style.color=''">
+        Log out now
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const WARN_AFTER   = 4 * 60 * 1000;   // 4 min → show modal
+  const LOGOUT_AFTER = 5 * 60 * 1000;   // 5 min → force logout
+  const PING_URL     = '<?= SITE_URL ?>/auth/session-ping.php';
+  const LOGOUT_URL   = '<?= SITE_URL ?>/auth/logout.php?reason=timeout';
+
+  let idleTimer, countdownTimer, countdownSec;
+  const overlay    = document.getElementById('idle-overlay');
+  const countdownEl = document.getElementById('idle-countdown');
+
+  function resetIdle() {
+    clearTimeout(idleTimer);
+    clearInterval(countdownTimer);
+    if (overlay) overlay.style.display = 'none';
+    idleTimer = setTimeout(showWarning, WARN_AFTER);
+  }
+
+  function showWarning() {
+    if (!overlay) return;
+    countdownSec = Math.round((LOGOUT_AFTER - WARN_AFTER) / 1000);
+    countdownEl.textContent = countdownSec;
+    overlay.style.display = 'flex';
+    countdownTimer = setInterval(function() {
+      countdownSec--;
+      countdownEl.textContent = countdownSec;
+      if (countdownSec <= 10) countdownEl.style.color = '#ef5350';
+      if (countdownSec <= 0) {
+        clearInterval(countdownTimer);
+        window.location.href = LOGOUT_URL;
+      }
+    }, 1000);
+  }
+
+  window.idleKeepAlive = function() {
+    fetch(PING_URL, { method: 'POST' })
+      .then(r => r.json())
+      .then(d => {
+        if (d.ok) { resetIdle(); }
+        else { window.location.href = LOGOUT_URL; }
+      })
+      .catch(() => resetIdle());
+  };
+
+  // Activity events that reset the idle timer
+  ['mousemove','mousedown','keydown','scroll','touchstart','click'].forEach(function(ev) {
+    document.addEventListener(ev, resetIdle, { passive: true });
+  });
+
+  resetIdle(); // start the timer on page load
+})();
+</script>
 
 <!-- Sidebar overlay (mobile) -->
 <div class="sidebar-overlay" id="sidebar-overlay"></div>

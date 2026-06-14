@@ -13,6 +13,15 @@ function require_login(): void {
         header('Location: ' . SITE_URL . '/auth/login.php?redirect=' . $redirect);
         exit;
     }
+    // Server-side idle timeout (6 min — client warns at 4, auto-logs at 5)
+    $idle_limit = 360;
+    if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > $idle_limit) {
+        session_unset();
+        session_destroy();
+        header('Location: ' . SITE_URL . '/auth/login.php?reason=timeout');
+        exit;
+    }
+    $_SESSION['last_activity'] = time();
 }
 
 function require_role(string $role): void {

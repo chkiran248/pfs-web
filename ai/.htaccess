@@ -1,3 +1,1 @@
-# AI endpoints are called via AJAX only — block direct browser access
-Order Allow,Deny
-Deny from all
+Options -Indexes

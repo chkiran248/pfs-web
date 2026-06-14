@@ -88,7 +88,19 @@ require_once '../includes/portal-header.php';
 .primo-msg-content ol { padding-left:1.25rem; margin:0.2rem 0; }
 .primo-msg-content li { margin-bottom:0.15rem; }
 .primo-msg-content br + br { display:none; }  /* prevent double <br> gaps */
-@media(max-width:768px){.primo-wrap{height:calc(100vh - var(--header-height) - 2rem);}.msg{max-width:95%;}.primo-suggestions{display:none;}}
+@media(max-width:768px){
+  .primo-wrap{
+    height:calc(100dvh - var(--header-height) - 72px - env(safe-area-inset-bottom,0px));
+    min-height:400px;
+  }
+  .msg{max-width:95%;}
+  .primo-suggestions{display:none;}
+  .primo-footer-strip{display:none;}
+  .primo-textarea{font-size:1rem;}
+  .context-dropdown{min-width:220px;}
+  .primo-header{padding:0.75rem 1rem;}
+  .primo-messages{padding:0.875rem;}
+}
 </style>
 
 <div class="primo-wrap">
@@ -403,7 +415,24 @@ async function sendMessage() {
     }
 
   } catch (e) {
-    primoBubble.textContent = '⚠ Connection error. Please try again.';
+    primoBubble.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:0.6rem">
+        <div style="display:flex;align-items:center;gap:0.5rem;color:var(--gold);font-weight:600;font-size:0.88rem">
+          <i class="bi bi-wifi-off"></i> Couldn't reach PrimoAI
+        </div>
+        <div style="font-size:0.82rem;color:var(--text-secondary);line-height:1.5">
+          This usually happens when the AI is taking longer than expected to respond.
+          Your question wasn't lost — please try sending it again.
+        </div>
+        <div style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-top:0.2rem">
+          <button onclick="document.getElementById('primoInput').focus()" style="font-size:0.75rem;font-family:'DM Mono',monospace;padding:0.3rem 0.75rem;border:1px solid var(--border);border-radius:4px;background:var(--surface-2);color:var(--lime);cursor:pointer">
+            Try again
+          </button>
+          <a href="https://wa.me/919980001338" target="_blank" rel="noopener" style="font-size:0.75rem;font-family:'DM Mono',monospace;padding:0.3rem 0.75rem;border:1px solid rgba(141,198,63,0.2);border-radius:4px;background:transparent;color:var(--text-secondary);text-decoration:none">
+            <i class="bi bi-whatsapp"></i> Chat with Kiran instead
+          </a>
+        </div>
+      </div>`;
   } finally {
     isSending = false;
     document.getElementById('primoSend').disabled = false;
@@ -427,7 +456,10 @@ async function typewriter(el, fullText) {
 }
 
 function sendSuggestion(btn) {
-  document.getElementById('primoInput').value = btn.textContent.replace(/^[^\s]+\s/, '');
+  const text = btn.textContent.trim();
+  // Strip leading emoji + space only if the button starts with an emoji
+  const isEmoji = text.codePointAt(0) > 0xFF;
+  document.getElementById('primoInput').value = isEmoji ? text.replace(/^[^\s]+\s/, '') : text;
   sendMessage();
 }
 

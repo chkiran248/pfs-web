@@ -63,11 +63,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
     if (!verify_csrf($_POST['csrf_token'] ?? '')) { $error = 'Invalid request.'; }
     else {
         $score = 0;
-        for ($i = 1; $i <= 10; $i++) {
+        for ($i = 1; $i <= 11; $i++) {
             $score += (int)($_POST["q$i"] ?? 1);
         }
-        $risk = $score <= 20 ? 'conservative' : ($score <= 30 ? 'moderate' : 'aggressive');
-        $life = $score <= 20 ? 'preservation' : ($score <= 30 ? 'growth' : 'accumulation');
+        // Max score = 44 (11 questions × 4). Thresholds scaled from 10-question version.
+        $risk = $score <= 22 ? 'conservative' : ($score <= 33 ? 'moderate' : 'aggressive');
+        $life = $score <= 22 ? 'preservation' : ($score <= 33 ? 'growth' : 'accumulation');
         try {
             $stmt2 = $db->prepare("UPDATE user_profiles SET risk_profile=:risk, life_stage=:life WHERE user_id=:uid ORDER BY id DESC LIMIT 1");
             $stmt2->execute([':uid'=>$uid,':risk'=>$risk,':life'=>$life]);
@@ -222,16 +223,17 @@ require_once '../includes/portal-header.php';
 
     <?php
     $questions = [
-      1 => ['q'=>'What is your primary investment goal?', 'opts'=>['Capital Preservation','Regular Income','Balanced Growth','Maximum Growth']],
-      2 => ['q'=>'What is your investment time horizon?', 'opts'=>['Less than 1 year','1–3 years','3–7 years','More than 7 years']],
-      3 => ['q'=>'If your portfolio drops 20%, you would…', 'opts'=>['Sell everything','Sell some holdings','Hold and wait','Buy more']],
-      4 => ['q'=>'How stable is your income?', 'opts'=>['Unpredictable','Variable','Stable','Very stable']],
-      5 => ['q'=>'How many months of expenses do you have as emergency fund?', 'opts'=>['Less than 3 months','3–6 months','6–12 months','More than 12 months']],
-      6 => ['q'=>'What is your investment experience?', 'opts'=>['Beginner — new to investing','Some — invested in FDs/MFs','Experienced — track markets actively','Expert — manage own portfolio']],
-      7 => ['q'=>'What are your current financial liabilities (loans etc.)?', 'opts'=>['Very high','Moderate','Low','None']],
-      8 => ['q'=>'How many financial dependents do you have?', 'opts'=>['3 or more','2','1','None']],
-      9 => ['q'=>'When might you need this invested money?', 'opts'=>['Within 2 years','2–5 years','5–10 years','More than 10 years']],
-      10=> ['q'=>'Are you comfortable with short-term losses for long-term gains?', 'opts'=>['No, I need capital safety','Somewhat, minor dips are okay','Yes, I can handle volatility','Definitely — I focus on long-term']],
+      1 => ['q'=>'What is your current age?', 'opts'=>['Above 50','36–50 years','25–35 years','Under 25 years']],
+      2 => ['q'=>'What is your primary investment goal?', 'opts'=>['Capital Preservation','Regular Income','Balanced Growth','Maximum Growth']],
+      3 => ['q'=>'What is your investment time horizon?', 'opts'=>['Less than 1 year','1–3 years','3–7 years','More than 7 years']],
+      4 => ['q'=>'If your portfolio drops 20%, you would…', 'opts'=>['Sell everything','Sell some holdings','Hold and wait','Buy more']],
+      5 => ['q'=>'How stable is your income?', 'opts'=>['Unpredictable','Variable','Stable','Very stable']],
+      6 => ['q'=>'How many months of expenses do you have as emergency fund?', 'opts'=>['Less than 3 months','3–6 months','6–12 months','More than 12 months']],
+      7 => ['q'=>'What is your investment experience?', 'opts'=>['Beginner — new to investing','Some — invested in FDs/MFs','Experienced — track markets actively','Expert — manage own portfolio']],
+      8 => ['q'=>'What are your current financial liabilities (loans etc.)?', 'opts'=>['Very high','Moderate','Low','None']],
+      9 => ['q'=>'How many financial dependents do you have?', 'opts'=>['3 or more','2','1','None']],
+      10=> ['q'=>'When might you need this invested money?', 'opts'=>['Within 2 years','2–5 years','5–10 years','More than 10 years']],
+      11=> ['q'=>'Are you comfortable with short-term losses for long-term gains?', 'opts'=>['No, I need capital safety','Somewhat, minor dips are okay','Yes, I can handle volatility','Definitely — I focus on long-term']],
     ];
     foreach ($questions as $n => $q): ?>
     <div class="form-group" style="margin-bottom:1.5rem">

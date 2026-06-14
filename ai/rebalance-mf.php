@@ -43,7 +43,7 @@ $hold_stmt->execute([':uid'=>$user_id]);
 $all_holdings = $hold_stmt->fetchAll();
 
 if (empty($all_holdings)) {
-    exit(json_encode(['success'=>false,'error'=>'No mutual fund holdings found. Add holdings via Portfolio page or upload a CAS statement via Primo.']));
+    exit(json_encode(['success'=>false,'error'=>'No mutual fund holdings found. Add holdings via Portfolio page or upload a CAS statement via PrimoAI.']));
 }
 
 // 3. Advisor recommended funds (for comparison)

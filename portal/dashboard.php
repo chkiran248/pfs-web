@@ -186,6 +186,19 @@ require_once '../includes/portal-header.php';
 <?php endif; ?>
 
 <?php
+// Risk profile nudge if not assessed
+if (!$user_data['risk_profile']):
+?><div style="background:linear-gradient(135deg,rgba(46,133,64,0.08),rgba(27,94,42,0.04));border:1px solid rgba(46,133,64,0.25);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+  <i class="bi bi-clipboard-check" style="font-size:1.5rem;color:var(--lime);flex-shrink:0"></i>
+  <div style="flex:1;min-width:180px">
+    <div style="font-weight:600;color:var(--cream);font-size:0.875rem;margin-bottom:0.1rem">Complete your Risk Profile</div>
+    <div style="font-size:0.78rem;color:var(--text-secondary)">Answer 11 quick questions so PrimoAI and your advisor can give you personalised recommendations.</div>
+  </div>
+  <a href="<?= SITE_URL ?>/portal/profile.php?tab=risk"
+     style="background:var(--mid);color:#fff;padding:0.5rem 1rem;border-radius:6px;font-size:0.82rem;font-weight:600;text-decoration:none;white-space:nowrap;flex-shrink:0">Take the Quiz →</a>
+</div><?php endif; ?>
+
+<?php
 // Insurance nudge if no insurance in portfolio
 $ins_check = $db->prepare("SELECT COUNT(*) FROM portfolio_entries WHERE user_id=:uid AND (fund_type='other' OR LOWER(fund_name) LIKE '%insurance%' OR LOWER(fund_name) LIKE '%term%' OR LOWER(fund_name) LIKE '%policy%')");
 $ins_check->execute([':uid'=>$uid]);
@@ -334,7 +347,7 @@ if (!$has_insurance):
     <div style="display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center">
       <button class="sugg-pill" onclick="location.href='<?= SITE_URL ?>/portal/primo.php?q=How+is+my+portfolio'">📊 Portfolio review</button>
       <button class="sugg-pill" onclick="location.href='<?= SITE_URL ?>/portal/primo.php?q=Am+I+on+track+for+goals'">🎯 Goal tracking</button>
-      <a href="<?= SITE_URL ?>/portal/primo.php" class="btn-primary btn-sm">Chat with Primo →</a>
+      <a href="<?= SITE_URL ?>/portal/primo.php" class="btn-primary btn-sm">Chat with PrimoAI →</a>
     </div>
   </div>
 </div>

@@ -1180,3 +1180,89 @@ h1, h2, h3, h4, h5 {
     max-width: 100%;
   }
 }
+
+/* ── BOTTOM NAVIGATION (mobile only) ── */
+.bottom-nav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  /* Show bottom nav */
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--surface-1);
+    border-top: 1px solid var(--border);
+    z-index: 400;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.25);
+  }
+
+  .bottom-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    padding: 0.6rem 0.25rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.6rem;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    transition: color 0.15s;
+    min-height: 56px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .bottom-nav-item i {
+    font-size: 1.35rem;
+    line-height: 1;
+  }
+
+  .bottom-nav-item:active {
+    background: var(--mid-pale);
+  }
+
+  .bottom-nav-item.active {
+    color: var(--bright);
+  }
+
+  /* PrimoAI item — accent lime */
+  .bottom-nav-primo { color: var(--cream-dim); }
+  .bottom-nav-primo i { color: var(--lime); }
+  .bottom-nav-primo.active { color: var(--lime); }
+
+  /* Push portal content above bottom nav */
+  .portal-content {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* WhatsApp float button above bottom nav */
+  .whatsapp-float {
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    right: 1rem;
+  }
+
+  /* Sticky CTA bar above bottom nav */
+  .sticky-cta-bar {
+    bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* iOS: prevent auto-zoom on input focus (requires font-size >= 16px) */
+  .form-input,
+  .form-select,
+  .form-textarea {
+    font-size: 1rem;
+  }
+}
+
+/* Light mode bottom nav */
+[data-theme="light"] .bottom-nav {
+  box-shadow: 0 -2px 12px rgba(0,0,0,0.08);
+}

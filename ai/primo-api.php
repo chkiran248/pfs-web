@@ -60,8 +60,8 @@ if ((int)$rate_stmt->fetchColumn() >= 20) {
     exit(json_encode(['error' => 'Rate limit reached. Please wait a few minutes.']));
 }
 
-// Build system prompt from live DB data
-$system_prompt = build_primo_context($user_id);
+// Build system prompt from live DB data (pass session_key for question count)
+$system_prompt = build_primo_context($user_id, $session_key);
 
 // Load conversation history
 $hist_stmt = $db->prepare("
@@ -132,6 +132,9 @@ $tokens_used   = $data['usage']['output_tokens'] ?? 0;
 if (!$full_response) {
     exit(json_encode(['error' => 'Empty response from AI. Please try again.']));
 }
+
+// Re-ping DB after long API call — MySQL may have timed out during Claude response
+$db = db_ensure_alive();
 
 // Save assistant response
 $db->prepare("INSERT INTO primo_conversations (user_id, role, message, tokens_used, session_key) VALUES (:uid,'assistant',:msg,:tok,:sk)")

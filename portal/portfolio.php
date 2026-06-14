@@ -11,8 +11,8 @@ $db  = get_db();
 $uid = get_user_id();
 $error = '';
 
-$fund_types = ['equity','debt','hybrid','elss','index','international','liquid','fd','nps','gold','other'];
-$type_colours = ['equity'=>'badge-green','debt'=>'badge-gold','hybrid'=>'badge-green','elss'=>'badge-green','index'=>'badge-muted','international'=>'badge-muted','liquid'=>'badge-muted','fd'=>'badge-gold','nps'=>'badge-gold','gold'=>'badge-gold','other'=>'badge-muted'];
+$fund_types = ['equity','debt','hybrid','elss','index','international','liquid','fd','nps','gold','fixed_income','other'];
+$type_colours = ['equity'=>'badge-green','debt'=>'badge-gold','hybrid'=>'badge-green','elss'=>'badge-green','index'=>'badge-muted','international'=>'badge-muted','liquid'=>'badge-muted','fd'=>'badge-gold','nps'=>'badge-gold','gold'=>'badge-gold','fixed_income'=>'badge-gold','other'=>'badge-muted'];
 
 // ── Handle Add / Edit ────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['action']??'', ['add_holding','edit_holding'])) {
@@ -155,6 +155,7 @@ require_once '../includes/portal-header.php';
           'pms'         => 'pms',
           'aif'         => 'aif',
           'crypto'      => 'crypto',
+          'fixed_income'=> 'fixed_income',
           'equity' => str_contains(strtolower($edit_holding['fund_name']??''), 'fund') ? 'mutual_fund' : 'stock',
           default => 'mutual_fund',
         };
@@ -190,6 +191,7 @@ require_once '../includes/portal-header.php';
             'pms'         => ['bi-briefcase',        'PMS',           'Portfolio Mgmt Service'],
             'aif'         => ['bi-layers',           'AIF',           'Category I, II & III'],
             'crypto'      => ['bi-currency-bitcoin', 'Crypto',        'BTC, ETH, Altcoins'],
+            'fixed_income'=> ['bi-building-check',   'Fixed Income',  'Bonds, SCSS, Post Office'],
             'other'       => ['bi-grid',             'Other',         'PPF, EPFO, ULIP, Real Estate'],
           ];
           foreach ($asset_types as $at_key => [$icon, $label, $hint]):
@@ -626,6 +628,59 @@ require_once '../includes/portal-header.php';
           <input type="hidden" name="maturity_date" value="">
         </div>
 
+        <!-- ── Fixed Income fields ── -->
+        <div class="asset-fields" id="fields-fixed_income" style="display:none">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Instrument Name *</label>
+              <input class="form-input" type="text" name="fund_name" id="fn_fi" value="<?= ($init_ft==='fixed_income'&&$edit_holding)?htmlspecialchars($edit_holding['fund_name']??'',ENT_QUOTES,'UTF-8'):'' ?>" placeholder="e.g. 8.5% GOI Bond 2030, SCSS Account">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Instrument Type</label>
+              <select class="form-select" name="folio_number">
+                <?php
+                $fi_types = ['Government Bond','Corporate Bond','SCSS (Senior Citizens Savings Scheme)','NSC (National Savings Certificate)','Post Office Monthly Income Scheme','KVP (Kisan Vikas Patra)','Post Office Time Deposit','RBI Floating Rate Bond','State Development Loan (SDL)'];
+                $cur_fi = ($init_ft==='fixed_income'&&$edit_holding)?($edit_holding['folio_number']??''):'';
+                foreach ($fi_types as $ft): ?>
+                <option value="<?= htmlspecialchars($ft,ENT_QUOTES,'UTF-8') ?>" <?= $cur_fi===$ft?'selected':'' ?>><?= $ft ?></option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Issuer / Institution</label>
+              <input class="form-input" type="text" name="fund_house" value="<?= ($init_ft==='fixed_income'&&$edit_holding)?htmlspecialchars($edit_holding['fund_house']??'',ENT_QUOTES,'UTF-8'):'' ?>" placeholder="e.g. Government of India, HDFC Ltd, India Post">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Interest Rate (% p.a.) *</label>
+              <input class="form-input" type="number" name="interest_rate" step="0.01" value="<?= ($init_ft==='fixed_income'&&$edit_holding)?($edit_holding['interest_rate']??''):'' ?>" placeholder="8.20">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Amount Invested (₹) *</label>
+              <input class="form-input" type="number" name="invested_amount" id="ia_fi" step="0.01" value="<?= ($init_ft==='fixed_income'&&$edit_holding)?($edit_holding['invested_amount']??''):'' ?>" placeholder="5,00,000">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Current / Maturity Value (₹)</label>
+              <input class="form-input" type="number" name="current_nav" step="0.01" value="<?= ($init_ft==='fixed_income'&&$edit_holding)?($edit_holding['current_nav']??''):'' ?>" placeholder="6,40,000">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Issue / Purchase Date</label>
+              <input class="form-input" type="date" name="purchase_date" value="<?= ($init_ft==='fixed_income'&&$edit_holding)?htmlspecialchars($edit_holding['purchase_date']??'',ENT_QUOTES,'UTF-8'):'' ?>">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Maturity Date</label>
+              <input class="form-input" type="date" name="maturity_date" value="<?= ($init_ft==='fixed_income'&&$edit_holding)?htmlspecialchars($edit_holding['maturity_date']??'',ENT_QUOTES,'UTF-8'):'' ?>">
+            </div>
+          </div>
+          <input type="hidden" name="units_held" value="1">
+          <input type="hidden" name="avg_nav" value="0">
+        </div>
+
         <!-- ── Other fields ── -->
         <div class="asset-fields" id="fields-other" style="display:none">
           <div class="form-row">
@@ -707,7 +762,7 @@ function selectAssetType(type) {
   var typeMap = {
     mutual_fund: document.getElementById('mf_subtype')?.value || 'equity',
     stock: 'equity', fd: 'fd', nps: 'nps', gold: 'gold',
-    insurance: 'insurance', pms: 'pms', aif: 'aif', crypto: 'crypto', other: 'other'
+    insurance: 'insurance', pms: 'pms', aif: 'aif', crypto: 'crypto', fixed_income: 'fixed_income', other: 'other'
   };
   document.getElementById('hidden_fund_type').value = typeMap[type] || 'equity';
   // Scroll to step 2
