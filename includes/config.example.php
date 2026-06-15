@@ -20,7 +20,7 @@ define('DB_PASS',       '');              // XAMPP default — empty
 define('DB_CHARSET',    'utf8mb4');
 
 // ── SMTP EMAIL ───────────────────────────────────────────
-define('SMTP_HOST',     'mail.primefin.in');
+define('SMTP_HOST',     'smtp.hostinger.com');  // Hostinger SMTP relay
 define('SMTP_PORT',     587);
 define('SMTP_USER',     'support@primefin.in');
 define('SMTP_PASS',     'YOUR_EMAIL_PASSWORD');
@@ -42,15 +42,8 @@ define('LOCKOUT_MINUTES',     15);
 define('BCRYPT_COST',         12);
 define('CSRF_TOKEN_LENGTH',   32);
 
-// ── SESSION COOKIE CONFIG ────────────────────────────────
-ini_set('session.cookie_httponly', '1');
-ini_set('session.cookie_secure',   '0');    // Set to '1' on Hostinger (HTTPS)
-ini_set('session.cookie_samesite', 'Strict');
-ini_set('session.gc_maxlifetime',  (string) SESSION_LIFETIME);
-ini_set('log_errors',              '1');
-ini_set('error_log',               __DIR__ . '/../logs/error.log');
-
 // ── ENVIRONMENT ──────────────────────────────────────────
+// IMPORTANT: Define APP_ENV before session config so cookie_secure is set correctly
 define('APP_ENV',   'development');  // Change to 'production' on Hostinger
 define('APP_DEBUG', true);
 
@@ -61,11 +54,53 @@ if (APP_ENV === 'development') {
     ini_set('display_errors', '0');
 }
 
+// ── SESSION COOKIE CONFIG ────────────────────────────────
+ini_set('session.cookie_httponly', '1');
+ini_set('session.cookie_secure',   APP_ENV === 'production' ? '1' : '0');  // Secure only in production (HTTPS)
+ini_set('session.cookie_samesite', 'Strict');
+ini_set('session.gc_maxlifetime',  (string) SESSION_LIFETIME);
+ini_set('log_errors',              '1');
+ini_set('error_log',               __DIR__ . '/../logs/error.log');
+
+// ── CTA LINKS ─────────────────────────────────────────────
+define('ONBOARDING_URL', 'https://www.assetplus.in/mfd/YOUR_HANDLE');
+define('INSURANCE_URL',  'https://insurance.assetplus.in/YOUR_ARN');
+define('CALENDLY_URL',   'https://calendly.com/YOUR_LINK');
+define('WHATSAPP_URL',   'https://wa.me/919980001338');
+
+// ── INDIAN CURRENCY FORMAT ────────────────────────────────
+if (!function_exists('format_inr')) {
+    function format_inr(float|int $amount, bool $symbol = true): string {
+        $neg = $amount < 0;
+        $n   = (string)(int) round(abs($amount));
+        if (strlen($n) <= 3) {
+            return ($neg ? '-' : '') . ($symbol ? '₹' : '') . $n;
+        }
+        $last3     = substr($n, -3);
+        $remaining = substr($n, 0, -3);
+        $groups    = [];
+        while (strlen($remaining) > 0) {
+            $groups[] = substr($remaining, -2);
+            $remaining = substr($remaining, 0, -2);
+        }
+        $formatted = implode(',', array_reverse($groups)) . ',' . $last3;
+        return ($neg ? '-' : '') . ($symbol ? '₹' : '') . ltrim($formatted, ',');
+    }
+
+    function format_inr_short(float|int $amount, bool $symbol = true): string {
+        $pre = $symbol ? '₹' : '';
+        $abs = abs($amount);
+        if ($abs >= 10000000) return $pre . number_format($abs / 10000000, 2) . ' Cr';
+        if ($abs >= 100000)   return $pre . number_format($abs / 100000, 2) . ' L';
+        return format_inr($amount, $symbol);
+    }
+}
+
 // ── PRIMO AI ──────────────────────────────────────────────
-define('CLAUDE_API_KEY',          'sk-ant-YOUR_CLAUDE_API_KEY');  // TODO: Add your API key from console.anthropic.com
-define('PRIMO_MODEL',             'claude-sonnet-4-6');      // Updated from prompt (was claude-sonnet-4-5)
-define('PRIMO_MAX_TOKENS',        1024);
-define('PRIMO_TEMPERATURE',       0.7);
-define('PRIMO_HISTORY_LIMIT',     10);
+define('CLAUDE_API_KEY',             'sk-ant-YOUR_CLAUDE_API_KEY');
+define('PRIMO_MODEL',                'claude-sonnet-4-6');
+define('PRIMO_MAX_TOKENS',           2048);
+define('PRIMO_TEMPERATURE',          0.7);
+define('PRIMO_HISTORY_LIMIT',        10);
 define('PRIMO_CONTEXT_MAX_HOLDINGS', 20);
-define('PRIMO_HISTORY_DAYS',      30);
+define('PRIMO_HISTORY_DAYS',         30);
