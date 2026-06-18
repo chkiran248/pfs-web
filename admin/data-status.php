@@ -92,11 +92,11 @@ require_once '../includes/admin-header.php';
   <div style="margin-top:1rem">
     <div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--lime);letter-spacing:0.15em;margin-bottom:0.5rem">HOSTINGER CRON SCHEDULE</div>
     <div style="background:var(--surface-2);border-radius:8px;padding:1rem;font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--text-secondary);line-height:2">
-      0 6 * * * php /home/USERNAME/public_html/data-fetcher/fetch-nav.php<br>
-      0 7 * * * php /home/USERNAME/public_html/data-fetcher/fetch-stock-prices.php<br>
-      0 8 * * * php /home/USERNAME/public_html/data-fetcher/fetch-news.php<br>
-      0 9 * * * php /home/USERNAME/public_html/data-fetcher/draft-insights.php<br>
-      0 2 * * 0 php /home/USERNAME/public_html/data-fetcher/fetch-fund-data.php
+      0 6 * * * /usr/bin/php /home/u834452319/domains/primefin.in/public_html/data-fetcher/fetch-nav.php >> /home/u834452319/domains/primefin.in/logs/cron.log 2>&1<br>
+      0 7 * * * /usr/bin/php /home/u834452319/domains/primefin.in/public_html/data-fetcher/fetch-stock-prices.php >> /home/u834452319/domains/primefin.in/logs/cron.log 2>&1<br>
+      0 8 * * * /usr/bin/php /home/u834452319/domains/primefin.in/public_html/data-fetcher/fetch-news.php >> /home/u834452319/domains/primefin.in/logs/cron.log 2>&1<br>
+      0 9 * * * /usr/bin/php /home/u834452319/domains/primefin.in/public_html/data-fetcher/draft-insights.php >> /home/u834452319/domains/primefin.in/logs/cron.log 2>&1<br>
+      0 2 * * 0 /usr/bin/php /home/u834452319/domains/primefin.in/public_html/data-fetcher/fetch-fund-data.php >> /home/u834452319/domains/primefin.in/logs/cron.log 2>&1
     </div>
   </div>
 </div>
