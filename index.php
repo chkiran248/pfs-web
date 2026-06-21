@@ -82,7 +82,7 @@ $contact_csrf = $_SESSION['contact_csrf'];
   <div class="container hero__inner">
     <div class="hero__eyebrow">
       <span class="dot"></span>
-      SEBI · AMFI REGISTERED &nbsp;|&nbsp; EST. 2016
+      AMFI REGISTERED MF DISTRIBUTOR &nbsp;|&nbsp; EST. 2016
     </div>
     <h1 class="hero__headline">
       Wealth Intelligence.<br />
@@ -386,7 +386,7 @@ $contact_csrf = $_SESSION['contact_csrf'];
     <div class="about__content">
       <p class="section-eyebrow">WHO WE ARE</p>
       <h2 class="section-title"><br /><em>Prime Financial Services</em></h2>
-      <p class="about__text">Founded on the principle that every Indian investor deserves institutional-quality advice, Prime Financials is the wealth intelligence arm of Prime Financial Services — a SEBI and AMFI registered advisory practice serving clients across India.</p>
+      <p class="about__text">Founded on the principle that every Indian investor deserves institutional-quality advice, Prime Financials is the wealth intelligence arm of Prime Financial Services — an AMFI Registered Mutual Fund Distributor (ARN-137538) serving clients across India.</p>
       <p class="about__text">We are not a platform. We are not an algorithm. We are advisors — with skin in the game, bound by fiduciary duty, and accountable to every client relationship we build.</p>
       <div class="about__certifications">
         <div class="cert-badge">AMFI Registered<br />Mutual Fund Distributor</div>
@@ -639,7 +639,7 @@ $contact_csrf = $_SESSION['contact_csrf'];
   </div>
   <div class="footer__disclaimer">
     <div class="container">
-      <p>Mutual Fund investments are subject to market risks. Please read all scheme-related documents carefully before investing. Past performance is not indicative of future returns. Insurance is subject to the terms and conditions of the respective policies. Prime Financials / Prime Financial Services is registered with AMFI (ARN-XXXXXX). This website does not constitute investment advice or solicitation. Please consult a qualified financial advisor before making investment decisions.</p>
+      <p>Mutual Fund investments are subject to market risks. Please read all scheme-related documents carefully before investing. Past performance is not indicative of future returns. Insurance is subject to the terms and conditions of the respective policies. Prime Financials / Prime Financial Services is registered with AMFI (ARN-137538). This website does not constitute investment advice or solicitation. Please consult a qualified financial advisor before making investment decisions.</p>
     </div>
   </div>
   <div class="footer__bottom">
