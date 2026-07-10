@@ -23,6 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $category   = trim($_POST['category'] ?? '');
         $sub_cat    = trim($_POST['sub_category'] ?? '') ?: null;
         $risk       = $_POST['risk_level'] ?? 'moderate';
+        $benchmark  = trim($_POST['benchmark'] ?? '') ?: null;
         $horizon    = max(1,(int)($_POST['min_horizon_yrs'] ?? 3));
         $goals      = implode(',', array_filter($_POST['goal_types'] ?? []));
         $why        = trim($_POST['why_recommended'] ?? '') ?: null;
@@ -37,14 +38,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         try {
             if ($action === 'add') {
-                $stmt = $db->prepare("INSERT INTO fund_recommendations (fund_name,scheme_code,fund_house,category,sub_category,risk_level,min_horizon_yrs,goal_types,why_recommended,key_features,expense_ratio,aum_cr,is_featured,is_active) VALUES (:fn,:sc,:fh,:cat,:sub,:risk,:hor,:goals,:why,:feat,:exp,:aum,:isFeat,:isAct)");
-                $stmt->execute([':fn'=>$fund_name,':sc'=>$scheme_code,':fh'=>$fund_house,':cat'=>$category,':sub'=>$sub_cat,':risk'=>$risk,':hor'=>$horizon,':goals'=>$goals,':why'=>$why,':feat'=>$features,':exp'=>$exp_r,':aum'=>$aum,':isFeat'=>$featured,':isAct'=>$active]);
+                $stmt = $db->prepare("INSERT INTO fund_recommendations (fund_name,scheme_code,fund_house,category,sub_category,risk_level,benchmark,min_horizon_yrs,goal_types,why_recommended,key_features,expense_ratio,aum_cr,is_featured,is_active) VALUES (:fn,:sc,:fh,:cat,:sub,:risk,:bm,:hor,:goals,:why,:feat,:exp,:aum,:isFeat,:isAct)");
+                $stmt->execute([':fn'=>$fund_name,':sc'=>$scheme_code,':fh'=>$fund_house,':cat'=>$category,':sub'=>$sub_cat,':risk'=>$risk,':bm'=>$benchmark,':hor'=>$horizon,':goals'=>$goals,':why'=>$why,':feat'=>$features,':exp'=>$exp_r,':aum'=>$aum,':isFeat'=>$featured,':isAct'=>$active]);
                 $new_id = (int)$db->lastInsertId();
                 if ($scheme_code) mf_refresh_fund($new_id, $scheme_code, $db);
                 $_SESSION['flash'] = ['type'=>'success','message'=>'Fund added' . ($scheme_code ? ' — NAV fetched from MFAPI.in.' : '.')];
             } else {
-                $stmt = $db->prepare("UPDATE fund_recommendations SET fund_name=:fn,scheme_code=:sc,fund_house=:fh,category=:cat,sub_category=:sub,risk_level=:risk,min_horizon_yrs=:hor,goal_types=:goals,why_recommended=:why,key_features=:feat,expense_ratio=:exp,aum_cr=:aum,is_featured=:isFeat,is_active=:isAct WHERE id=:id");
-                $stmt->execute([':fn'=>$fund_name,':sc'=>$scheme_code,':fh'=>$fund_house,':cat'=>$category,':sub'=>$sub_cat,':risk'=>$risk,':hor'=>$horizon,':goals'=>$goals,':why'=>$why,':feat'=>$features,':exp'=>$exp_r,':aum'=>$aum,':isFeat'=>$featured,':isAct'=>$active,':id'=>$id]);
+                $stmt = $db->prepare("UPDATE fund_recommendations SET fund_name=:fn,scheme_code=:sc,fund_house=:fh,category=:cat,sub_category=:sub,risk_level=:risk,benchmark=:bm,min_horizon_yrs=:hor,goal_types=:goals,why_recommended=:why,key_features=:feat,expense_ratio=:exp,aum_cr=:aum,is_featured=:isFeat,is_active=:isAct WHERE id=:id");
+                $stmt->execute([':fn'=>$fund_name,':sc'=>$scheme_code,':fh'=>$fund_house,':cat'=>$category,':sub'=>$sub_cat,':risk'=>$risk,':bm'=>$benchmark,':hor'=>$horizon,':goals'=>$goals,':why'=>$why,':feat'=>$features,':exp'=>$exp_r,':aum'=>$aum,':isFeat'=>$featured,':isAct'=>$active,':id'=>$id]);
                 if ($scheme_code) mf_refresh_fund($id, $scheme_code, $db);
                 $_SESSION['flash'] = ['type'=>'success','message'=>'Fund updated' . ($scheme_code ? ' — NAV refreshed.' : '.')];
             }
@@ -95,10 +96,20 @@ if (isset($_GET['edit'])) {
 $fs = $db->query("SELECT * FROM fund_recommendations ORDER BY is_featured DESC, is_active DESC, fund_name ASC");
 $all_funds = $fs->fetchAll(PDO::FETCH_ASSOC);
 
-$risk_badge = ['low'=>'badge-green','moderate'=>'badge-gold','high'=>'badge-gold','very_high'=>'badge-muted'];
-$risk_opts  = ['low'=>'Low','moderate'=>'Moderate','high'=>'High','very_high'=>'Very High'];
-$goal_opts  = ['retirement'=>'Retirement','education'=>'Education','wealth'=>'Wealth Creation','tax_saving'=>'Tax Saving (ELSS)','emergency'=>'Emergency','custom'=>'Custom'];
-$cat_opts   = ['Large Cap','Mid Cap','Small Cap','Flexi Cap','ELSS','Debt','Hybrid','Index','Sectoral / Thematic','Liquid / Overnight'];
+$risk_badge  = ['low'=>'badge-green','moderate'=>'badge-gold','high'=>'badge-gold','very_high'=>'badge-muted'];
+$risk_opts   = ['low'=>'Low','moderate'=>'Moderate','high'=>'High','very_high'=>'Very High'];
+$goal_opts   = ['retirement'=>'Retirement','education'=>'Education','wealth'=>'Wealth Creation','tax_saving'=>'Tax Saving (ELSS)','emergency'=>'Emergency','custom'=>'Custom'];
+$cat_opts    = ['Large Cap','Mid Cap','Small Cap','Flexi Cap','ELSS','Debt','Hybrid','Index','Sectoral / Thematic','Liquid / Overnight'];
+$bench_opts  = [
+    ''                   => '— Select Benchmark —',
+    'nifty50'            => 'Nifty 50 TRI',
+    'nifty100'           => 'Nifty 100 TRI',
+    'nifty_midcap150'    => 'Nifty Midcap 150 TRI',
+    'nifty_smallcap250'  => 'Nifty Smallcap 250 TRI',
+    'nifty500'           => 'Nifty 500 TRI',
+    'crisil_short_dur'   => 'CRISIL Short Duration (Debt)',
+    'crisil_gilt'        => 'CRISIL Gilt (Debt)',
+];
 
 $page_title = 'Fund Recommendations — Admin';
 $ef         = $edit_fund;
@@ -129,6 +140,10 @@ require_once '../includes/portal-header.php';
         <th>Fund</th><th>Scheme Code</th><th>Category / Risk</th>
         <th style="text-align:right">Current NAV</th>
         <th style="text-align:right">1yr</th><th style="text-align:right">3yr</th><th style="text-align:right">5yr</th>
+        <th style="text-align:right" title="Automated tech score 0–100. is_featured=1 when ≥70">Tech Score</th>
+        <th style="text-align:right" title="Risk-adjusted return (Sharpe Ratio)">Sharpe</th>
+        <th style="text-align:right" title="Maximum Drawdown">Max DD</th>
+        <th style="text-align:right" title="Jensen's Alpha vs benchmark">Alpha</th>
         <th>Refreshed</th><th>Status</th><th>Actions</th>
       </tr></thead>
       <tbody>
@@ -159,6 +174,16 @@ require_once '../includes/portal-header.php';
           <td style="text-align:right;font-family:'DM Mono',monospace;color:<?= $f['return_1yr'] !== null ? 'var(--bright)' : 'var(--text-muted)' ?>"><?= $f['return_1yr'] !== null ? round((float)$f['return_1yr'],2).'%' : '&mdash;' ?></td>
           <td style="text-align:right;font-family:'DM Mono',monospace;color:<?= $f['return_3yr'] !== null ? 'var(--bright)' : 'var(--text-muted)' ?>"><?= $f['return_3yr'] !== null ? round((float)$f['return_3yr'],2).'%' : '&mdash;' ?></td>
           <td style="text-align:right;font-family:'DM Mono',monospace;color:<?= $f['return_5yr'] !== null ? 'var(--bright)' : 'var(--text-muted)' ?>"><?= $f['return_5yr'] !== null ? round((float)$f['return_5yr'],2).'%' : '&mdash;' ?></td>
+          <?php /* Tech Score with colour bar */ ?>
+          <td style="text-align:right">
+            <?php if (isset($f['tech_score']) && $f['tech_score'] !== null): $ts = (int)$f['tech_score']; $tc = $ts >= 70 ? 'var(--bright)' : ($ts >= 50 ? 'var(--gold)' : 'var(--text-muted)'); ?>
+            <div style="font-family:'DM Mono',monospace;font-size:0.82rem;color:<?= $tc ?>;font-weight:600"><?= $ts ?></div>
+            <div style="height:3px;width:<?= min(100,$ts) ?>%;background:<?= $tc ?>;border-radius:2px;margin-top:3px;margin-left:auto"></div>
+            <?php else: ?><span style="color:var(--text-muted);font-size:0.75rem">—</span><?php endif; ?>
+          </td>
+          <td style="text-align:right;font-family:'DM Mono',monospace;font-size:0.8rem;color:<?= isset($f['sharpe_ratio']) && $f['sharpe_ratio'] !== null ? (((float)$f['sharpe_ratio']) >= 1 ? 'var(--bright)' : 'var(--gold)') : 'var(--text-muted)' ?>"><?= isset($f['sharpe_ratio']) && $f['sharpe_ratio'] !== null ? round((float)$f['sharpe_ratio'],2) : '&mdash;' ?></td>
+          <td style="text-align:right;font-family:'DM Mono',monospace;font-size:0.8rem;color:<?= isset($f['max_drawdown']) && $f['max_drawdown'] !== null ? ((float)$f['max_drawdown'] > -20 ? 'var(--bright)' : 'var(--danger)') : 'var(--text-muted)' ?>"><?= isset($f['max_drawdown']) && $f['max_drawdown'] !== null ? round((float)$f['max_drawdown'],1).'%' : '&mdash;' ?></td>
+          <td style="text-align:right;font-family:'DM Mono',monospace;font-size:0.8rem;color:<?= isset($f['alpha']) && $f['alpha'] !== null ? ((float)$f['alpha'] >= 0 ? 'var(--bright)' : 'var(--danger)') : 'var(--text-muted)' ?>"><?= isset($f['alpha']) && $f['alpha'] !== null ? round((float)$f['alpha'],1) : '&mdash;' ?></td>
           <td style="font-size:0.75rem;color:<?= $is_stale ? 'var(--danger)' : 'var(--bright)' ?>;font-family:'DM Mono',monospace"><?= $f['last_data_refresh'] ? date('d M, H:i', strtotime($f['last_data_refresh'])) : 'Never' ?></td>
           <td><span class="badge <?= $f['is_active'] ? 'badge-green' : 'badge-muted' ?>"><?= $f['is_active'] ? 'Active' : 'Hidden' ?></span></td>
           <td>
@@ -244,8 +269,20 @@ require_once '../includes/portal-header.php';
           </select>
         </div>
         <div class="form-group">
+          <label class="form-label">Benchmark <span style="color:var(--lime);font-size:0.68rem;font-weight:400">(for Alpha / Tracking Error)</span></label>
+          <select name="benchmark" class="form-select">
+            <?php foreach ($bench_opts as $bv => $bl): ?><option value="<?= $bv ?>" <?= ($ef['benchmark'] ?? '') === $bv ? 'selected' : '' ?>><?= htmlspecialchars($bl, ENT_QUOTES, 'UTF-8') ?></option><?php endforeach; ?>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
           <label class="form-label">Min Investment Horizon (years)</label>
           <input type="number" name="min_horizon_yrs" class="form-input" min="1" max="30" value="<?= (int)($ef['min_horizon_yrs'] ?? 3) ?>" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Sub-Category <span style="color:var(--text-muted);font-size:0.68rem;font-weight:400">(optional)</span></label>
+          <input type="text" name="sub_category" class="form-input" placeholder="e.g. Large & Mid Cap" value="<?= htmlspecialchars($ef['sub_category'] ?? '', ENT_QUOTES, 'UTF-8') ?>" />
         </div>
       </div>
       <div class="form-group">

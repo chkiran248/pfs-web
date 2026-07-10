@@ -58,30 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
     }
 }
 
-// ── Handle: Risk quiz ─────────────────────────────────────
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_risk') {
-    if (!verify_csrf($_POST['csrf_token'] ?? '')) { $error = 'Invalid request.'; }
-    else {
-        $score = 0;
-        for ($i = 1; $i <= 11; $i++) {
-            $score += (int)($_POST["q$i"] ?? 1);
-        }
-        // Max score = 44 (11 questions × 4). Thresholds scaled from 10-question version.
-        $risk = $score <= 22 ? 'conservative' : ($score <= 33 ? 'moderate' : 'aggressive');
-        $life = $score <= 22 ? 'preservation' : ($score <= 33 ? 'growth' : 'accumulation');
-        try {
-            $stmt2 = $db->prepare("UPDATE user_profiles SET risk_profile=:risk, life_stage=:life WHERE user_id=:uid ORDER BY id DESC LIMIT 1");
-            $stmt2->execute([':uid'=>$uid,':risk'=>$risk,':life'=>$life]);
-            if ($stmt2->rowCount() === 0) {
-                $db->prepare("INSERT INTO user_profiles (user_id, risk_profile, life_stage) VALUES (:uid, :risk, :life)")
-                   ->execute([':uid'=>$uid,':risk'=>$risk,':life'=>$life]);
-            }
-            $_SESSION['flash'] = ['type'=>'success','message'=>'Risk profile saved: ' . ucfirst($risk) . '.'];
-            header('Location: ' . SITE_URL . '/portal/profile.php?tab=risk');
-            exit;
-        } catch (PDOException $e) { error_log($e->getMessage()); $error = 'Could not save risk profile.'; }
-    }
-}
+// Risk tab now handled by portal/risk-assessment.php — no inline POST here
 
 // ── Handle: Change password ───────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'change_password') {
@@ -109,9 +86,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'chang
 }
 
 $risk_descriptions = [
-    'conservative' => 'You prefer capital protection over high returns. Recommended: Debt funds, FDs, Liquid funds.',
-    'moderate'     => 'You balance growth with safety. Recommended: Balanced/Hybrid funds, large-cap equity, NPS.',
-    'aggressive'   => 'You seek maximum long-term growth. Recommended: Mid/small cap, ELSS, sectoral funds.',
+    'conservative' => 'You prefer capital preservation over high returns. Focus on debt funds, liquid funds, short-duration bonds, and low-volatility hybrid funds.',
+    'moderate'     => 'You balance growth with safety. A mix of large-cap equity, balanced/hybrid funds, and some debt instruments suits you best.',
+    'aggressive'   => 'You seek maximum long-term wealth creation. Mid-cap, small-cap, flexi-cap, ELSS, and sectoral funds are well-suited for you.',
+];
+$risk_badge_cfg = [
+    'conservative' => ['color' => 'var(--bright)', 'bg' => 'rgba(76,175,80,0.12)'],
+    'moderate'     => ['color' => 'var(--gold)',   'bg' => 'rgba(201,168,76,0.12)'],
+    'aggressive'   => ['color' => '#ff6b35',        'bg' => 'rgba(255,107,53,0.12)'],
 ];
 $income_ranges = ['<5L' => 'Below ₹5 Lakhs', '5-10L' => '₹5–10 Lakhs', '10-25L' => '₹10–25 Lakhs', '25-50L' => '₹25–50 Lakhs', '50L+' => 'Above ₹50 Lakhs'];
 
@@ -200,59 +182,86 @@ require_once '../includes/portal-header.php';
 
 <?php else: ?>
 <!-- ── Risk Profile Tab ── -->
-<?php if ($profile['risk_profile']): ?>
+<?php
+$rp  = $profile['risk_profile'] ?? null;
+$rs  = $profile['risk_score']   ?? null;
+$rat = $profile['risk_assessed_at'] ?? null;
+$rbc = $risk_badge_cfg[$rp] ?? null;
+$assessment_url = SITE_URL . '/portal/risk-assessment.php?redirect=profile';
+?>
+
+<?php if ($rp): ?>
 <div class="portal-card" style="margin-bottom:1.25rem">
-  <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem">
-    <div class="stat-value positive" style="font-size:1.5rem"><?= ucfirst($profile['risk_profile']) ?></div>
-    <span class="badge badge-green" style="font-size:0.7rem"><?= ucfirst($profile['life_stage']??'') ?></span>
+  <!-- Profile header -->
+  <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1rem">
+    <div style="display:flex;align-items:center;gap:0.6rem;background:<?= $rbc['bg'] ?>;border:1px solid <?= $rbc['color'] ?>;border-radius:24px;padding:0.4rem 1.1rem">
+      <span style="font-weight:600;font-size:1.05rem;color:<?= $rbc['color'] ?>"><?= ucfirst($rp) ?></span>
+    </div>
+    <?php if ($rs !== null): ?>
+    <span style="font-family:'DM Mono',monospace;font-size:0.78rem;color:var(--text-secondary)">
+      Score: <strong style="color:var(--cream)"><?= $rs ?>/20</strong>
+    </span>
+    <?php endif; ?>
+    <?php if ($rat): ?>
+    <span style="font-size:0.78rem;color:var(--text-secondary)">
+      Assessed: <?= date('d M Y', strtotime($rat)) ?>
+    </span>
+    <?php endif; ?>
   </div>
-  <p style="color:var(--text-secondary);font-size:0.9rem;line-height:1.7"><?= $risk_descriptions[$profile['risk_profile']] ?? '' ?></p>
-  <div style="margin-top:1rem">
-    <a href="?tab=risk&retake=1" class="btn-outline btn-sm">Retake Quiz</a>
+
+  <p style="color:var(--text-secondary);font-size:0.9rem;line-height:1.7;margin-bottom:1rem">
+    <?= $risk_descriptions[$rp] ?? '' ?>
+  </p>
+
+  <!-- Score breakdown bar -->
+  <?php if ($rs !== null): ?>
+  <div style="margin-bottom:1rem">
+    <div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--lime);letter-spacing:0.12em;margin-bottom:0.4rem">RISK SCORE SPECTRUM</div>
+    <div style="position:relative;height:8px;background:var(--surface-2);border-radius:4px;overflow:hidden">
+      <div style="position:absolute;left:0;top:0;height:100%;width:30%;background:var(--bright);opacity:0.5;border-radius:4px 0 0 4px"></div>
+      <div style="position:absolute;left:30%;top:0;height:100%;width:35%;background:var(--gold);opacity:0.5"></div>
+      <div style="position:absolute;left:65%;top:0;height:100%;width:35%;background:#ff6b35;opacity:0.5;border-radius:0 4px 4px 0"></div>
+      <div style="position:absolute;top:-2px;height:12px;width:12px;border-radius:50%;background:var(--cream);border:2px solid var(--bg);left:calc(<?= round($rs / 20 * 100) ?>% - 6px);transition:left 0.4s"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--text-muted);margin-top:0.35rem">
+      <span>Conservative (0–6)</span><span>Moderate (7–13)</span><span>Aggressive (14–20)</span>
+    </div>
   </div>
-</div>
-<?php endif; ?>
+  <?php endif; ?>
 
-<?php if (!$profile['risk_profile'] || isset($_GET['retake'])): ?>
-<div class="portal-card">
-  <div class="card-title">Risk Profile Assessment</div>
-  <p style="color:var(--text-secondary);font-size:0.875rem;margin-bottom:1.5rem">Answer 10 quick questions to find your investor profile.</p>
-  <form method="POST" novalidate>
-    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrf_token(), ENT_QUOTES,'UTF-8') ?>">
-    <input type="hidden" name="action" value="save_risk">
-
+  <!-- Recommended fund types -->
+  <div style="background:var(--surface-2);border-radius:10px;padding:1rem;margin-bottom:1rem">
+    <div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--lime);letter-spacing:0.12em;margin-bottom:0.6rem">SUITABLE FUND CATEGORIES</div>
     <?php
-    $questions = [
-      1 => ['q'=>'What is your current age?', 'opts'=>['Above 50','36–50 years','25–35 years','Under 25 years']],
-      2 => ['q'=>'What is your primary investment goal?', 'opts'=>['Capital Preservation','Regular Income','Balanced Growth','Maximum Growth']],
-      3 => ['q'=>'What is your investment time horizon?', 'opts'=>['Less than 1 year','1–3 years','3–7 years','More than 7 years']],
-      4 => ['q'=>'If your portfolio drops 20%, you would…', 'opts'=>['Sell everything','Sell some holdings','Hold and wait','Buy more']],
-      5 => ['q'=>'How stable is your income?', 'opts'=>['Unpredictable','Variable','Stable','Very stable']],
-      6 => ['q'=>'How many months of expenses do you have as emergency fund?', 'opts'=>['Less than 3 months','3–6 months','6–12 months','More than 12 months']],
-      7 => ['q'=>'What is your investment experience?', 'opts'=>['Beginner — new to investing','Some — invested in FDs/MFs','Experienced — track markets actively','Expert — manage own portfolio']],
-      8 => ['q'=>'What are your current financial liabilities (loans etc.)?', 'opts'=>['Very high','Moderate','Low','None']],
-      9 => ['q'=>'How many financial dependents do you have?', 'opts'=>['3 or more','2','1','None']],
-      10=> ['q'=>'When might you need this invested money?', 'opts'=>['Within 2 years','2–5 years','5–10 years','More than 10 years']],
-      11=> ['q'=>'Are you comfortable with short-term losses for long-term gains?', 'opts'=>['No, I need capital safety','Somewhat, minor dips are okay','Yes, I can handle volatility','Definitely — I focus on long-term']],
+    $suggestions = [
+        'conservative' => [['Liquid / Overnight', 'Lowest risk — park emergency funds'],['Short Duration Debt', 'Stable income, low volatility'],['Conservative Hybrid', 'Mostly debt with small equity kicker'],['Arbitrage Funds', 'Equity taxation, debt-level risk']],
+        'moderate'     => [['Large Cap Equity', 'Blue-chip stability with growth'],['Balanced Advantage', 'Dynamic equity-debt allocation'],['ELSS', 'Tax saving + market-linked growth'],['Flexi Cap', 'Fund manager discretion across caps']],
+        'aggressive'   => [['Mid Cap Equity', 'High growth potential, higher volatility'],['Small Cap Equity', 'Maximum long-term compounding'],['Sectoral / Thematic', 'Concentrated bets on sectors'],['International Funds', 'Geographic diversification']],
     ];
-    foreach ($questions as $n => $q): ?>
-    <div class="form-group" style="margin-bottom:1.5rem">
-      <label class="form-label" style="font-size:0.875rem;color:var(--cream)">
-        <?= $n ?>. <?= htmlspecialchars($q['q'], ENT_QUOTES,'UTF-8') ?>
-      </label>
-      <div style="display:flex;flex-direction:column;gap:0.4rem;margin-top:0.4rem">
-        <?php foreach ($q['opts'] as $i => $opt): ?>
-        <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.875rem;color:var(--text-secondary);padding:0.4rem 0">
-          <input type="radio" name="q<?= $n ?>" value="<?= $i+1 ?>" required style="accent-color:var(--mid)">
-          <?= htmlspecialchars($opt, ENT_QUOTES,'UTF-8') ?>
-        </label>
-        <?php endforeach; ?>
-      </div>
+    foreach (($suggestions[$rp] ?? []) as [$cat, $desc]):
+    ?>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:0.35rem 0;border-bottom:1px solid var(--border-light)">
+      <span style="font-size:0.85rem;color:var(--cream)"><?= $cat ?></span>
+      <span style="font-size:0.78rem;color:var(--text-secondary)"><?= $desc ?></span>
     </div>
     <?php endforeach; ?>
+  </div>
 
-    <button type="submit" class="btn-primary">Get My Risk Profile →</button>
-  </form>
+  <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
+    <a href="<?= $assessment_url ?>" class="btn-outline btn-sm">Retake Assessment</a>
+    <a href="<?= SITE_URL ?>/advisory/mutual-funds.php" class="btn-primary btn-sm">View My Recommendations →</a>
+  </div>
+</div>
+
+<?php else: ?>
+<!-- No profile yet -->
+<div class="portal-card" style="text-align:center;padding:3rem 2rem">
+  <div style="font-size:2rem;margin-bottom:0.75rem">📊</div>
+  <h3 style="font-family:'Cormorant Garamond',serif;color:var(--cream);font-size:1.4rem;margin-bottom:0.6rem">No risk profile on file</h3>
+  <p style="color:var(--text-secondary);font-size:0.9rem;line-height:1.7;max-width:400px;margin:0 auto 1.5rem">
+    Complete our 5-question assessment to get personalised fund recommendations matched to your risk tolerance.
+  </p>
+  <a href="<?= $assessment_url ?>" class="btn-primary">Start Assessment →</a>
 </div>
 <?php endif; ?>
 <?php endif; ?>
