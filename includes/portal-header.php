@@ -79,9 +79,12 @@ function nav_link(string $href, string $icon, string $label, string $current): s
       <button onclick="idleKeepAlive()" style="width:100%;padding:0.75rem;background:var(--mid);border:none;border-radius:8px;color:#fff;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;transition:background 0.2s" onmouseover="this.style.background='var(--bright)'" onmouseout="this.style.background='var(--mid)'">
         <i class="bi bi-check-circle" style="margin-right:0.4rem"></i>Yes, keep me logged in
       </button>
-      <a href="<?= SITE_URL ?>/auth/logout.php" style="width:100%;padding:0.65rem;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text-secondary);font-family:'DM Sans',sans-serif;font-size:0.82rem;text-decoration:none;display:block;transition:all 0.2s" onmouseover="this.style.borderColor='rgba(201,168,76,0.3)';this.style.color='var(--cream)'" onmouseout="this.style.borderColor='';this.style.color=''">
-        Log out now
-      </a>
+      <form method="post" action="<?= SITE_URL ?>/auth/logout.php" style="width:100%;margin:0">
+        <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+        <button type="submit" style="width:100%;padding:0.65rem;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text-secondary);font-family:'DM Sans',sans-serif;font-size:0.82rem;cursor:pointer;transition:all 0.2s" onmouseover="this.style.borderColor='rgba(201,168,76,0.3)';this.style.color='var(--cream)'" onmouseout="this.style.borderColor='';this.style.color=''">
+          Log out now
+        </button>
+      </form>
     </div>
   </div>
 </div>

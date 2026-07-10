@@ -6,7 +6,15 @@ require_once '../includes/auth.php';
 require_once '../includes/mailer.php';
 
 if (is_logged_in()) {
-    header('Location: ' . SITE_URL . '/portal/dashboard.php');
+    $dest = ($_SESSION['user_role'] ?? '') === 'admin' ? '/admin/dashboard.php' : '/portal/dashboard.php';
+    header('Location: ' . SITE_URL . $dest);
+    exit;
+}
+
+// Handle "restart" GET param — must be before any output
+if (isset($_GET['restart'])) {
+    unset($_SESSION['reset_email'], $_SESSION['reset_step'], $_SESSION['forgot_msg']);
+    header('Location: ' . SITE_URL . '/auth/forgot-password.php');
     exit;
 }
 
@@ -268,14 +276,6 @@ require_once __DIR__ . '/auth-layout.php';
   </div><!-- /.auth-inner -->
 </div><!-- /.auth-wrapper -->
 
-<?php
-// Handle "restart" GET param to clear session state
-if (isset($_GET['restart'])) {
-    unset($_SESSION['reset_email'], $_SESSION['reset_step'], $_SESSION['forgot_msg']);
-    header('Location: ' . SITE_URL . '/auth/forgot-password.php');
-    exit;
-}
-?>
 
 <script src="<?= SITE_URL ?>/assets/js/portal.js"></script>
 <script>

@@ -6,7 +6,8 @@ require_once '../includes/auth.php';
 require_once '../includes/mailer.php';
 
 if (is_logged_in()) {
-    header('Location: ' . SITE_URL . '/portal/dashboard.php');
+    $dest = ($_SESSION['user_role'] ?? '') === 'admin' ? '/admin/dashboard.php' : '/portal/dashboard.php';
+    header('Location: ' . SITE_URL . $dest);
     exit;
 }
 
@@ -115,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
                     unset($_SESSION['pending_verify_email'], $_SESSION['dev_otp']);
                     $_SESSION['flash'] = ['type' => 'success', 'message' => 'Email verified! Welcome to Prime Financials.'];
-                    header('Location: ' . SITE_URL . '/portal/dashboard.php');
+                    header('Location: ' . SITE_URL . '/portal/dashboard.php'); // new users are always clients
                     exit;
                 }
             } catch (PDOException $e) {
