@@ -15,7 +15,7 @@ const BENCHMARKS = [
     'nifty100'         => ['nse_col' => 'NIFTY 100 Total Returns Index',          'mfapi' => '147666'],
     'nifty_midcap150'  => ['nse_col' => 'NIFTY MIDCAP 150 Total Returns Index',   'mfapi' => '148726'],
     'nifty_smallcap250'=> ['nse_col' => 'NIFTY SMALLCAP 250 Total Returns Index', 'mfapi' => '148519'],
-    'nifty500'         => ['nse_col' => 'NIFTY 500 Total Returns Index',           'mfapi' => '152908'],
+    'nifty500'         => ['nse_col' => 'NIFTY 500 Total Returns Index',           'mfapi' => '147666'], // nifty100 proxy (nifty500 funds too new for 3yr history)
     'crisil_short_dur' => ['nse_col' => null,                                      'mfapi' => '118796'],
     'crisil_gilt'      => ['nse_col' => null,                                      'mfapi' => '119707'],
 ];

@@ -23,7 +23,7 @@ const BENCH_PROXY = [
     'nifty100'          => '147666',
     'nifty_midcap150'   => '148726',
     'nifty_smallcap250' => '148519',
-    'nifty500'          => '152908',
+    'nifty500'          => '147666', // nifty100 proxy (nifty500 index funds <3yr history)
     'crisil_short_dur'  => '118796',
     'crisil_gilt'       => '119707',
 ];
