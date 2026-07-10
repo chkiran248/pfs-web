@@ -169,13 +169,17 @@ function std_dev(array $values): float
 function cagr_from_navs(array $navs, int $years): ?float
 {
     if (count($navs) < 2) return null;
-    $dates  = array_keys($navs);
-    $latest = end($navs);
-    $target = strtotime("-{$years} years", strtotime(end($dates)));
-    foreach (array_reverse($dates, true) as $d => $nav) {
+    $dates    = array_keys($navs);   // ['Y-m-d', 'Y-m-d', ...] — numerically indexed
+    $last_date = end($dates);
+    $latest   = $navs[$last_date];
+    $target   = strtotime("-{$years} years", strtotime($last_date));
+    $last_ts  = strtotime($last_date);
+    // Walk backwards: newest date first
+    foreach (array_reverse($dates) as $d) {   // $d is the date string
         if (strtotime($d) <= $target) {
+            $nav = $navs[$d];
             if ($nav <= 0) return null;
-            $actual_yrs = (strtotime(end($dates)) - strtotime($d)) / (365.25 * 86400);
+            $actual_yrs = ($last_ts - strtotime($d)) / (365.25 * 86400);
             if ($actual_yrs <= 0) return null;
             return round((pow($latest / $nav, 1.0 / $actual_yrs) - 1.0) * 100, 2);
         }
