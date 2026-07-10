@@ -17,7 +17,8 @@ function mf_api_fetch(string $scheme_code): ?array {
     $resp = @file_get_contents($url, false, $ctx);
     if (!$resp) return null;
     $data = json_decode($resp, true);
-    if (!is_array($data) || ($data['status'] ?? '') !== 'SUCCESS' || empty($data['data'])) return null;
+    // MFAPI individual-fund responses don't include a status field; only validate data exists
+    if (!is_array($data) || empty($data['data']) || !isset($data['data'][0]['nav'])) return null;
     return $data;
 }
 

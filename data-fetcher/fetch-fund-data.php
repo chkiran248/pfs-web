@@ -5,58 +5,58 @@ if (php_sapi_name() !== 'cli') { http_response_code(403); exit('CLI only.'); }
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../includes/db.php';
 
+require_once __DIR__ . '/../includes/mf-api.php';
+
 $db = get_db();
 echo '[' . date('H:i:s') . "] Fund return update starting\n";
 
-$funds   = $db->query("SELECT id, fund_name FROM fund_recommendations WHERE is_active=1")->fetchAll();
-$context = stream_context_create(['http' => ['timeout' => 20, 'user_agent' => 'PrimeFinancials/1.0']]);
+// Use scheme_code from DB when set; fall back to fuzzy-name match only if missing
+$funds = $db->query("SELECT id, fund_name, scheme_code FROM fund_recommendations WHERE is_active=1")->fetchAll(PDO::FETCH_ASSOC);
 
-// Load scheme list from mfapi.in (free, no key)
-$schemes_json = @file_get_contents('https://api.mfapi.in/mf', false, $context);
-$all_schemes  = json_decode((string)$schemes_json, true) ?? [];
-echo 'Loaded ' . count($all_schemes) . " schemes from mfapi.in\n";
+$context     = stream_context_create(['http' => ['timeout' => 20, 'user_agent' => 'PrimeFinancials/1.0']]);
+$all_schemes = null; // lazy-load the full list only if fuzzy matching is needed
 
-$stmt = $db->prepare("UPDATE fund_recommendations SET return_1yr=:r1, return_3yr=:r3, return_5yr=:r5, last_data_refresh=NOW() WHERE id=:id");
-
-function calc_cagr(array $nav_data, float $current_nav, int $days): ?float {
-    $target = new DateTime("-{$days} days");
-    foreach ($nav_data as $e) {
-        $d = DateTime::createFromFormat('d-m-Y', $e['date']); // mfapi.in uses dd-mm-yyyy
-        if (!$d) continue;
-        if ($d <= $target) {
-            $old = (float)$e['nav'];
-            if ($old <= 0) return null;
-            return round((pow($current_nav / $old, 365 / $days) - 1) * 100, 2);
-        }
-    }
-    return null;
-}
+$stmt = $db->prepare("UPDATE fund_recommendations SET return_1yr=:r1, return_3yr=:r3, return_5yr=:r5, current_nav=:nav, last_data_refresh=NOW() WHERE id=:id");
 
 foreach ($funds as $fund) {
-    // Fuzzy match by similarity
-    $best_code = null; $best_pct = 0;
-    $search    = strtolower($fund['fund_name']);
-    foreach ($all_schemes as $s) {
-        similar_text(strtolower($s['schemeName']), $search, $pct);
-        if ($pct > $best_pct) { $best_pct = $pct; $best_code = $s['schemeCode']; }
+    $scheme_code = $fund['scheme_code'] ?? null;
+
+    if (!$scheme_code) {
+        // Lazy-load all schemes for fuzzy matching
+        if ($all_schemes === null) {
+            $json = @file_get_contents('https://api.mfapi.in/mf', false, $context);
+            $all_schemes = json_decode((string)$json, true) ?? [];
+            echo 'Loaded ' . count($all_schemes) . " schemes for fuzzy matching\n";
+        }
+        $best_code = null; $best_pct = 0;
+        $search = strtolower($fund['fund_name']);
+        foreach ($all_schemes as $s) {
+            $sname = strtolower($s['schemeName']);
+            if (strpos($sname, 'direct') !== false && strpos($sname, 'growth') !== false) {
+                similar_text($search, $sname, $pct);
+                if ($pct > $best_pct) { $best_pct = $pct; $best_code = $s['schemeCode']; }
+            }
+        }
+        if (!$best_code || $best_pct < 65) {
+            echo "No match ({$best_pct}%): {$fund['fund_name']}\n";
+            continue;
+        }
+        $scheme_code = (string)$best_code;
+        echo "Fuzzy matched ({$best_pct}%): {$fund['fund_name']} → {$scheme_code}\n";
     }
-    if (!$best_code || $best_pct < 65) { echo "No match ({$best_pct}%): {$fund['fund_name']}\n"; continue; }
 
-    $hist = @file_get_contents("https://api.mfapi.in/mf/{$best_code}", false, $context);
-    if (!$hist) { sleep(1); continue; }
+    $data    = mf_api_fetch($scheme_code);
+    if (!$data) { echo "MFAPI fetch failed: {$fund['fund_name']} [{$scheme_code}]\n"; sleep(1); continue; }
 
-    $data    = json_decode((string)$hist, true);
-    $navdata = $data['data'] ?? [];
-    if (empty($navdata)) continue;
+    $navdata = $data['data'];
+    $latest  = (float)$navdata[0]['nav'];
+    $r1      = mf_cagr($navdata, 1);
+    $r3      = mf_cagr($navdata, 3);
+    $r5      = mf_cagr($navdata, 5);
 
-    $latest = (float)$navdata[0]['nav'];
-    $r1     = calc_cagr($navdata, $latest, 365);
-    $r3     = calc_cagr($navdata, $latest, 365 * 3);
-    $r5     = calc_cagr($navdata, $latest, 365 * 5);
-
-    $stmt->execute([':r1' => $r1, ':r3' => $r3, ':r5' => $r5, ':id' => $fund['id']]);
-    echo "Updated: {$fund['fund_name']} | 1yr={$r1}% 3yr={$r3}% 5yr={$r5}%\n";
-    sleep(1); // be respectful of free API
+    $stmt->execute([':r1' => $r1, ':r3' => $r3, ':r5' => $r5, ':nav' => round($latest, 4), ':id' => $fund['id']]);
+    echo "Updated: {$fund['fund_name']} | NAV={$latest} | 1yr={$r1}% 3yr={$r3}% 5yr={$r5}%\n";
+    sleep(1);
 }
 
 echo '[' . date('H:i:s') . "] Fund return update complete\n";
