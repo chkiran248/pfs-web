@@ -1,10 +1,11 @@
-<?php
+﻿<?php
 declare(strict_types=1);
 require_once '../includes/config.php';
 require_once '../includes/db.php';
 require_once '../includes/auth.php';
 require_login();
-require_role('client');
+// Advisory pages accessible to both clients and admins
+if (!is_logged_in()) { header('Location: ' . SITE_URL . '/auth/login.php'); exit; }
 
 $db  = get_db();
 $cat = trim($_GET['cat'] ?? '');
@@ -20,7 +21,7 @@ $insights = $stmt->fetchAll();
 $cats = ['market_update'=>'Market Update','tax_tips'=>'Tax Tips','fund_analysis'=>'Fund Analysis','nps'=>'NPS','insurance'=>'Insurance','stocks'=>'Stocks','general'=>'General'];
 $cat_badge = ['market_update'=>'badge-green','tax_tips'=>'badge-gold','fund_analysis'=>'badge-green','nps'=>'badge-gold','insurance'=>'badge-muted','stocks'=>'badge-muted','general'=>'badge-muted'];
 
-$page_title = 'Market Insights — Prime Financials';
+$page_title = 'Market Insights â€” Prime Financials';
 require_once '../includes/portal-header.php';
 ?>
 
@@ -38,7 +39,7 @@ require_once '../includes/portal-header.php';
 
 <?php if (empty($insights)): ?>
 <div class="portal-card" style="text-align:center;padding:3rem;color:var(--text-secondary)">
-  <div style="font-size:2rem;margin-bottom:1rem">▦</div>
+  <div style="font-size:2rem;margin-bottom:1rem">â–¦</div>
   No insights published yet<?= $cat?' in this category':'' ?>. Check back soon.
 </div>
 <?php else: ?>
@@ -47,10 +48,10 @@ require_once '../includes/portal-header.php';
   <div class="portal-card">
     <div style="margin-bottom:0.6rem"><span class="badge <?= $cat_badge[$ins['category']]??'badge-muted' ?>"><?= $cats[$ins['category']]??ucfirst($ins['category']) ?></span></div>
     <div style="font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:600;color:var(--cream);line-height:1.3;margin-bottom:0.5rem"><?= htmlspecialchars($ins['title'],ENT_QUOTES,'UTF-8') ?></div>
-    <?php if ($ins['excerpt']): ?><div style="font-size:0.82rem;color:var(--text-secondary);line-height:1.6;margin-bottom:0.75rem"><?= htmlspecialchars(mb_substr($ins['excerpt'],0,150),ENT_QUOTES,'UTF-8') ?><?= strlen($ins['excerpt'])>150?'…':'' ?></div><?php endif; ?>
+    <?php if ($ins['excerpt']): ?><div style="font-size:0.82rem;color:var(--text-secondary);line-height:1.6;margin-bottom:0.75rem"><?= htmlspecialchars(mb_substr($ins['excerpt'],0,150),ENT_QUOTES,'UTF-8') ?><?= strlen($ins['excerpt'])>150?'â€¦':'' ?></div><?php endif; ?>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:auto">
-      <span style="font-size:0.72rem;color:var(--text-muted);font-family:'DM Mono',monospace"><?= $ins['published_at']?date('d M Y',strtotime($ins['published_at'])):'—' ?> · <?= $ins['views'] ?> views</span>
-      <button onclick="openInsight(<?= $ins['id'] ?>)" class="btn-ghost btn-sm">Read →</button>
+      <span style="font-size:0.72rem;color:var(--text-muted);font-family:'DM Mono',monospace"><?= $ins['published_at']?date('d M Y',strtotime($ins['published_at'])):'â€”' ?> Â· <?= $ins['views'] ?> views</span>
+      <button onclick="openInsight(<?= $ins['id'] ?>)" class="btn-ghost btn-sm">Read â†’</button>
     </div>
   </div>
   <?php endforeach; ?>
@@ -61,7 +62,7 @@ require_once '../includes/portal-header.php';
   <div style="max-width:720px;margin:0 auto;background:var(--surface-1);border:1px solid var(--border);border-radius:16px;padding:2rem">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
       <span class="badge" id="modal-cat"></span>
-      <button onclick="closeInsight()" style="background:none;border:none;color:var(--text-secondary);font-size:1.5rem;cursor:pointer">×</button>
+      <button onclick="closeInsight()" style="background:none;border:none;color:var(--text-secondary);font-size:1.5rem;cursor:pointer">Ã—</button>
     </div>
     <h2 style="font-family:'Cormorant Garamond',serif;font-size:1.8rem;color:var(--cream);margin-bottom:0.5rem" id="modal-title"></h2>
     <div style="font-size:0.75rem;color:var(--text-muted);font-family:'DM Mono',monospace;margin-bottom:1.5rem" id="modal-date"></div>
@@ -93,3 +94,4 @@ document.getElementById('insight-modal').addEventListener('click',function(e){if
 <?php endif; ?>
 
 <?php require_once '../includes/portal-footer.php'; ?>
+

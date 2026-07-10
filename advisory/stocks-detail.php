@@ -1,10 +1,11 @@
-<?php
+﻿<?php
 declare(strict_types=1);
 require_once '../includes/config.php';
 require_once '../includes/db.php';
 require_once '../includes/auth.php';
 require_login();
-require_role('client');
+// Advisory pages accessible to both clients and admins
+if (!is_logged_in()) { header('Location: ' . SITE_URL . '/auth/login.php'); exit; }
 
 $db  = get_db();
 $uid = get_user_id();
@@ -39,14 +40,14 @@ if (!empty($stock['key_metrics'])) {
 }
 
 $cap_labels = ['large_cap'=>'Large Cap','mid_cap'=>'Mid Cap','small_cap'=>'Small Cap','micro_cap'=>'Micro Cap'];
-$page_title = htmlspecialchars($stock['company_name'], ENT_QUOTES, 'UTF-8') . ' — Prime Financials';
+$page_title = htmlspecialchars($stock['company_name'], ENT_QUOTES, 'UTF-8') . ' â€” Prime Financials';
 require_once '../includes/portal-header.php';
 ?>
 
-<div style="margin-bottom:1.5rem"><a href="<?= SITE_URL ?>/advisory/stocks.php" style="color:var(--text-secondary);font-size:0.875rem;text-decoration:none">← Back to Stock Research</a></div>
+<div style="margin-bottom:1.5rem"><a href="<?= SITE_URL ?>/advisory/stocks.php" style="color:var(--text-secondary);font-size:0.875rem;text-decoration:none">â† Back to Stock Research</a></div>
 
 <div class="disclaimer disclaimer--stock">
-  <strong>⚠ Research Note — Not Investment Advice</strong> These notes are for educational purposes only. Prime Financials is NOT a SEBI RIA. Please consult a SEBI RIA before investing. Investments in securities are subject to market risks.
+  <strong>âš  Research Note â€” Not Investment Advice</strong> These notes are for educational purposes only. Prime Financials is NOT a SEBI RIA. Please consult a SEBI RIA before investing. Investments in securities are subject to market risks.
 </div>
 
 <div style="margin:1.5rem 0">
@@ -59,9 +60,9 @@ require_once '../includes/portal-header.php';
   <h1 style="font-family:'Cormorant Garamond',serif;font-size:2.25rem;font-weight:700;color:var(--cream);margin-bottom:0.25rem"><?= htmlspecialchars($stock['company_name'],ENT_QUOTES,'UTF-8') ?></h1>
   <?php if ($stock['report_title']): ?><p style="font-style:italic;color:var(--text-secondary);font-size:1rem"><?= htmlspecialchars($stock['report_title'],ENT_QUOTES,'UTF-8') ?></p><?php endif; ?>
   <p style="font-size:0.78rem;color:var(--text-muted);font-family:'DM Mono',monospace;margin-top:0.5rem">
-    Report Date: <?= $stock['report_date']?date('d M Y',strtotime($stock['report_date'])):'—' ?>
-    <?= $stock['price_at_report']?' · Price at report: ₹'.number_format((float)$stock['price_at_report'],2):'' ?>
-    · <?= $stock['views'] ?> views
+    Report Date: <?= $stock['report_date']?date('d M Y',strtotime($stock['report_date'])):'â€”' ?>
+    <?= $stock['price_at_report']?' Â· Price at report: â‚¹'.number_format((float)$stock['price_at_report'],2):'' ?>
+    Â· <?= $stock['views'] ?> views
   </p>
 </div>
 
@@ -95,7 +96,7 @@ require_once '../includes/portal-header.php';
       <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrf_token(),ENT_QUOTES,'UTF-8') ?>">
       <input type="hidden" name="action" value="add_watchlist">
       <p style="color:var(--text-secondary);font-size:0.875rem;margin-bottom:1rem">Add to your watchlist to track this stock and set price alerts.</p>
-      <button type="submit" class="btn-outline btn-sm">★ Add to Stock Watchlist</button>
+      <button type="submit" class="btn-outline btn-sm">â˜… Add to Stock Watchlist</button>
     </form>
   </div>
 </div>
@@ -111,3 +112,4 @@ require_once '../includes/portal-header.php';
 </div>
 
 <?php require_once '../includes/portal-footer.php'; ?>
+

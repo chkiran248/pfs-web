@@ -1,10 +1,11 @@
-<?php
+﻿<?php
 declare(strict_types=1);
 require_once '../includes/config.php';
 require_once '../includes/db.php';
 require_once '../includes/auth.php';
 require_login();
-require_role('client');
+// Advisory pages accessible to both clients and admins
+if (!is_logged_in()) { header('Location: ' . SITE_URL . '/auth/login.php'); exit; }
 
 $sectors = [
     ['name'=>'IT / Technology',    'ytd'=>12.4, 'view'=>'Overweight', 'note'=>'Strong earnings momentum. US tech spend recovery driving Indian IT. Preferred: Large-cap IT with global exposure.'],
@@ -15,20 +16,20 @@ $sectors = [
     ['name'=>'Real Estate',        'ytd'=>31.2, 'view'=>'Neutral',    'note'=>'Strong volume growth but valuations now stretched. Selective top-tier developers preferred.'],
     ['name'=>'Metals & Mining',    'ytd'=>-5.8, 'view'=>'Underweight','note'=>'China demand concerns weighing on steel and aluminium. Commodity cycle likely to remain muted.'],
     ['name'=>'Energy & Power',     'ytd'=>6.4,  'view'=>'Neutral',    'note'=>'Renewable energy capex positive long-term. PSU utilities re-rating partially done.'],
-    ['name'=>'Infrastructure',     'ytd'=>18.9, 'view'=>'Overweight', 'note'=>'Govt capex sustained at ₹11L Cr. Order books healthy. Roads, railways, water key themes.'],
+    ['name'=>'Infrastructure',     'ytd'=>18.9, 'view'=>'Overweight', 'note'=>'Govt capex sustained at â‚¹11L Cr. Order books healthy. Roads, railways, water key themes.'],
     ['name'=>'Chemicals',          'ytd'=>-3.2, 'view'=>'Neutral',    'note'=>'China dumping pressure continues. Select specialty chemical companies preferred over bulk.'],
     ['name'=>'Consumption',        'ytd'=>4.8,  'view'=>'Neutral',    'note'=>'Urban spending resilient. Premiumisation continues. Rural recovery expected H2.'],
     ['name'=>'Capital Goods',      'ytd'=>24.1, 'view'=>'Overweight', 'note'=>'Manufacturing capex cycle in full swing. Order inflows robust. Import substitution theme strong.'],
 ];
 $view_style = ['Overweight'=>['badge-green','var(--bright)'],'Neutral'=>['badge-gold','var(--gold)'],'Underweight'=>['badge-muted','var(--danger)']];
 
-$page_title = 'Sector Tracker — Prime Financials';
+$page_title = 'Sector Tracker â€” Prime Financials';
 require_once '../includes/portal-header.php';
 ?>
 
 <p class="page-eyebrow">Advisory</p>
 <h1 class="page-title">Sector Tracker</h1>
-<p class="page-subtitle">NSE sector performance and advisor views — updated periodically</p>
+<p class="page-subtitle">NSE sector performance and advisor views â€” updated periodically</p>
 
 <div class="disclaimer disclaimer--mf" style="margin-bottom:1.5rem">
   Sector performance figures are illustrative. Actual YTD returns vary. This represents advisor views for educational purposes only. Not investment advice.
@@ -61,13 +62,13 @@ require_once '../includes/portal-header.php';
 
 <!-- Top picks bridge -->
 <div class="portal-card">
-  <div class="card-title">Overweight Sectors — Relevant Fund Categories</div>
+  <div class="card-title">Overweight Sectors â€” Relevant Fund Categories</div>
   <div style="display:flex;flex-direction:column;gap:0.75rem">
     <?php foreach ([['IT','Large Cap IT Funds, Index Funds (NIFTY IT)'],['Banking & Finance','Banking & PSU Debt, Nifty Bank ETF, Financial Services Funds'],['Auto','Auto Sector Funds, Flexi Cap with Auto tilt'],['Infrastructure','Infrastructure Funds, PSU Theme Funds, Nifty 500 Index'],['Capital Goods','Manufacturing Funds, Nifty India Manufacturing ETF'],['Pharma','Pharma Sector Funds, Healthcare Thematic Funds']] as [$sec, $funds]): ?>
     <div style="display:flex;align-items:flex-start;gap:1rem;padding:0.75rem 0;border-bottom:1px solid var(--border-light)">
       <span class="badge badge-green" style="flex-shrink:0"><?= $sec ?></span>
       <span style="font-size:0.875rem;color:var(--text-secondary)"><?= $funds ?></span>
-      <a href="<?= SITE_URL ?>/advisory/mutual-funds.php" class="btn-ghost btn-sm" style="flex-shrink:0;margin-left:auto">View Funds →</a>
+      <a href="<?= SITE_URL ?>/advisory/mutual-funds.php" class="btn-ghost btn-sm" style="flex-shrink:0;margin-left:auto">View Funds â†’</a>
     </div>
     <?php endforeach; ?>
   </div>
@@ -76,3 +77,4 @@ require_once '../includes/portal-header.php';
 <div class="disclaimer disclaimer--mf" style="margin-top:1.5rem">AMFI Registered MF Distributor (ARN-<?= AMFI_ARN ?>). Mutual Fund investments subject to market risks. Views expressed are for educational purposes only and may change without notice.</div>
 
 <?php require_once '../includes/portal-footer.php'; ?>
+
