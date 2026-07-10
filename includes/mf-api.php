@@ -7,11 +7,11 @@ declare(strict_types=1);
    Caches in fund_recommendations table (24h TTL)
    ============================================================ */
 
-function mf_api_fetch(string $scheme_code): ?array {
+function mf_api_fetch(string $scheme_code, int $timeout = 30): ?array {
     $url = 'https://api.mfapi.in/mf/' . urlencode($scheme_code);
     $ctx = stream_context_create(['http' => [
-        'timeout'       => 12,
-        'user_agent'    => 'PrimeFin-Portal/1.0',
+        'timeout'       => $timeout,  // 30s default; pass higher for full-history fetches
+        'user_agent'    => 'Mozilla/5.0 (compatible; PrimeFin-Portal/1.0)',
         'ignore_errors' => true,
     ]]);
     $resp = @file_get_contents($url, false, $ctx);
@@ -55,7 +55,6 @@ function mf_refresh_fund(int $fund_id, string $scheme_code, PDO $db): bool {
     $return_1yr  = mf_cagr($nav_data, 1);
     $return_3yr  = mf_cagr($nav_data, 3);
     $return_5yr  = mf_cagr($nav_data, 5);
-    $nav_date    = $nav_data[0]['date'] ?? null; // DD-MM-YYYY
 
     try {
         $stmt = $db->prepare(

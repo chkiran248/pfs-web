@@ -2,6 +2,9 @@
 declare(strict_types=1);
 if (php_sapi_name() !== 'cli') { http_response_code(403); exit('CLI only.'); }
 
+set_time_limit(0);           // CLI scripts need unlimited time for MFAPI fetches
+ini_set('memory_limit', '256M');
+
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/mf-api.php';
