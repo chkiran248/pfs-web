@@ -42,7 +42,9 @@ $update = $db->prepare(
      WHERE id=:id"
 );
 
-$all_results = [];
+$all_results  = [];
+$scored_count = 0;
+$skipped_count = 0;
 
 foreach ($funds as $fund) {
     echo "\nScoring: {$fund['fund_name']}\n";
@@ -51,6 +53,7 @@ foreach ($funds as $fund) {
     $fund_data = mf_api_fetch($fund['scheme_code']);
     if (!$fund_data || empty($fund_data['data'])) {
         echo "  SKIP — MFAPI unavailable for scheme {$fund['scheme_code']}\n";
+        $skipped_count++;
         continue;
     }
     $fund_navs = parse_nav_series($fund_data['data']); // [date => nav], sorted oldest-first
@@ -97,11 +100,12 @@ foreach ($funds as $fund) {
         ':ft' => $is_featured,
         ':id' => $fund['id'],
     ]);
+    $scored_count++;
 
     sleep(1); // respect MFAPI rate limits
 }
 
-echo "\n[" . date('H:i:s') . "] Scoring complete — {$update->rowCount()} funds processed\n";
+echo "\n[" . date('H:i:s') . "] Scoring complete — {$scored_count} scored, {$skipped_count} skipped\n";
 
 // ── Pure math helpers ─────────────────────────────────────────────────────────
 
