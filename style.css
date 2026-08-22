@@ -523,8 +523,6 @@ cite { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--lime);
   .step-connector { display: none; }
   .about__inner { grid-template-columns: 1fr; gap: 3rem; }
   .contact__inner { grid-template-columns: 1fr; gap: 3rem; }
-}
-@media (max-width: 768px) {
   .nav__links {
     display: none; flex-direction: column;
     position: fixed; top: 72px; left: 0; right: 0;
@@ -536,6 +534,9 @@ cite { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--lime);
   .nav__links a { font-size: 1.1rem; }
   .nav .btn--nav { display: none; }
   .nav__hamburger { display: flex; }
+}
+@media (max-width: 768px) {
+  .nav__links a { font-size: 1.1rem; }
   .intel-grid { grid-template-columns: 1fr; }
   .intel-card--large { grid-column: 1; grid-row: auto; border-right: none; border-bottom: 1.5px solid var(--border); }
   .product-row { grid-template-columns: 1fr; gap: 2.5rem; }
