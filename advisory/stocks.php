@@ -5,8 +5,6 @@ require_once '../includes/db.php';
 require_once '../includes/auth.php';
 require_once '../includes/stock-api.php';
 require_login();
-// Advisory pages accessible to both clients and admins
-if (!is_logged_in()) { header('Location: ' . SITE_URL . '/auth/login.php'); exit; }
 
 $db = get_db();
 stock_maybe_refresh($db);
@@ -28,7 +26,7 @@ $sectors_stmt->execute();
 $sectors = $sectors_stmt->fetchAll(PDO::FETCH_COLUMN);
 
 $cap_labels = ['large_cap'=>'Large Cap','mid_cap'=>'Mid Cap','small_cap'=>'Small Cap','micro_cap'=>'Micro Cap'];
-$page_title = 'Stock Research â€” Prime Financials';
+$page_title = 'Stock Research — Prime Financials';
 require_once '../includes/portal-header.php';
 ?>
 
@@ -36,7 +34,7 @@ require_once '../includes/portal-header.php';
 <h1 class="page-title">Stock Research</h1>
 
 <div class="disclaimer disclaimer--stock">
-  <strong>âš  Research Note â€” Not Investment Advice</strong>
+  <strong>⚠ Research Note — Not Investment Advice</strong>
   These research notes are for educational and informational purposes only. Prime Financials is an AMFI Registered Mutual Fund Distributor and is NOT a SEBI Registered Investment Advisor (RIA). This does not constitute investment advice or a recommendation to buy or sell any security. Please consult a SEBI RIA before investing. Investments in securities are subject to market risks.
 </div>
 
@@ -61,7 +59,7 @@ require_once '../includes/portal-header.php';
 
 <?php if (empty($stocks)): ?>
 <div class="portal-card" style="text-align:center;padding:3rem;color:var(--text-secondary)">
-  <div style="font-size:2rem;margin-bottom:1rem">â—ƒ</div>
+  <div style="font-size:2rem;margin-bottom:1rem">◃</div>
   No research published yet.
 </div>
 <?php else: ?>
@@ -79,12 +77,12 @@ require_once '../includes/portal-header.php';
     <div style="margin-bottom:0.4rem"><?= stock_price_badge((float)$s['current_price'],(float)$s['price_change_pct']) ?></div>
     <?php endif; ?>
     <?php if ($s['report_title']): ?><div style="font-style:italic;color:var(--text-secondary);font-size:0.875rem;margin-bottom:0.5rem"><?= htmlspecialchars($s['report_title'],ENT_QUOTES,'UTF-8') ?></div><?php endif; ?>
-    <?php if ($s['analyst_view']): ?><div style="font-size:0.82rem;color:var(--text-secondary);line-height:1.6;margin-bottom:0.75rem"><?= htmlspecialchars(mb_substr($s['analyst_view'],0,120),ENT_QUOTES,'UTF-8') ?><?= strlen($s['analyst_view'])>120?'â€¦':'' ?></div><?php endif; ?>
+    <?php if ($s['analyst_view']): ?><div style="font-size:0.82rem;color:var(--text-secondary);line-height:1.6;margin-bottom:0.75rem"><?= htmlspecialchars(mb_substr($s['analyst_view'],0,120),ENT_QUOTES,'UTF-8') ?><?= strlen($s['analyst_view'])>120?'…':'' ?></div><?php endif; ?>
     <div style="display:flex;justify-content:space-between;align-items:center">
       <div style="font-size:0.75rem;color:var(--text-muted);font-family:'DM Mono',monospace">
-        <?= $s['report_date']?date('d M Y',strtotime($s['report_date'])):'â€”' ?><?= $s['price_at_report']?' Â· â‚¹'.number_format((float)$s['price_at_report'],2).' at report':'' ?>
+        <?= $s['report_date']?date('d M Y',strtotime($s['report_date'])):'—' ?><?= $s['price_at_report']?' · ₹'.number_format((float)$s['price_at_report'],2).' at report':'' ?>
       </div>
-      <a href="<?= SITE_URL ?>/advisory/stocks-detail.php?id=<?= $s['id'] ?>" class="btn-outline btn-sm">Read Report â†’</a>
+      <a href="<?= SITE_URL ?>/advisory/stocks-detail.php?id=<?= $s['id'] ?>" class="btn-outline btn-sm">Read Report →</a>
     </div>
   </div>
   <?php endforeach; ?>
@@ -92,5 +90,4 @@ require_once '../includes/portal-header.php';
 <?php endif; ?>
 
 <?php require_once '../includes/portal-footer.php'; ?>
-
 

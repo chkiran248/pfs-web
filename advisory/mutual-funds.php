@@ -6,8 +6,6 @@ require_once '../includes/auth.php';
 require_once '../includes/mf-api.php';
 require_once '../includes/recommendation-engine.php';
 require_login();
-// Advisory pages accessible to both clients and admins
-if (!is_logged_in()) { header('Location: ' . SITE_URL . '/auth/login.php'); exit; }
 
 $db  = get_db();
 $uid = get_user_id();
@@ -38,7 +36,7 @@ $assessed_at     = $client_profile['risk_assessed_at'] ?? null;
 $needs_retake    = $assessed_at && strtotime($assessed_at) < strtotime('-1 year');
 $assessment_url  = SITE_URL . '/portal/risk-assessment.php?redirect=mutual-funds';
 
-$page_title = 'Mutual Funds â€” Prime Financials';
+$page_title = 'Mutual Funds — Prime Financials';
 require_once '../includes/portal-header.php';
 
 $risk_badge_cfg = [
@@ -53,13 +51,13 @@ $rbc = $risk_badge_cfg[$risk_profile] ?? null;
 <h1 class="page-title">Mutual Fund Recommendations</h1>
 
 <div class="disclaimer disclaimer--mf" style="margin-bottom:1.25rem">
-  Mutual Fund investments are subject to market risks. Please read all scheme-related documents carefully before investing. Past performance is not indicative of future results. Prime Financials â€” AMFI Registered MF Distributor (<?= AMFI_ARN ?>).
+  Mutual Fund investments are subject to market risks. Please read all scheme-related documents carefully before investing. Past performance is not indicative of future results. Prime Financials — AMFI Registered MF Distributor (<?= AMFI_ARN ?>).
 </div>
 
 <?php if (!$risk_profile): ?>
-<!-- â”€â”€ No profile gate â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<!-- ── No profile gate ────────────────────────────────────────────────────── -->
 <div class="portal-card" style="text-align:center;padding:3rem 2rem;max-width:560px;margin:2rem auto">
-  <div style="font-size:2.5rem;margin-bottom:1rem">ðŸ“Š</div>
+  <div style="font-size:2.5rem;margin-bottom:1rem">📊</div>
   <h2 style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--cream);margin-bottom:0.75rem">
     Let's find funds that suit <em>you</em>
   </h2>
@@ -68,15 +66,15 @@ $rbc = $risk_badge_cfg[$risk_profile] ?? null;
     It takes <strong style="color:var(--cream)">2 minutes</strong> to complete.
   </p>
   <a href="<?= $assessment_url ?>" class="btn-primary" style="display:inline-block;padding:0.8rem 2rem;font-size:1rem">
-    Start Risk Assessment â†’
+    Start Risk Assessment →
   </a>
   <div style="margin-top:1.25rem;font-size:0.78rem;color:var(--text-muted)">
-    5 questions Â· No personal data shared Â· You can retake anytime
+    5 questions · No personal data shared · You can retake anytime
   </div>
 </div>
 
 <?php else: ?>
-<!-- â”€â”€ Profile chip â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<!-- ── Profile chip ───────────────────────────────────────────────────────── -->
 <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem">
   <div style="display:flex;align-items:center;gap:0.6rem;background:<?= $rbc['bg'] ?>;border:1px solid <?= $rbc['color'] ?>;border-radius:24px;padding:0.4rem 1rem">
     <span style="font-size:0.65rem;font-family:'DM Mono',monospace;color:var(--text-secondary);letter-spacing:0.1em">RISK PROFILE</span>
@@ -91,12 +89,12 @@ $rbc = $risk_badge_cfg[$risk_profile] ?? null;
   </span>
   <?php endif; ?>
   <a href="<?= $assessment_url ?>" style="font-size:0.78rem;color:var(--lime);text-decoration:none">
-    <?= $needs_retake ? 'âš  Retake recommended (over 1 year old)' : 'Retake assessment â†’' ?>
+    <?= $needs_retake ? '⚠ Retake recommended (over 1 year old)' : 'Retake assessment →' ?>
   </a>
 </div>
 
 <?php
-// â”€â”€ Scored fund list â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Scored fund list ──────────────────────────────────────────────────────────
 $all_scored   = get_personalized_funds($db, $uid);
 $strong       = array_filter($all_scored, fn($f) => $f['match_score'] >= 75);
 $good         = array_filter($all_scored, fn($f) => $f['match_score'] >= 50 && $f['match_score'] < 75);
@@ -107,9 +105,9 @@ $risk_badge   = ['low'=>'badge-green','moderate'=>'badge-gold','high'=>'badge-go
 ?>
 
 <?php if (!empty($recommended)): ?>
-<!-- â”€â”€ Recommended section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<!-- ── Recommended section ────────────────────────────────────────────────── -->
 <div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--lime);letter-spacing:0.2em;margin-bottom:0.75rem">
-  â˜… RECOMMENDED FOR YOU (<?= count($recommended) ?> fund<?= count($recommended)!==1?'s':'' ?>)
+  ★ RECOMMENDED FOR YOU (<?= count($recommended) ?> fund<?= count($recommended)!==1?'s':'' ?>)
 </div>
 <div class="grid-2" style="margin-bottom:2rem">
   <?php foreach ($recommended as $f): ?>
@@ -119,9 +117,9 @@ $risk_badge   = ['low'=>'badge-green','moderate'=>'badge-gold','high'=>'badge-go
 <?php endif; ?>
 
 <?php if (!empty($consider) || !empty($other)): ?>
-<!-- â”€â”€ Other funds toggle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<!-- ── Other funds toggle ────────────────────────────────────────────────── -->
 <button id="toggleOther" onclick="toggleOtherFunds()" style="background:none;border:none;color:var(--lime);font-size:0.82rem;cursor:pointer;padding:0;margin-bottom:1rem;font-family:'DM Mono',monospace;letter-spacing:0.1em">
-  â–¶ SHOW OTHER FUNDS (<?= count($consider) + count($other) ?>)
+  ▶ SHOW OTHER FUNDS (<?= count($consider) + count($other) ?>)
 </button>
 <div id="otherFunds" style="display:none">
   <?php if (!empty($consider)): ?>
@@ -156,19 +154,19 @@ $risk_badge   = ['low'=>'badge-green','moderate'=>'badge-gold','high'=>'badge-go
   <div class="card-title">ELSS Tax Saver Planner</div>
   <div class="grid-2" style="align-items:start">
     <div>
-      <p style="color:var(--text-secondary);font-size:0.9rem;line-height:1.7;margin-bottom:0.75rem">ELSS (Equity Linked Savings Scheme) funds offer tax savings under <strong style="color:var(--cream)">Section 80C</strong> up to â‚¹1.5 Lakhs â€” with the shortest lock-in of just <strong style="color:var(--lime)">3 years</strong>.</p>
+      <p style="color:var(--text-secondary);font-size:0.9rem;line-height:1.7;margin-bottom:0.75rem">ELSS (Equity Linked Savings Scheme) funds offer tax savings under <strong style="color:var(--cream)">Section 80C</strong> up to ₹1.5 Lakhs — with the shortest lock-in of just <strong style="color:var(--lime)">3 years</strong>.</p>
       <div style="display:flex;flex-direction:column;gap:0.5rem">
-        <?php foreach ([['ðŸ“…','Shortest lock-in: 3 years (vs 5yr for PPF/NSC)'],['ðŸ’°','Tax saving: up to â‚¹46,800 at 30% bracket'],['ðŸ“ˆ','Historically 12â€“15% XIRR over 5+ years'],['ðŸ”„','SIP allowed â€” invest from â‚¹500/month']] as [$icon,$text]): ?>
+        <?php foreach ([['📅','Shortest lock-in: 3 years (vs 5yr for PPF/NSC)'],['💰','Tax saving: up to ₹46,800 at 30% bracket'],['📈','Historically 12–15% XIRR over 5+ years'],['🔄','SIP allowed — invest from ₹500/month']] as [$icon,$text]): ?>
         <div style="display:flex;gap:0.75rem;align-items:flex-start;font-size:0.875rem;color:var(--text-secondary)"><span><?= $icon ?></span><span><?= $text ?></span></div>
         <?php endforeach; ?>
       </div>
     </div>
     <div style="background:var(--surface-2);border-radius:10px;padding:1.25rem">
       <div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--lime);letter-spacing:0.15em;margin-bottom:0.75rem">QUICK ELSS CALCULATOR</div>
-      <div class="form-group"><label class="form-label">Monthly ELSS SIP (â‚¹)</label><input class="form-input" type="number" id="elss_sip" value="12500" oninput="calcElss()"></div>
-      <div style="margin-top:0.75rem;font-size:0.85rem;color:var(--text-secondary)">Annual investment: <span style="color:var(--cream)" id="elss_annual">â‚¹1,50,000</span></div>
-      <div style="font-size:0.85rem;color:var(--text-secondary)">Tax saved (30% bracket): <span style="color:var(--lime)" id="elss_saved">â‚¹46,800</span></div>
-      <div style="font-size:0.85rem;color:var(--text-secondary)">3-year corpus @13%: <span style="color:var(--bright)" id="elss_corpus">â‚¹5,22,000</span></div>
+      <div class="form-group"><label class="form-label">Monthly ELSS SIP (₹)</label><input class="form-input" type="number" id="elss_sip" value="12500" oninput="calcElss()"></div>
+      <div style="margin-top:0.75rem;font-size:0.85rem;color:var(--text-secondary)">Annual investment: <span style="color:var(--cream)" id="elss_annual">₹1,50,000</span></div>
+      <div style="font-size:0.85rem;color:var(--text-secondary)">Tax saved (30% bracket): <span style="color:var(--lime)" id="elss_saved">₹46,800</span></div>
+      <div style="font-size:0.85rem;color:var(--text-secondary)">3-year corpus @13%: <span style="color:var(--bright)" id="elss_corpus">₹5,22,000</span></div>
     </div>
   </div>
 </div>
@@ -178,16 +176,16 @@ function calcElss(){
   var sip=parseFloat(document.getElementById('elss_sip').value)||0;
   var annual=sip*12; var saved=Math.min(150000,annual)*0.30*1.04;
   var r=(13/100)/12,n=36,corpus=r>0?sip*((Math.pow(1+r,n)-1)/r)*(1+r):sip*n;
-  document.getElementById('elss_annual').textContent='â‚¹'+Math.round(annual).toLocaleString('en-IN');
-  document.getElementById('elss_saved').textContent='â‚¹'+Math.round(saved).toLocaleString('en-IN');
-  document.getElementById('elss_corpus').textContent='â‚¹'+Math.round(corpus).toLocaleString('en-IN');
+  document.getElementById('elss_annual').textContent='₹'+Math.round(annual).toLocaleString('en-IN');
+  document.getElementById('elss_saved').textContent='₹'+Math.round(saved).toLocaleString('en-IN');
+  document.getElementById('elss_corpus').textContent='₹'+Math.round(corpus).toLocaleString('en-IN');
 }
 function toggleOtherFunds(){
   var el=document.getElementById('otherFunds');
   var btn=document.getElementById('toggleOther');
   var shown=el.style.display!=='none';
   el.style.display=shown?'none':'block';
-  btn.textContent=(shown?'â–¶ SHOW':'â–¼ HIDE')+btn.textContent.slice(btn.textContent.indexOf(' OTHER'));
+  btn.textContent=(shown?'▶ SHOW':'▼ HIDE')+btn.textContent.slice(btn.textContent.indexOf(' OTHER'));
 }
 document.addEventListener('DOMContentLoaded',calcElss);
 </script>
@@ -224,7 +222,7 @@ function render_fund_card(array $f, array $risk_badge, int $uid, PDO $db, bool $
       <div style="margin-bottom:0.5rem">
         <div style="font-weight:600;color:var(--cream);font-size:1rem">
           <?= htmlspecialchars($f['fund_name'], ENT_QUOTES, 'UTF-8') ?>
-          <?php if ($f['is_featured']): ?><span class="badge badge-gold" style="margin-left:4px">â˜…</span><?php endif; ?>
+          <?php if ($f['is_featured']): ?><span class="badge badge-gold" style="margin-left:4px">★</span><?php endif; ?>
         </div>
         <div style="font-size:0.8rem;color:var(--text-secondary)"><?= htmlspecialchars($f['fund_house']??'', ENT_QUOTES, 'UTF-8') ?></div>
       </div>
@@ -266,7 +264,7 @@ function render_fund_card(array $f, array $risk_badge, int $uid, PDO $db, bool $
         <div style="text-align:center">
           <div style="font-size:0.58rem;color:var(--text-muted);font-family:'DM Mono',monospace"><?= $lbl ?> CAGR</div>
           <div style="font-family:'DM Mono',monospace;font-size:0.88rem;color:<?= $f[$col]!==null?(((float)$f[$col])>=0?'var(--bright)':'var(--danger)'):'var(--text-muted)' ?>">
-            <?= $f[$col] !== null ? round((float)$f[$col],1).'%' : 'â€”' ?>
+            <?= $f[$col] !== null ? round((float)$f[$col],1).'%' : '—' ?>
           </div>
         </div>
         <?php endforeach; ?>
@@ -288,11 +286,11 @@ function render_fund_card(array $f, array $risk_badge, int $uid, PDO $db, bool $
       <?php endif; ?>
 
       <?php if ($f['expense_ratio']): ?>
-      <div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:0.4rem">Expense: <?= $f['expense_ratio'] ?>%<?= $f['aum_cr'] ? ' Â· AUM: â‚¹'.number_format((float)$f['aum_cr'],0).'Cr' : '' ?></div>
+      <div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:0.4rem">Expense: <?= $f['expense_ratio'] ?>%<?= $f['aum_cr'] ? ' · AUM: ₹'.number_format((float)$f['aum_cr'],0).'Cr' : '' ?></div>
       <?php endif; ?>
       <?php if ($f['why_recommended']): ?>
       <div style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:0.75rem;line-height:1.5">
-        <?= htmlspecialchars(mb_substr($f['why_recommended'],0,120), ENT_QUOTES,'UTF-8') ?><?= mb_strlen($f['why_recommended'])>120?'â€¦':'' ?>
+        <?= htmlspecialchars(mb_substr($f['why_recommended'],0,120), ENT_QUOTES,'UTF-8') ?><?= mb_strlen($f['why_recommended'])>120?'…':'' ?>
       </div>
       <?php endif; ?>
 
@@ -303,11 +301,10 @@ function render_fund_card(array $f, array $risk_badge, int $uid, PDO $db, bool $
           <input type="hidden" name="action" value="add_watchlist">
           <input type="hidden" name="fund_name"  value="<?= htmlspecialchars($f['fund_name'], ENT_QUOTES,'UTF-8') ?>">
           <input type="hidden" name="fund_house" value="<?= htmlspecialchars($f['fund_house']??'', ENT_QUOTES,'UTF-8') ?>">
-          <button type="submit" class="btn-outline btn-sm">â˜… Watchlist</button>
+          <button type="submit" class="btn-outline btn-sm">★ Watchlist</button>
         </form>
-        <a href="https://wa.me/<?= WHATSAPP_NUM ?>?text=I+want+to+invest+in+<?= urlencode($f['fund_name']) ?>+recommended+on+primefin.in" class="btn-ghost btn-sm" target="_blank" rel="noopener">ðŸ’¬ Advisor</a>
+        <a href="https://wa.me/<?= WHATSAPP_NUM ?>?text=I+want+to+invest+in+<?= urlencode($f['fund_name']) ?>+recommended+on+primefin.in" class="btn-ghost btn-sm" target="_blank" rel="noopener">💬 Advisor</a>
       </div>
     </div>
     <?php
 }
-

@@ -4,8 +4,6 @@ require_once '../includes/config.php';
 require_once '../includes/db.php';
 require_once '../includes/auth.php';
 require_login();
-// Advisory pages accessible to both clients and admins
-if (!is_logged_in()) { header('Location: ' . SITE_URL . '/auth/login.php'); exit; }
 
 $db = get_db();
 
@@ -17,7 +15,7 @@ $portfolios = $stmt->fetchAll();
 // Static fallback
 $static = [
     ['portfolio_name'=>'Conservative Vault','risk_profile'=>'conservative','description'=>'Capital preservation with steady income. Ideal for investors within 3 years of a goal or with low risk tolerance.','target_return'=>8.0,'rebalance_freq'=>'quarterly','holdings'=>[['Liquid Fund',20,'mutual_fund','Emergency buffer, high liquidity'],['Short Duration Debt',30,'mutual_fund','Stable returns, low volatility'],['Large Cap Equity',30,'mutual_fund','Quality growth with lower drawdown'],['Gold',10,'gold','Inflation hedge & portfolio anchor'],['FD / Senior Schemes',10,'fd','Capital protection, guaranteed return']]],
-    ['portfolio_name'=>'Balanced Growth Portfolio','risk_profile'=>'moderate','description'=>'Balanced growth with moderate risk. Suitable for investors with 5â€“7 year horizon and moderate risk appetite.','target_return'=>11.0,'rebalance_freq'=>'quarterly','holdings'=>[['Large Cap Equity',40,'mutual_fund','Foundation â€” quality blue chip exposure'],['Flexi Cap Fund',20,'mutual_fund','Active management across market caps'],['Hybrid / Balanced Adv.',25,'mutual_fund','Risk modulation with equity + debt'],['Gold',10,'gold','Diversification and inflation protection'],['International / US Equity',5,'etf','Global exposure and currency diversification']]],
+    ['portfolio_name'=>'Balanced Growth Portfolio','risk_profile'=>'moderate','description'=>'Balanced growth with moderate risk. Suitable for investors with 5–7 year horizon and moderate risk appetite.','target_return'=>11.0,'rebalance_freq'=>'quarterly','holdings'=>[['Large Cap Equity',40,'mutual_fund','Foundation — quality blue chip exposure'],['Flexi Cap Fund',20,'mutual_fund','Active management across market caps'],['Hybrid / Balanced Adv.',25,'mutual_fund','Risk modulation with equity + debt'],['Gold',10,'gold','Diversification and inflation protection'],['International / US Equity',5,'etf','Global exposure and currency diversification']]],
     ['portfolio_name'=>'Aggressive Wealth Builder','risk_profile'=>'aggressive','description'=>'Maximum long-term wealth creation. For investors with 7+ year horizon and high risk tolerance.','target_return'=>14.0,'rebalance_freq'=>'yearly','holdings'=>[['Mid & Small Cap',35,'mutual_fund','High growth potential, higher volatility'],['Flexi Cap / Multi Cap',30,'mutual_fund','Flexible allocation across market caps'],['International / US Equity',20,'etf','Global diversification and dollar returns'],['Gold',10,'gold','Portfolio stabiliser'],['Thematic / Sector Funds',5,'mutual_fund','Tactical high-conviction bets']]],
 ];
 
@@ -25,7 +23,7 @@ $use_static = empty($portfolios);
 $risk_badge = ['conservative'=>'badge-green','moderate'=>'badge-gold','aggressive'=>'badge-muted'];
 $chart_colors = ['#1B5E2A','#2E8540','#4CAF50','#8DC63F','#C9A84C','#558b2f','#a5d6a7','#66BB6A'];
 
-$page_title = 'Model Portfolios â€” Prime Financials';
+$page_title = 'Model Portfolios — Prime Financials';
 require_once '../includes/portal-header.php';
 ?>
 
@@ -79,7 +77,7 @@ require_once '../includes/portal-header.php';
       <?php endforeach; ?>
     </table>
     <div style="margin-top:1rem">
-      <a href="https://wa.me/<?= WHATSAPP_NUM ?>?text=I+want+to+discuss+the+<?= urlencode($p['portfolio_name']) ?>+model+portfolio+on+primefin.in" class="btn-outline btn-sm" target="_blank" rel="noopener">ðŸ’¬ Discuss This Portfolio</a>
+      <a href="https://wa.me/<?= WHATSAPP_NUM ?>?text=I+want+to+discuss+the+<?= urlencode($p['portfolio_name']) ?>+model+portfolio+on+primefin.in" class="btn-outline btn-sm" target="_blank" rel="noopener">💬 Discuss This Portfolio</a>
     </div>
   </div>
   <script>
@@ -95,4 +93,3 @@ require_once '../includes/portal-header.php';
 </div>
 
 <?php require_once '../includes/portal-footer.php'; ?>
-

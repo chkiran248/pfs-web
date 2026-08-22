@@ -5,8 +5,6 @@ require_once '../includes/db.php';
 require_once '../includes/auth.php';
 require_once '../includes/mf-api.php';
 require_login();
-// Advisory pages accessible to both clients and admins
-if (!is_logged_in()) { header('Location: ' . SITE_URL . '/auth/login.php'); exit; }
 
 $db = get_db();
 mf_maybe_refresh($db);
@@ -29,7 +27,7 @@ if (!empty($ids)) {
 }
 
 $risk_badge = ['low'=>'badge-green','moderate'=>'badge-gold','high'=>'badge-gold','very_high'=>'badge-muted'];
-$page_title = 'Fund Compare â€” Prime Financials';
+$page_title = 'Fund Compare — Prime Financials';
 require_once '../includes/portal-header.php';
 ?>
 
@@ -37,7 +35,7 @@ require_once '../includes/portal-header.php';
 <h1 class="page-title">Fund Compare</h1>
 <p class="page-subtitle">Compare up to 3 mutual funds side by side</p>
 
-<div class="disclaimer disclaimer--mf">MF investments subject to market risks. Returns shown are indicative. Prime Financials â€” AMFI Registered MF Distributor (ARN-<?= AMFI_ARN ?>).</div>
+<div class="disclaimer disclaimer--mf">MF investments subject to market risks. Returns shown are indicative. Prime Financials — AMFI Registered MF Distributor (ARN-<?= AMFI_ARN ?>).</div>
 
 <!-- Fund selectors -->
 <form method="GET" style="display:flex;flex-wrap:wrap;gap:1rem;align-items:flex-end;margin:1.25rem 0">
@@ -45,7 +43,7 @@ require_once '../includes/portal-header.php';
   <div style="flex:1;min-width:200px">
     <label class="form-label">Fund <?= $i ?></label>
     <select class="form-select" name="f<?= $i ?>" onchange="this.form.submit()">
-      <option value="">â€” Select Fund â€”</option>
+      <option value="">— Select Fund —</option>
       <?php foreach ($all_funds as $f): ?>
       <option value="<?= $f['id'] ?>" <?= (isset($_GET["f$i"]) && (int)$_GET["f$i"] === (int)$f['id'])?'selected':'' ?>>
         <?= htmlspecialchars($f['fund_name'], ENT_QUOTES,'UTF-8') ?>
@@ -59,7 +57,7 @@ require_once '../includes/portal-header.php';
 
 <?php if (empty($selected)): ?>
 <div class="portal-card" style="text-align:center;padding:3rem;color:var(--text-secondary)">
-  <div style="font-size:2rem;margin-bottom:1rem">â—‡</div>
+  <div style="font-size:2rem;margin-bottom:1rem">◇</div>
   Select up to 3 funds above to compare them side by side.
 </div>
 <?php else: ?>
@@ -102,15 +100,15 @@ require_once '../includes/portal-header.php';
             <?php if ($cfg['fmt']==='badge' && $val): ?>
               <span class="badge <?= $risk_badge[$val]??'badge-muted' ?>"><?= ucfirst(str_replace('_',' ',$val)) ?></span>
             <?php elseif ($cfg['fmt']==='pct' && $val): ?>
-              <?= $val ?>%<?= $isBest?' â†‘':'' ?>
+              <?= $val ?>%<?= $isBest?' ↑':'' ?>
             <?php elseif ($cfg['fmt']==='pct_low' && $val): ?>
-              <?= $val ?>%<?= $isBest?' â†“ (lowest)':'' ?>
+              <?= $val ?>%<?= $isBest?' ↓ (lowest)':'' ?>
             <?php elseif ($cfg['fmt']==='yr' && $val): ?>
               <?= $val ?>yr+
             <?php elseif ($cfg['fmt']==='cr' && $val): ?>
               <?= format_inr((float)$val) ?>Cr
             <?php else: ?>
-              <?= $val ? htmlspecialchars((string)$val, ENT_QUOTES,'UTF-8') : 'â€”' ?>
+              <?= $val ? htmlspecialchars((string)$val, ENT_QUOTES,'UTF-8') : '—' ?>
             <?php endif; ?>
           </td>
           <?php endforeach; ?>
@@ -119,7 +117,7 @@ require_once '../includes/portal-header.php';
         <tr>
           <td style="font-weight:500;color:var(--cream)">Why Recommended</td>
           <?php foreach ($selected as $f): ?>
-          <td style="font-size:0.8rem;color:var(--text-secondary)"><?= $f['why_recommended']?htmlspecialchars(mb_substr($f['why_recommended'],0,120), ENT_QUOTES,'UTF-8').'â€¦':'â€”' ?></td>
+          <td style="font-size:0.8rem;color:var(--text-secondary)"><?= $f['why_recommended']?htmlspecialchars(mb_substr($f['why_recommended'],0,120), ENT_QUOTES,'UTF-8').'…':'—' ?></td>
           <?php endforeach; ?>
         </tr>
       </tbody>
@@ -155,5 +153,4 @@ document.addEventListener('DOMContentLoaded', function(){
 <?php endif; ?>
 
 <?php require_once '../includes/portal-footer.php'; ?>
-
 
