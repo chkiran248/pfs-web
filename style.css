@@ -199,7 +199,7 @@ ul { list-style: none; }
 }
 [data-theme="light"] .nav--scrolled { box-shadow: 0 2px 24px rgba(0,0,0,0.08); }
 
-.nav__inner { display: flex; align-items: center; gap: 1.5rem; height: 100%; }
+.nav__inner { display: flex; align-items: center; gap: clamp(0.5rem, 1vw, 1.5rem); height: 100%; }
 
 .nav__logo { display: flex; align-items: center; gap: 0.7rem; flex-shrink: 0; }
 .logo-img {
@@ -216,7 +216,7 @@ ul { list-style: none; }
   transition: color 0.4s ease;
 }
 
-.nav__links { display: flex; align-items: center; gap: 1.5rem; margin-left: auto; }
+.nav__links { display: flex; align-items: center; flex-wrap: nowrap; gap: clamp(0.6rem, 1.2vw, 1.5rem); margin-left: auto; }
 .nav__links a {
   font-size: 0.875rem; color: var(--text-secondary);
   letter-spacing: 0.03em; transition: color 0.28s ease;
