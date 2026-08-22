@@ -90,7 +90,7 @@ require_once '../includes/portal-header.php';
     <div style="font-size:2.5rem;flex-shrink:0">🤖</div>
     <div style="flex:1;min-width:200px">
       <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:600;color:var(--cream);margin-bottom:0.25rem">Auto-Import with PrimoAI</div>
-      <p style="color:var(--text-secondary);font-size:0.875rem;margin-bottom:0.6rem">Upload your CAS statement or broker PDF — PrimoAI extracts and adds all holdings automatically.</p>
+      <p style="color:var(--text-secondary);font-size:0.875rem;margin-bottom:0.6rem">Upload your CAS statement or broker PDF — PrimoAI extracts and adds all holdings automatically. Don't have your CAS yet? <a href="<?= SITE_URL ?>/documentation.php?page=cas-nsdl-statement" style="color:var(--lime)">See how to get one →</a></p>
       <div style="display:flex;gap:0.5rem;flex-wrap:wrap;font-size:0.75rem;color:var(--text-muted)">
         <span>① Upload PDF</span><span style="color:var(--border)">→</span>
         <span>② PrimoAI reads it</span><span style="color:var(--border)">→</span>

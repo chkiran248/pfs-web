@@ -566,7 +566,8 @@ scrollBottom();
           🔐 <strong style="color:var(--cream)">Common statement passwords:</strong><br>
           • NSDL / CDSL demat statement → <span style="font-family:'DM Mono',monospace;color:var(--lime)">PAN in CAPITALS</span> (e.g. ABCDE1234F)<br>
           • CAMS / KFintech CAS → <span style="font-family:'DM Mono',monospace;color:var(--lime)">PAN in CAPITALS</span><br>
-          • Broker statements (Zerodha/Groww) → usually not password protected
+          • Broker statements (Zerodha/Groww) → usually not password protected<br>
+          Don't have your statement yet? <a href="<?= SITE_URL ?>/documentation.php?page=cas-nsdl-statement" style="color:var(--lime)">See how to get one →</a>
         </div>
       </div>
 

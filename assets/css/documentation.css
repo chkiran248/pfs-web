@@ -1,0 +1,250 @@
+/* Documentation Center — Prime Financials */
+
+.docs-body {
+  padding-top: 72px;
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+.docs-layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 2.5rem;
+}
+
+/* ── Sidebar ─────────────────────────────────────────── */
+.docs-sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 72px;
+  max-height: calc(100vh - 72px);
+  overflow-y: auto;
+  padding: 2.5rem 0.75rem 2rem 0;
+}
+
+.docs-group { margin-bottom: 0.35rem; }
+
+.docs-group summary {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 0.6rem;
+  cursor: pointer;
+  list-style: none;
+  border-radius: 7px;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  color: var(--text-secondary);
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.docs-group summary::-webkit-details-marker { display: none; }
+.docs-group summary::marker { content: ''; }
+.docs-group summary:hover { background: var(--surface-2); color: var(--cream); }
+
+.docs-group-icon { color: var(--lime); font-size: 0.95rem; flex-shrink: 0; }
+
+.docs-chevron {
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  transition: transform 0.2s ease;
+}
+.docs-group[open] > summary .docs-chevron { transform: rotate(90deg); }
+
+.docs-links {
+  display: flex;
+  flex-direction: column;
+  padding: 0.2rem 0 0.6rem 1.85rem;
+}
+.docs-links a {
+  padding: 0.5rem 0.7rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  border-left: 2px solid transparent;
+  border-radius: 0 6px 6px 0;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.docs-links a:hover { color: var(--cream); background: var(--surface-2); }
+.docs-links a.active {
+  color: var(--lime);
+  background: rgba(141, 198, 63, 0.08);
+  border-left-color: var(--lime);
+  font-weight: 500;
+}
+
+.docs-help-card {
+  margin-top: 1.75rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.15rem;
+}
+.docs-help-card h5 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: var(--cream);
+  margin-bottom: 0.5rem;
+}
+.docs-help-card h5 i { color: var(--lime); }
+.docs-help-card p {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 0.9rem;
+}
+
+/* ── Content ─────────────────────────────────────────── */
+.docs-content {
+  flex: 1;
+  min-width: 0;
+  padding: 3rem 0 6rem;
+  max-width: 800px;
+}
+
+.docs-eyebrow { margin-bottom: 1.25rem; }
+
+.docs-article h1 {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(1.9rem, 3.2vw, 2.6rem);
+  font-weight: 600;
+  color: var(--cream);
+  margin-bottom: 1.75rem;
+  line-height: 1.2;
+}
+
+.docs-article h2 {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--cream);
+  margin: 2.5rem 0 1rem;
+}
+
+.docs-article h3 {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--cream);
+  margin: 1.75rem 0 0.75rem;
+}
+
+.docs-article p {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  line-height: 1.85;
+  margin-bottom: 1.15rem;
+}
+
+.docs-article ul,
+.docs-article ol {
+  margin: 0 0 1.25rem 1.35rem;
+  color: var(--text-secondary);
+  line-height: 1.85;
+}
+.docs-article li { margin-bottom: 0.5rem; }
+.docs-article li::marker { color: var(--lime); }
+
+.docs-article strong { color: var(--cream); font-weight: 600; }
+
+.docs-article a {
+  color: var(--lime);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.docs-article a:hover { color: var(--cream); }
+
+.docs-article code {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.88em;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1em 0.4em;
+  color: var(--cream);
+}
+
+/* Callout / tip box */
+.doc-callout {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+  background: rgba(141, 198, 63, 0.08);
+  border: 1px solid rgba(141, 198, 63, 0.25);
+  border-radius: 10px;
+  padding: 1.1rem 1.3rem;
+  margin: 1.75rem 0;
+}
+.doc-callout .doc-callout-icon {
+  color: var(--lime);
+  font-size: 1.15rem;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+.doc-callout p {
+  margin: 0;
+  color: var(--cream);
+  font-size: 0.94rem;
+  line-height: 1.7;
+}
+.doc-callout strong { color: var(--lime); }
+
+/* Warning-style callout */
+.doc-callout--warn {
+  background: rgba(201, 168, 76, 0.08);
+  border-color: rgba(201, 168, 76, 0.28);
+}
+.doc-callout--warn .doc-callout-icon,
+.doc-callout--warn strong { color: var(--gold); }
+
+/* Numbered step cards, reused inside articles for multi-option guides */
+.doc-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 1.5rem 0 2rem;
+}
+.doc-step {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.25rem 1.4rem;
+}
+.doc-step h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0 0 0.5rem;
+}
+.doc-step h3 .doc-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  background: rgba(141, 198, 63, 0.12);
+  color: var(--lime);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+.doc-step p { margin-bottom: 0.5rem; }
+.doc-step p:last-child { margin-bottom: 0; }
+
+@media (max-width: 900px) {
+  .docs-layout { flex-direction: column; }
+  .docs-sidebar {
+    width: 100%;
+    position: static;
+    max-height: none;
+    padding: 1.5rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .docs-content { padding: 2rem 0 4rem; }
+}

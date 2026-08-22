@@ -60,6 +60,7 @@ $contact_csrf = $_SESSION['contact_csrf'];
       <li><a href="#intelligence">Intelligence</a></li>
       <li><a href="#approach">Our Approach</a></li>
       <li><a href="#pricing">Pricing</a></li>
+      <li><a href="documentation.php">Documentation</a></li>
       <li><a href="#about">About</a></li>
       <li class="nav__mobile-login"><a href="auth/login.php">Client Login →</a></li>
     </ul>
@@ -629,10 +630,10 @@ $contact_csrf = $_SESSION['contact_csrf'];
       <div class="footer__col">
         <h4>Compliance</h4>
         <ul>
-          <li><a href="#">AMFI Registration</a></li>
-          <li><a href="#">Privacy Policy</a></li>
-          <li><a href="#">Disclaimer</a></li>
-          <li><a href="#">Grievance Redressal</a></li>
+          <li><a href="documentation.php?page=amfi-compliance">AMFI Registration</a></li>
+          <li><a href="documentation.php?page=privacy-policy">Privacy Policy</a></li>
+          <li><a href="documentation.php?page=disclaimer">Disclaimer</a></li>
+          <li><a href="documentation.php?page=grievance-redressal">Grievance Redressal</a></li>
         </ul>
       </div>
     </div>

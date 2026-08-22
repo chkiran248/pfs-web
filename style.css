@@ -216,10 +216,11 @@ ul { list-style: none; }
   transition: color 0.4s ease;
 }
 
-.nav__links { display: flex; align-items: center; gap: 2rem; margin-left: auto; }
+.nav__links { display: flex; align-items: center; gap: 1.5rem; margin-left: auto; }
 .nav__links a {
   font-size: 0.875rem; color: var(--text-secondary);
   letter-spacing: 0.03em; transition: color 0.28s ease;
+  white-space: nowrap;
 }
 .nav__links a:hover { color: var(--cream); }
 
