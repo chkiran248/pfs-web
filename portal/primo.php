@@ -137,10 +137,10 @@ require_once '../includes/portal-header.php';
     <div class="msg assistant" id="welcomeMsg">
       <div class="msg-avatar">✦</div>
       <div>
-        <div class="msg-bubble primo-msg-content">
-          Hi <?= htmlspecialchars(get_user_name(),ENT_QUOTES,'UTF-8') ?>! I'm <strong>PrimoAI</strong>, your AI financial assistant. I have live access to your portfolio, goals, and watchlists.<br><br>
-          Ask me anything about your investments, goals, tax planning, or general Indian finance questions. What's on your mind?
-        </div>
+        <div class="msg-bubble primo-msg-content" id="welcomeBubble"
+             data-md="Hi **<?= htmlspecialchars(get_user_name(),ENT_QUOTES,'UTF-8') ?>**! I'm **PrimoAI**, your AI financial assistant. I have live access to your portfolio, goals, and watchlists.
+
+Ask me anything about your investments, goals, tax planning, or general Indian finance questions. What's on your mind?"></div>
         <div class="msg-time">Just now</div>
       </div>
     </div>
@@ -517,6 +517,10 @@ ta.addEventListener('input', () => {
 ta.addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
 });
+
+// Render welcome message through markdown pipeline
+const wb = document.getElementById('welcomeBubble');
+if (wb) wb.innerHTML = renderMarkdown(wb.dataset.md);
 
 // Pre-scroll if history loaded
 scrollBottom();
