@@ -58,6 +58,48 @@ function require_premium(string $feature, string $redirect_back = ''): void {
     }
 }
 
+/**
+ * Activate a paid Cashfree subscription for a user.
+ * Called by payment-verify.php and the webhook after confirming payment.
+ */
+function activate_paid_subscription(int $user_id, string $cf_order_id, string $billing_cycle): bool {
+    $db          = get_db();
+    $plan_code   = 'premium';
+    $days        = $billing_cycle === 'annual' ? 365 : 30;
+    $expires_sql = "DATE_ADD(NOW(), INTERVAL {$days} DAY)";
+
+    $db->beginTransaction();
+    try {
+        // Cancel any existing active subscriptions
+        $db->prepare("UPDATE user_subscriptions SET status = 'cancelled' WHERE user_id = :uid AND status = 'active'")
+           ->execute([':uid' => $user_id]);
+
+        // Insert new subscription
+        $db->prepare("
+            INSERT INTO user_subscriptions
+                (user_id, plan_code, status, billing_cycle, cashfree_order_id, started_at, expires_at)
+            VALUES
+                (:uid, :plan, 'active', :cycle, :oid, NOW(), {$expires_sql})
+        ")->execute([
+            ':uid'   => $user_id,
+            ':plan'  => $plan_code,
+            ':cycle' => $billing_cycle,
+            ':oid'   => $cf_order_id,
+        ]);
+
+        // Mark payment as paid
+        $db->prepare("UPDATE payments SET status = 'paid', paid_at = NOW() WHERE cashfree_order_id = :oid")
+           ->execute([':oid' => $cf_order_id]);
+
+        $db->commit();
+        return true;
+    } catch (Exception $e) {
+        $db->rollBack();
+        error_log('activate_paid_subscription error: ' . $e->getMessage());
+        return false;
+    }
+}
+
 /** Redeem a coupon code for the current user. */
 function redeem_coupon(int $user_id, string $code): array {
     $db   = get_db();

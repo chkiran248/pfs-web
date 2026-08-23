@@ -107,9 +107,10 @@ require_once '../includes/portal-header.php';
     </ul>
     <?php if (!$active): ?>
     <div style="display:flex;flex-direction:column;gap:0.5rem">
-      <a href="https://wa.me/<?= WHATSAPP_NUM ?>?text=<?= urlencode('Hi, I want to subscribe to Prime Financials Prime Member plan at Rs 499/month.') ?>"
-         target="_blank" rel="noopener"
-         style="display:block;text-align:center;background:var(--gold);color:#0c1a0c;padding:0.6rem;border-radius:7px;font-size:0.82rem;font-weight:700;text-decoration:none">Subscribe via WhatsApp</a>
+      <a href="<?= SITE_URL ?>/portal/checkout.php?cycle=annual"
+         style="display:block;text-align:center;background:var(--gold);color:#0c1a0c;padding:0.6rem;border-radius:7px;font-size:0.82rem;font-weight:700;text-decoration:none">Pay Annual ₹4,999 <span style="font-weight:400;font-size:0.75rem">— save 17%</span></a>
+      <a href="<?= SITE_URL ?>/portal/checkout.php?cycle=monthly"
+         style="display:block;text-align:center;background:transparent;border:1px solid var(--gold);color:var(--gold);padding:0.55rem;border-radius:7px;font-size:0.82rem;font-weight:600;text-decoration:none">Pay Monthly ₹499</a>
     </div>
     <?php endif; ?>
   </div>
