@@ -7,10 +7,10 @@
 
 /* ── CSS VARIABLES ── */
 :root {
-  --bg:             #1a3020;
-  --surface-1:      #223d28;
-  --surface-2:      #2a4c32;
-  --border:         rgba(46,133,64,0.25);
+  --bg:             #162816;
+  --surface-1:      #1e3520;
+  --surface-2:      #264028;
+  --border:         rgba(46,133,64,0.22);
   --border-light:   rgba(46,133,64,0.12);
   --forest:         #1B5E2A;
   --mid:            #2E8540;
@@ -20,10 +20,10 @@
   --gold:           #C9A84C;
   --cream:          #e4f0e4;
   --cream-muted:    #93b893;
-  --cream-dim:      #527252;
+  --cream-dim:      #4a6e4a;
   --text-primary:   #e4f0e4;
   --text-secondary: #85a885;
-  --text-muted:     #527252;
+  --text-muted:     #4a6e4a;
   --sidebar-width:  220px;
   --header-height:  64px;
   --danger:         #ef5350;
