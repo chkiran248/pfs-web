@@ -104,8 +104,16 @@ body { background: var(--bg); color: var(--text-primary); font-family: 'DM Sans'
       <div class="error-msg"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div>
       <a href="<?= SITE_URL ?>/portal/pricing.php" class="back-link">← Back to pricing</a>
     <?php else: ?>
-      <div class="spinner"></div>
-      <div class="status-msg">Redirecting to secure payment…</div>
+      <div id="spinnerWrap">
+        <div class="spinner"></div>
+        <div class="status-msg">Redirecting to secure payment…</div>
+      </div>
+      <div id="payBtn" style="display:none;margin-top:1.25rem">
+        <button onclick="initPayment()" style="width:100%;background:var(--gold);color:#0c1a0c;border:none;padding:0.75rem;border-radius:8px;font-size:0.9rem;font-weight:700;cursor:pointer">
+          Click here to pay ₹<?= number_format($amount) ?>
+        </button>
+        <div id="jsError" style="margin-top:0.75rem;font-size:0.75rem;color:#ef5350"></div>
+      </div>
       <a href="<?= SITE_URL ?>/portal/pricing.php" class="back-link">Cancel and go back</a>
     <?php endif; ?>
   </div>
@@ -114,13 +122,44 @@ body { background: var(--bg); color: var(--text-primary); font-family: 'DM Sans'
 <?php if (!$error && $payment_session_id): ?>
 <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 <script>
-(function () {
-  const cashfree = Cashfree({ mode: <?= CF_ENV === 'production' ? '"production"' : '"sandbox"' ?> });
-  cashfree.checkout({
-    paymentSessionId: <?= json_encode($payment_session_id) ?>,
-    redirectTarget: "_self",
-  });
-})();
+const CF_SESSION_ID = <?= json_encode($payment_session_id) ?>;
+const CF_MODE       = <?= CF_ENV === 'production' ? '"production"' : '"sandbox"' ?>;
+
+function initPayment() {
+  document.getElementById('payBtn').style.display = 'none';
+  document.getElementById('spinnerWrap').style.display = 'block';
+  try {
+    const cashfree = Cashfree({ mode: CF_MODE });
+    cashfree.checkout({ paymentSessionId: CF_SESSION_ID, redirectTarget: '_self' })
+      .catch(function(err) {
+        showFallback('SDK error: ' + (err && err.message ? err.message : JSON.stringify(err)));
+      });
+  } catch(e) {
+    showFallback('Could not start payment: ' + e.message);
+  }
+}
+
+function showFallback(msg) {
+  document.getElementById('spinnerWrap').style.display = 'none';
+  document.getElementById('payBtn').style.display = 'block';
+  document.getElementById('jsError').textContent = msg || '';
+}
+
+// Try auto-redirect on load; show button after 4s if not redirected
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    if (document.getElementById('spinnerWrap')) {
+      initPayment();
+      // If still on page after 6 more seconds, show manual button
+      setTimeout(function() {
+        if (document.getElementById('spinnerWrap') &&
+            document.getElementById('spinnerWrap').style.display !== 'none') {
+          showFallback('');
+        }
+      }, 6000);
+    }
+  }, 800);
+});
 </script>
 <?php endif; ?>
 </body>
