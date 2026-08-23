@@ -99,6 +99,13 @@ require_once '../includes/portal-header.php';
 .gain-pos { color:var(--bright); }
 .gain-neg { color:#ef5350; }
 .research-badge { color:var(--lime); }
+.rb-report-actions { display:flex; gap:0.65rem; margin-top:1rem; flex-wrap:wrap; }
+.rb-action-btn { display:flex; align-items:center; gap:0.4rem; padding:0.55rem 1rem; border-radius:7px; font-size:0.82rem; font-family:'DM Sans',sans-serif; font-weight:500; cursor:pointer; border:none; transition:all 0.18s; }
+.rb-action-btn--pdf  { background:var(--mid); color:#fff; }
+.rb-action-btn--pdf:hover  { background:var(--bright); }
+.rb-action-btn--email { background:transparent; color:var(--lime); border:1px solid var(--lime); }
+.rb-action-btn--email:hover { background:rgba(141,198,63,0.1); }
+.rb-action-btn:disabled { opacity:0.55; cursor:not-allowed; }
 </style>
 
 <p class="page-eyebrow">My Finances</p>
@@ -186,6 +193,7 @@ require_once '../includes/portal-header.php';
 </div>
 
 <script>
+const SITE_URL_JS = '<?= SITE_URL ?>';
 const MF_URL = '<?= SITE_URL ?>/ai/rebalance-mf.php';
 const ONBOARDING_URL = '<?= ONBOARDING_URL ?>';
 const CALENDLY_URL   = '<?= CALENDLY_URL ?>';
@@ -215,13 +223,170 @@ async function runRebalancer(type) {
     });
     const r = await resp.json();
     if (!r.success) throw new Error(r.error || 'Analysis failed');
-    isMF ? renderMF(r.data, body) : renderEQ(r.data, body);
+    if (isMF) { window._rbMFData = r.data; renderMF(r.data, body); }
+    else       { window._rbEQData = r.data; renderEQ(r.data, body); }
   } catch(err) {
     body.innerHTML = `<div class="rb-error">⚠ ${e(err.message)}<br><small style="color:var(--text-muted)">Please try again in a moment.</small></div>`;
   } finally {
     btn.disabled = false;
     btn.textContent = 'Re-run →';
   }
+}
+
+// ── PDF Download ───────────────────────────────────────────
+function downloadPDF(type) {
+  const data = type === 'mutual_fund' ? window._rbMFData : window._rbEQData;
+  if (!data) return;
+  const title = type === 'mutual_fund' ? 'Mutual Fund Rebalancer Report' : 'Equity Portfolio Analyser Report';
+  const date  = new Date().toLocaleDateString('en-IN', { day:'numeric', month:'long', year:'numeric' });
+  const body  = buildReportBody(type, data);
+  const disclaimer = type === 'mutual_fund'
+    ? 'Mutual Fund investments are subject to market risks. Please read all scheme-related documents carefully before investing. Past performance is not indicative of future results. Prime Financials — AMFI Registered MF Distributor (ARN-137538).'
+    : '⚠ Research Note — Not Investment Advice. This analysis is for educational and informational purposes only. Prime Financials is an AMFI Registered MF Distributor and is NOT a SEBI Registered Investment Advisor (RIA). This does not constitute investment advice. Please consult a SEBI RIA before investing. Investments in securities are subject to market risks.';
+
+  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+    <title>${e(title)} — Prime Financials</title>
+    <style>
+      *{box-sizing:border-box;margin:0;padding:0}
+      body{font-family:Arial,Helvetica,sans-serif;color:#0d1f0d;background:#fff;padding:2cm;font-size:13px}
+      h3{color:#1B5E2A;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.15em;font-family:monospace;margin:1.25rem 0 0.6rem}
+      table{width:100%;border-collapse:collapse;margin-bottom:1.25rem}
+      th{background:#1B5E2A;color:#fff;text-align:left;padding:0.45rem 0.7rem;font-size:0.78rem}
+      td{padding:0.45rem 0.7rem;border-bottom:1px solid #c8e6c9;font-size:0.8rem}
+      .score{font-size:2.2rem;font-weight:700;color:#2E8540;line-height:1}
+      .badge{font-family:monospace;font-size:0.62rem;padding:0.2rem 0.5rem;border-radius:4px;white-space:nowrap}
+      .card{border:1px solid #c8e6c9;border-radius:6px;padding:0.8rem;margin-bottom:0.65rem}
+      .card-urgent{border-left:3px solid #c62828}
+      .card-moderate{border-left:3px solid #a07d2a}
+      ul,ol{padding-left:1.1rem;line-height:1.65}li{margin-bottom:0.3rem}
+      @media print{body{padding:1cm}}
+    </style>
+  </head><body>
+    <div style="display:flex;align-items:center;gap:1rem;border-bottom:2px solid #2E8540;padding-bottom:1rem;margin-bottom:1.5rem">
+      <img src="${SITE_URL_JS}/logo.png" alt="Prime Financials" style="height:44px;object-fit:contain">
+      <div>
+        <div style="font-size:1.2rem;font-weight:700;color:#1B5E2A">Prime Financials</div>
+        <div style="font-size:0.72rem;color:#666">AMFI Registered MF Distributor · ARN-137538 · primefin.in</div>
+      </div>
+    </div>
+    <h1 style="font-size:1.3rem;color:#1B5E2A;margin-bottom:0.2rem">${e(title)}</h1>
+    <p style="font-size:0.78rem;color:#888;margin-bottom:1.5rem">Generated on ${date} · Prime Financials Client Portal</p>
+    ${body}
+    <div style="margin-top:2rem;padding:0.875rem 1rem;background:#f5f9f5;border-left:3px solid #2E8540;font-size:0.72rem;color:#555;line-height:1.7">${disclaimer}</div>
+    <div style="margin-top:1.25rem;padding-top:0.75rem;border-top:1px solid #ddd;display:flex;justify-content:space-between;font-size:0.68rem;color:#aaa">
+      <span>Prime Financials · support@primefin.in · +91 9980001338</span><span>primefin.in</span>
+    </div>
+  </body></html>`;
+
+  const w = window.open('', '_blank');
+  if (!w) { alert('Allow pop-ups for this site to download the PDF.'); return; }
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  setTimeout(() => w.print(), 600);
+}
+
+// ── Email Report ────────────────────────────────────────────
+async function emailReport(type, btn) {
+  const data = type === 'mutual_fund' ? window._rbMFData : window._rbEQData;
+  if (!data) return;
+  const orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Sending…';
+  try {
+    const res = await fetch(SITE_URL_JS + '/portal/send-rebalancer-report.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF },
+      body: JSON.stringify({ type, data })
+    });
+    const r = await res.json();
+    if (!r.success) throw new Error(r.error || 'Failed');
+    btn.innerHTML = '<i class="bi bi-check-circle"></i> Email Sent!';
+    btn.style.cssText += ';background:#2E8540;color:#fff;border-color:#2E8540';
+    setTimeout(() => { btn.innerHTML = orig; btn.removeAttribute('style'); btn.disabled = false; }, 3500);
+  } catch (err) {
+    btn.innerHTML = '<i class="bi bi-x-circle"></i> Failed';
+    btn.style.cssText += ';background:#ef5350;color:#fff;border-color:#ef5350';
+    setTimeout(() => { btn.innerHTML = orig; btn.removeAttribute('style'); btn.disabled = false; }, 3000);
+  }
+}
+
+// ── Report body builder (shared by PDF + Email) ─────────────
+function buildReportBody(type, d) {
+  const isMF = type === 'mutual_fund';
+  const G = '#2E8540', R = '#c62828', Y = '#a07d2a', B = '#1565c0', DIM = '#5a7a5a', BDR = '#c8e6c9';
+  const MFV = { hold:{l:'HOLD',c:G}, buy_more:{l:'BUY MORE',c:B}, switch:{l:'SWITCH',c:Y}, sell:{l:'SELL',c:R} };
+  const EQV = { hold:{l:'HOLD',c:G}, accumulate:{l:'ACCUMULATE',c:B}, reduce:{l:'CONSIDER REDUCING',c:Y}, exit:{l:'REVIEW POSITION',c:R}, review:{l:'MONITOR CLOSELY',c:'#f57f17'} };
+  const SIPL = { continue:'Continue SIP', increase:'Increase SIP', decrease:'Reduce SIP', stop:'Stop SIP' };
+  const hcol = isMF ? ({good:G,fair:Y,needs_attention:R}[d.overall_health]||G) : G;
+  let c = `<div style="display:flex;align-items:baseline;gap:0.75rem;margin-bottom:0.4rem">
+    <span style="font-size:2.2rem;font-weight:700;color:${hcol};line-height:1">${(isMF?d.overall_score:d.overall_score)||0}/100</span>
+    <span style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:${DIM};font-family:monospace">${e((isMF?d.overall_health:d.overall_assessment||'').replace(/_/g,' ').toUpperCase())}</span>
+  </div><p style="font-size:0.85rem;color:#0d1f0d;line-height:1.65;margin-bottom:1.25rem">${e(d.summary||'')}</p>`;
+
+  if (isMF) {
+    if (d.current_allocation && d.target_allocation) {
+      c += `<h3>Allocation Drift</h3><table><thead><tr><th>Category</th><th style="text-align:right">Current</th><th style="text-align:right">Target</th><th style="text-align:right">Drift</th></tr></thead><tbody>`;
+      [['Equity','equity'],['Debt','debt'],['Others','others']].forEach(([n,k])=>{
+        const cur=d.current_allocation[k+'_pct']||0,tgt=d.target_allocation[k+'_pct']||0,diff=cur-tgt,ok=Math.abs(diff)<=5;
+        c+=`<tr><td>${n}</td><td style="text-align:right">${cur}%</td><td style="text-align:right">${tgt}%</td><td style="text-align:right;color:${ok?G:Y}">${diff>0?'+':''}${diff}% ${ok?'✓':'⚠'}</td></tr>`;
+      });
+      c += `</tbody></table>`;
+    }
+    c += `<h3>Holdings Analysis</h3>`;
+    (d.holdings||[]).forEach(f=>{
+      const v=MFV[f.verdict]||MFV.hold, sl=SIPL[f.sip_recommendation]||'Continue SIP';
+      c+=`<div class="card ${f.priority==='urgent'?'card-urgent':f.priority==='moderate'?'card-moderate':''}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.35rem">
+          <strong style="font-size:0.875rem">${e(f.fund_name||'')}</strong>
+          <span class="badge" style="background:${v.c}20;color:${v.c};border:1px solid ${v.c}">${v.l}</span>
+        </div>
+        <div style="font-family:monospace;font-size:0.65rem;color:${DIM};margin-bottom:0.35rem">Weight: ${f.weight_in_portfolio_pct||0}% · ${e(sl)}${f.return_assessment?' · '+e(f.return_assessment.replace(/_/g,' ')):''}</div>
+        <p style="font-size:0.8rem;color:#0d1f0d;line-height:1.55;margin:0">${e(f.reason||'')}</p>
+        ${f.action_detail?`<p style="font-size:0.78rem;color:${G};margin:0.3rem 0 0">→ ${e(f.action_detail)}</p>`:''}
+      </div>`;
+    });
+    if ((d.rebalancing_actions||[]).length) {
+      c += `<h3>Recommended Actions</h3><ol>`;
+      d.rebalancing_actions.forEach(a=>{
+        c+=`<li><strong>${e(a.action_type.replace(/_/g,' ').toUpperCase())}</strong>${a.from_fund?' — '+e(a.from_fund)+(a.to_fund?' → '+e(a.to_fund):''):''}<br><span style="color:${DIM};font-size:0.78rem">${e(a.reason||'')}</span></li>`;
+      });
+      c += `</ol>`;
+    }
+  } else {
+    if ((d.sector_breakdown||[]).length) {
+      c += `<h3>Sector Breakdown</h3><table><thead><tr><th>Sector</th><th style="text-align:right">Allocation</th><th style="text-align:center">Status</th></tr></thead><tbody>`;
+      d.sector_breakdown.forEach(s=>{
+        c+=`<tr><td>${e(s.sector||'')}</td><td style="text-align:right">${s.allocation_pct||0}%</td><td style="text-align:center;color:${s.flag?Y:G}">${s.flag?'⚠ Concentrated':'✓ OK'}</td></tr>`;
+      });
+      c += `</tbody></table>`;
+    }
+    c += `<h3>Holdings Analysis</h3>`;
+    (d.holdings||[]).forEach(f=>{
+      const v=EQV[f.verdict]||EQV.hold,gp=f.unrealised_gain_pct||0;
+      c+=`<div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.35rem">
+          <strong style="font-size:0.875rem">${e(f.stock_name||'')}${f.ticker?` <span style="font-family:monospace;font-size:0.7em;color:${DIM}">(${e(f.ticker)})</span>`:''}</strong>
+          <span class="badge" style="background:${v.c}20;color:${v.c};border:1px solid ${v.c}">${v.l}</span>
+        </div>
+        <div style="font-family:monospace;font-size:0.65rem;color:${DIM};margin-bottom:0.35rem">Weight: ${f.weight_in_equity_pct||0}% · <span style="color:${gp>=0?G:R}">${gp>=0?'+':''}${gp}% unrealised</span> · ${f.holding_period_days||0}d held</div>
+        ${f.tax_note?`<p style="font-size:0.75rem;color:${Y};margin:0 0 0.3rem">💰 ${e(f.tax_note)}</p>`:''}
+        <p style="font-size:0.8rem;color:#0d1f0d;line-height:1.55;margin:0">${e(f.reason||'')}</p>
+        ${f.action_detail?`<p style="font-size:0.78rem;color:${G};margin:0.3rem 0 0">→ ${e(f.action_detail)}</p>`:''}
+      </div>`;
+    });
+    if ((d.tax_opportunities||[]).length) {
+      c+=`<h3>💡 Tax Opportunities</h3><ul>`;
+      d.tax_opportunities.forEach(t=>{c+=`<li>${e(t.description||'')}</li>`;});
+      c+=`</ul>`;
+    }
+    if ((d.concentration_alerts||[]).length) {
+      c+=`<h3>⚠ Concentration Alerts</h3><ul>`;
+      d.concentration_alerts.forEach(a=>{c+=`<li>${e(a.description||'')}<br><span style="color:${DIM};font-size:0.78rem">${e(a.suggestion||'')}</span></li>`;});
+      c+=`</ul>`;
+    }
+  }
+  return c;
 }
 
 // ── Verdict config ─────────────────────────────────────────
@@ -305,6 +470,10 @@ function renderMF(d, el) {
 
   h += `<p class="rb-disclaimer">${e(d.disclaimer||'')}</p>`;
   h += `<a href="https://wa.me/${WA_NUM}?text=${encodeURIComponent('Hi, I ran the Prime Financials MF Rebalancer and want to discuss the recommendations.')}" class="rb-wa-btn" target="_blank" rel="noopener">💬 Discuss with Advisor</a>`;
+  h += `<div class="rb-report-actions">
+    <button class="rb-action-btn rb-action-btn--pdf" onclick="downloadPDF('mutual_fund')"><i class="bi bi-file-earmark-pdf"></i> Download PDF</button>
+    <button class="rb-action-btn rb-action-btn--email" id="emailMF" onclick="emailReport('mutual_fund', this)"><i class="bi bi-envelope"></i> Email Report</button>
+  </div>`;
   el.innerHTML = h;
 }
 
@@ -367,6 +536,10 @@ function renderEQ(d, el) {
 
   h += `<div class="disclaimer disclaimer--stock" style="font-size:0.75rem">${e(d.disclaimer||'')}</div>`;
   h += `<a href="https://wa.me/${WA_NUM}?text=${encodeURIComponent('Hi, I reviewed my equity portfolio on Prime Financials and want to discuss the analysis.')}" class="rb-wa-btn" target="_blank" rel="noopener">💬 Discuss with Advisor</a>`;
+  h += `<div class="rb-report-actions">
+    <button class="rb-action-btn rb-action-btn--pdf" onclick="downloadPDF('equity')"><i class="bi bi-file-earmark-pdf"></i> Download PDF</button>
+    <button class="rb-action-btn rb-action-btn--email" id="emailEQ" onclick="emailReport('equity', this)"><i class="bi bi-envelope"></i> Email Report</button>
+  </div>`;
   el.innerHTML = h;
 }
 </script>
