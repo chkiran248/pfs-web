@@ -154,7 +154,8 @@ function nav_link(string $href, string $icon, string $label, string $current): s
       <a href="<?= SITE_URL ?>">
         <img src="<?= SITE_URL ?>/logo.png" alt="Prime Financials"
              width="32" height="32"
-             style="width:32px;height:32px;object-fit:contain;border-radius:6px;flex-shrink:0;mix-blend-mode:lighten;display:block" />
+             class="sidebar-logo-img"
+             style="width:32px;height:32px;object-fit:contain;border-radius:6px;flex-shrink:0;display:block" />
         <div>
           <span class="logo-text">Prime Financials</span>
           <span class="logo-tagline">Data is Our Power</span>
