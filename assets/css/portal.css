@@ -30,6 +30,23 @@
   --danger-pale:    rgba(239,83,80,0.12);
 }
 
+[data-theme="light"] {
+  --bg:             #e8f2e8;
+  --surface-1:      #f5fbf5;
+  --surface-2:      #ddeadd;
+  --border:         rgba(46,133,64,0.25);
+  --border-light:   rgba(46,133,64,0.12);
+  --mid-pale:       rgba(46,133,64,0.08);
+  --cream:          #0d1f0d;
+  --cream-muted:    #1e3e1e;
+  --cream-dim:      #3d6a3d;
+  --text-primary:   #0d1f0d;
+  --text-secondary: #1e4a1e;
+  --text-muted:     #3d6e3d;
+  --lime:           #3d6b20;
+  --mid:            #2E8540;
+}
+
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
     --bg:             #e8f2e8;
@@ -49,22 +66,12 @@
   }
 }
 
-[data-theme="light"] {
-  --bg:             #e8f2e8;
-  --surface-1:      #f5fbf5;
-  --surface-2:      #ddeadd;
-  --border:         rgba(46,133,64,0.25);
-  --border-light:   rgba(46,133,64,0.12);
-  --mid-pale:       rgba(46,133,64,0.08);
-  --cream:          #0d1f0d;
-  --cream-muted:    #1e3e1e;
-  --cream-dim:      #3d6a3d;
-  --text-primary:   #0d1f0d;
-  --text-secondary: #1e4a1e;
-  --text-muted:     #3d6e3d;
-  --lime:           #3d6b20;
-  --mid:            #2E8540;
-}
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar             { width: 4px; height: 4px; }
+::-webkit-scrollbar-track       { background: transparent; }
+::-webkit-scrollbar-thumb       { background: rgba(46,133,64,0.35); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #2E8540; }
+* { scrollbar-width: thin; scrollbar-color: rgba(46,133,64,0.35) transparent; }
 
 /* ── RESET & BASE ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -78,13 +85,6 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
-
-/* ── SCROLLBAR ── */
-::-webkit-scrollbar               { width: 4px; height: 4px; }
-::-webkit-scrollbar-track         { background: transparent; }
-::-webkit-scrollbar-thumb         { background: var(--border); border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover   { background: var(--mid); }
-* { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
 
 a { color: var(--bright); text-decoration: none; }
 a:hover { color: var(--lime); }
