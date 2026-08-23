@@ -60,6 +60,13 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar               { width: 4px; height: 4px; }
+::-webkit-scrollbar-track         { background: transparent; }
+::-webkit-scrollbar-thumb         { background: var(--border); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover   { background: var(--mid); }
+* { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+
 a { color: var(--bright); text-decoration: none; }
 a:hover { color: var(--lime); }
 
