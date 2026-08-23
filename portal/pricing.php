@@ -10,6 +10,7 @@ require_role('client');
 $uid          = get_user_id();
 $current_plan = get_user_plan($uid);
 $pc           = get_plan_config($current_plan);
+$sub          = get_user_subscription($uid);
 $coupon_error = $coupon_success = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['coupon_code'])) {
@@ -33,8 +34,19 @@ require_once '../includes/portal-header.php';
 <p class="page-subtitle">Start free. Upgrade when you're ready — or invest with us and get everything free.</p>
 
 <?php if ($current_plan !== 'free'): ?>
-<div class="flash-success" style="margin-bottom:1.5rem">
-  ✓ You are on the <strong><?= $pc['label'] ?></strong> plan with full premium access.
+<div class="flash-success" style="margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem">
+  <span>✓ You are on the <strong><?= $pc['label'] ?></strong> plan with full premium access.</span>
+  <?php if ($sub && $sub['expires_at']): ?>
+    <?php $exp = new DateTime($sub['expires_at']); $days_left = (int)(new DateTime())->diff($exp)->days; ?>
+    <span style="font-size:0.8rem;color:var(--text-secondary)">
+      <?= $days_left <= 30 ? '<span style="color:var(--gold)">⚠ ' : '' ?>
+      Active until <strong><?= $exp->format('d M Y') ?></strong>
+      (<?= $days_left ?> day<?= $days_left !== 1 ? 's' : '' ?> left)
+      <?= $days_left <= 30 ? '</span>' : '' ?>
+    </span>
+  <?php elseif ($sub && !$sub['expires_at']): ?>
+    <span style="font-size:0.8rem;color:var(--text-secondary)">Lifetime access</span>
+  <?php endif; ?>
 </div>
 <?php endif; ?>
 
@@ -99,7 +111,15 @@ require_once '../includes/portal-header.php';
     <div style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:700;color:var(--cream)">Member</div>
     <div style="font-size:1.75rem;font-weight:700;color:var(--cream);margin:0.5rem 0"><?= format_inr(499) ?><span style="font-size:0.85rem;color:var(--text-muted)">/mo</span></div>
     <div style="font-size:0.78rem;color:var(--gold);margin-bottom:0.5rem"><?= format_inr(4999) ?>/year — save 17%</div>
-    <?php if ($active): ?><span class="badge badge-gold" style="margin-bottom:0.75rem">★ Member</span><?php endif; ?>
+    <?php if ($active): ?>
+      <span class="badge badge-gold" style="margin-bottom:0.5rem">★ Member</span>
+      <?php if ($sub && $sub['expires_at']): ?>
+        <?php $exp2 = new DateTime($sub['expires_at']); $days2 = (int)(new DateTime())->diff($exp2)->days; ?>
+        <div style="font-size:0.75rem;color:<?= $days2 <= 30 ? 'var(--gold)' : 'var(--text-muted)' ?>;margin-bottom:0.5rem">
+          <?= $days2 <= 30 ? '⚠ ' : '' ?>Renews <?= $exp2->format('d M Y') ?> · <?= $days2 ?> days left
+        </div>
+      <?php endif; ?>
+    <?php endif; ?>
     <ul style="list-style:none;padding:0;margin:1rem 0;display:flex;flex-direction:column;gap:0.4rem;font-size:0.82rem;color:var(--text-secondary)">
       <li>✅ Everything in Prime</li>
       <li>✅ Priority advisor support</li>

@@ -21,6 +21,25 @@ function get_user_plan(int $user_id): string {
     return $stmt->fetchColumn() ?: 'free';
 }
 
+/**
+ * Returns the active subscription row for a user, or null if none.
+ * Includes: plan_code, expires_at, billing_cycle, cashfree_order_id
+ */
+function get_user_subscription(int $user_id): ?array {
+    $db   = get_db();
+    $stmt = $db->prepare("
+        SELECT plan_code, expires_at, billing_cycle, cashfree_order_id
+        FROM user_subscriptions
+        WHERE user_id = :uid AND status = 'active'
+          AND (expires_at IS NULL OR expires_at > NOW())
+        ORDER BY FIELD(plan_code,'premium','active_investor','free') ASC
+        LIMIT 1
+    ");
+    $stmt->execute([':uid' => $user_id]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    return $row ?: null;
+}
+
 /** Check if user's plan allows a specific feature. */
 function can_access(int $user_id, string $feature): bool {
     $free_features = [
