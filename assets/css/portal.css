@@ -168,9 +168,21 @@ h1, h2, h3, h4, h5 {
   display: block;
 }
 
+[data-theme="light"] .sidebar-logo-img,
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .sidebar-logo-img {
+    mix-blend-mode: normal;
+    background-color: #2E8540;
+    border-radius: 6px;
+    padding: 3px;
+  }
+}
+
 [data-theme="light"] .sidebar-logo-img {
-  mix-blend-mode: multiply;
-  filter: brightness(0.9);
+  mix-blend-mode: normal;
+  background-color: #2E8540;
+  border-radius: 6px;
+  padding: 3px;
 }
 
 .sidebar-nav {
