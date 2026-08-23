@@ -55,7 +55,7 @@ function nav_link(string $href, string $icon, string $label, string $current): s
   <script>(function(){var t=localStorage.getItem('pv-theme');if(t==='light')document.documentElement.setAttribute('data-theme','light');})()</script>
 
   <!-- Portal CSS -->
-  <link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/portal.css?v=<?= filemtime($_SERVER['DOCUMENT_ROOT'] . '/assets/css/portal.css') ?>" />
+  <link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/portal.css?v=20260823" />
 
   <!-- Bootstrap Icons (local) -->
   <link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/bootstrap-icons.min.css" />
