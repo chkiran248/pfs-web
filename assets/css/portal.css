@@ -7,23 +7,23 @@
 
 /* ── CSS VARIABLES ── */
 :root {
-  --bg:             #070e07;
-  --surface-1:      #0c140c;
-  --surface-2:      #111e11;
-  --border:         rgba(46,133,64,0.18);
-  --border-light:   rgba(46,133,64,0.08);
+  --bg:             #1a3020;
+  --surface-1:      #223d28;
+  --surface-2:      #2a4c32;
+  --border:         rgba(46,133,64,0.25);
+  --border-light:   rgba(46,133,64,0.12);
   --forest:         #1B5E2A;
   --mid:            #2E8540;
-  --mid-pale:       rgba(46,133,64,0.12);
+  --mid-pale:       rgba(46,133,64,0.14);
   --bright:         #4CAF50;
   --lime:           #8DC63F;
   --gold:           #C9A84C;
   --cream:          #e4f0e4;
   --cream-muted:    #93b893;
-  --cream-dim:      #4e7a4e;
+  --cream-dim:      #527252;
   --text-primary:   #e4f0e4;
   --text-secondary: #85a885;
-  --text-muted:     #2e4e2e;
+  --text-muted:     #527252;
   --sidebar-width:  220px;
   --header-height:  64px;
   --danger:         #ef5350;
@@ -31,18 +31,18 @@
 }
 
 [data-theme="light"] {
-  --bg:             #f0f6f0;
-  --surface-1:      #ffffff;
-  --surface-2:      #eaf3ea;
-  --border:         rgba(46,133,64,0.2);
-  --border-light:   rgba(46,133,64,0.1);
+  --bg:             #e8f2e8;
+  --surface-1:      #f5fbf5;
+  --surface-2:      #ddeadd;
+  --border:         rgba(46,133,64,0.25);
+  --border-light:   rgba(46,133,64,0.12);
   --mid-pale:       rgba(46,133,64,0.08);
   --cream:          #0d1f0d;
   --cream-muted:    #2a4a2a;
   --cream-dim:      #6a8a6a;
   --text-primary:   #0d1f0d;
   --text-secondary: #2a5a2a;
-  --text-muted:     #7aaa7a;
+  --text-muted:     #6a9a6a;
   --lime:           #558b2f;
   --mid:            #2E8540;
 }
