@@ -20,7 +20,7 @@ if ($current_plan === 'premium') {
 
 // Fetch user details for Cashfree customer object
 $db   = get_db();
-$stmt = $db->prepare("SELECT u.full_name, u.email, up.phone FROM users u LEFT JOIN user_profiles up ON up.user_id = u.id WHERE u.id = :uid LIMIT 1");
+$stmt = $db->prepare("SELECT full_name, email, phone FROM users WHERE id = :uid LIMIT 1");
 $stmt->execute([':uid' => $uid]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$user) { header('Location: ' . SITE_URL . '/auth/logout.php'); exit; }
