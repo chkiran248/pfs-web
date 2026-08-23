@@ -4,7 +4,7 @@
  * URL to register in Cashfree Dashboard → Developers → Webhooks:
  *   https://primefin.in/webhooks/cashfree.php
  *
- * Events to subscribe: PAYMENT_SUCCESS_WEBHOOK, PAYMENT_FAILED_WEBHOOK
+ * Events to subscribe: PAYMENT_SUCCESS_WEBHOOK, PAYMENT_FAILED_WEBHOOK, USER_DROPPED_WEBHOOK
  */
 declare(strict_types=1);
 require_once __DIR__ . '/../includes/config.php';
@@ -70,8 +70,9 @@ if ($payment['status'] === 'paid') {
 }
 
 // Match both 2023-08-01 style (PAYMENT_SUCCESS_WEBHOOK) and 2026-01-01 style (payment.success)
-$is_success = in_array($type, ['PAYMENT_SUCCESS_WEBHOOK', 'payment.success']) || $pay_status === 'SUCCESS';
-$is_failed  = in_array($type, ['PAYMENT_FAILED_WEBHOOK',  'payment.failed'])  || $pay_status === 'FAILED';
+$is_success  = in_array($type, ['PAYMENT_SUCCESS_WEBHOOK', 'payment.success'])     || $pay_status === 'SUCCESS';
+$is_failed   = in_array($type, ['PAYMENT_FAILED_WEBHOOK',  'payment.failed'])       || $pay_status === 'FAILED';
+$is_dropped  = in_array($type, ['USER_DROPPED_WEBHOOK',    'payment.user_dropped']) || $pay_status === 'USER_DROPPED';
 
 if ($is_success) {
     // Update payment record
@@ -98,6 +99,16 @@ if ($is_failed) {
        ->execute([':oid' => $order_id]);
     http_response_code(200);
     echo json_encode(['status' => 'marked_failed']);
+    exit;
+}
+
+if ($is_dropped) {
+    // User closed the payment page or abandoned mid-flow
+    $db->prepare("UPDATE payments SET status = 'user_dropped' WHERE cashfree_order_id = :oid")
+       ->execute([':oid' => $order_id]);
+    error_log("Cashfree webhook: user dropped order {$order_id}");
+    http_response_code(200);
+    echo json_encode(['status' => 'marked_dropped']);
     exit;
 }
 
