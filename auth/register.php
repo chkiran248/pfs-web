@@ -27,6 +27,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verify_csrf($_POST['csrf_token'] ?? '')) {
         $error = 'Invalid request. Please try again.';
     } else {
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+
+        if (is_registration_rate_limited($ip)) {
+            $error = 'Too many registration attempts from your network. Please try again in a while.';
+        } else {
+        log_registration_attempt($ip); // count this attempt regardless of outcome below
+
         $name    = trim($_POST['full_name'] ?? '');
         $email   = trim(filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL) ?? '');
         $phone   = trim($_POST['phone'] ?? '');
@@ -39,6 +46,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'email' => htmlspecialchars($email, ENT_QUOTES, 'UTF-8'),
             'phone' => htmlspecialchars($phone, ENT_QUOTES, 'UTF-8'),
         ];
+
+        if (!verify_turnstile($_POST['cf-turnstile-response'] ?? '', $ip)) {
+            $errors[] = 'CAPTCHA verification failed. Please try again.';
+        }
 
         // Validation
         if (!$name || strlen($name) < 2 || strlen($name) > 100) {
@@ -64,27 +75,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (empty($errors)) {
             try {
-                $db = get_db();
+                $db        = get_db();
+                $canonical = normalize_email($email);
 
-                // Check for existing email
-                $stmt = $db->prepare("SELECT id FROM users WHERE email = :email");
-                $stmt->execute([':email' => $email]);
+                // email_canonical only exists once schema-email-normalization.sql
+                // has been run — degrade gracefully if it hasn't been applied yet.
+                $has_canonical = (bool) $db->query("SHOW COLUMNS FROM users LIKE 'email_canonical'")->fetch();
+
+                // Check for existing email (raw match, plus canonical match once available —
+                // catches Gmail dot-trick / +tag variants of an email already registered)
+                if ($has_canonical) {
+                    $stmt = $db->prepare("SELECT id FROM users WHERE email = :email OR email_canonical = :canon");
+                    $stmt->execute([':email' => $email, ':canon' => $canonical]);
+                } else {
+                    $stmt = $db->prepare("SELECT id FROM users WHERE email = :email");
+                    $stmt->execute([':email' => $email]);
+                }
                 if ($stmt->fetch()) {
                     $errors[] = 'An account with this email already exists.';
                 } else {
                     $hash = password_hash($pass, PASSWORD_BCRYPT, ['cost' => BCRYPT_COST]);
 
                     // Insert user
-                    $stmt = $db->prepare(
-                        "INSERT INTO users (full_name, email, phone, password_hash, role, email_verified, is_active)
-                         VALUES (:name, :email, :phone, :hash, 'client', 0, 1)"
-                    );
-                    $stmt->execute([
-                        ':name'  => $name,
-                        ':email' => $email,
-                        ':phone' => $phone ?: null,
-                        ':hash'  => $hash,
-                    ]);
+                    if ($has_canonical) {
+                        $stmt = $db->prepare(
+                            "INSERT INTO users (full_name, email, email_canonical, phone, password_hash, role, email_verified, is_active)
+                             VALUES (:name, :email, :canon, :phone, :hash, 'client', 0, 1)"
+                        );
+                        $stmt->execute([
+                            ':name'  => $name,
+                            ':email' => $email,
+                            ':canon' => $canonical,
+                            ':phone' => $phone ?: null,
+                            ':hash'  => $hash,
+                        ]);
+                    } else {
+                        $stmt = $db->prepare(
+                            "INSERT INTO users (full_name, email, phone, password_hash, role, email_verified, is_active)
+                             VALUES (:name, :email, :phone, :hash, 'client', 0, 1)"
+                        );
+                        $stmt->execute([
+                            ':name'  => $name,
+                            ':email' => $email,
+                            ':phone' => $phone ?: null,
+                            ':hash'  => $hash,
+                        ]);
+                    }
                     $user_id = (int) $db->lastInsertId();
 
                     // Create empty profile
@@ -142,6 +178,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($errors) {
             $error = implode('<br>', $errors);
         }
+        }
     }
 }
 
@@ -149,6 +186,8 @@ $page_title = 'Create Account — Prime Financials';
 $auth_wide  = true;
 require_once __DIR__ . '/auth-layout.php';
 ?>
+
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
 <h1 class="auth-heading">Create Account</h1>
 <p class="auth-sub">Join Prime Financials and take control of your wealth</p>
@@ -205,6 +244,8 @@ require_once __DIR__ . '/auth-layout.php';
     <input type="checkbox" id="terms" name="terms" required />
     <label for="terms">I agree to the <a href="<?= SITE_URL ?>/#" class="auth-link">Terms of Service</a> and <a href="<?= SITE_URL ?>/#" class="auth-link">Privacy Policy</a></label>
   </div>
+
+  <div class="cf-turnstile" data-sitekey="<?= htmlspecialchars(TURNSTILE_SITE_KEY, ENT_QUOTES, 'UTF-8') ?>" style="margin-bottom:1.25rem"></div>
 
   <button type="submit" class="btn-primary" style="width:100%;justify-content:center">
     Create Account →

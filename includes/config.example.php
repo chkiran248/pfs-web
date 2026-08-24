@@ -42,6 +42,15 @@ define('LOCKOUT_MINUTES',     15);
 define('BCRYPT_COST',         12);
 define('CSRF_TOKEN_LENGTH',   32);
 
+// Registration abuse controls (separate bucket from login lockouts above)
+define('MAX_REGISTRATIONS_PER_IP',   5);   // per REGISTRATION_WINDOW_MINUTES
+define('REGISTRATION_WINDOW_MINUTES', 60);
+
+// ── CLOUDFLARE TURNSTILE (registration CAPTCHA) ───────────
+// Get real keys at https://dash.cloudflare.com/?to=/:account/turnstile
+define('TURNSTILE_SITE_KEY',   'YOUR_TURNSTILE_SITE_KEY');
+define('TURNSTILE_SECRET_KEY', 'YOUR_TURNSTILE_SECRET_KEY');
+
 // ── ENVIRONMENT ──────────────────────────────────────────
 // IMPORTANT: Define APP_ENV before session config so cookie_secure is set correctly
 define('APP_ENV',   'development');  // Change to 'production' on Hostinger

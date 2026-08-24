@@ -96,14 +96,30 @@ try {
                ->execute([':gid' => $google_id, ':id' => $user['id']]);
         } else {
             // 3. New user — create account (no password required)
-            $db->prepare(
-                "INSERT INTO users (full_name, email, password_hash, google_id, role, email_verified, is_active, created_at)
-                 VALUES (:name, :email, '', :gid, 'client', 1, 1, NOW())"
-            )->execute([
-                ':name'  => $google_name,
-                ':email' => $google_email,
-                ':gid'   => $google_id,
-            ]);
+            // email_canonical only exists once schema-email-normalization.sql has been
+            // run — degrade gracefully if it hasn't been applied yet (see auth/register.php).
+            $has_canonical = (bool) $db->query("SHOW COLUMNS FROM users LIKE 'email_canonical'")->fetch();
+
+            if ($has_canonical) {
+                $db->prepare(
+                    "INSERT INTO users (full_name, email, email_canonical, password_hash, google_id, role, email_verified, is_active, created_at)
+                     VALUES (:name, :email, :canon, '', :gid, 'client', 1, 1, NOW())"
+                )->execute([
+                    ':name'  => $google_name,
+                    ':email' => $google_email,
+                    ':canon' => normalize_email($google_email),
+                    ':gid'   => $google_id,
+                ]);
+            } else {
+                $db->prepare(
+                    "INSERT INTO users (full_name, email, password_hash, google_id, role, email_verified, is_active, created_at)
+                     VALUES (:name, :email, '', :gid, 'client', 1, 1, NOW())"
+                )->execute([
+                    ':name'  => $google_name,
+                    ':email' => $google_email,
+                    ':gid'   => $google_id,
+                ]);
+            }
             $new_id = (int) $db->lastInsertId();
 
             // Re-fetch the new user row
