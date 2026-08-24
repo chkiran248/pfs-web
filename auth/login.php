@@ -25,7 +25,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
 
-        if (is_rate_limited($ip)) {
+        if (!verify_turnstile($_POST['cf-turnstile-response'] ?? '', $ip)) {
+            $error = 'Security check failed. Please try again.';
+        } elseif (is_rate_limited($ip)) {
             $error = 'Too many failed attempts. Please wait ' . LOCKOUT_MINUTES . ' minutes.';
         } else {
             $email    = trim(filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL) ?? '');
@@ -104,6 +106,8 @@ $redirect   = htmlspecialchars($_GET['redirect'] ?? '', ENT_QUOTES, 'UTF-8');
 require_once __DIR__ . '/auth-layout.php';
 ?>
 
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
 <h1 class="auth-heading">Welcome Back</h1>
 <p class="auth-sub">Login to your Prime Financials portal</p>
 
@@ -145,6 +149,8 @@ require_once __DIR__ . '/auth-layout.php';
     <input type="checkbox" id="remember" name="remember" />
     <label for="remember">Remember me on this device</label>
   </div>
+
+  <div class="cf-turnstile" data-sitekey="<?= htmlspecialchars(TURNSTILE_SITE_KEY, ENT_QUOTES, 'UTF-8') ?>" style="margin-bottom:1.25rem"></div>
 
   <button type="submit" class="btn-primary" style="width:100%;justify-content:center">
     Login to Portal →
