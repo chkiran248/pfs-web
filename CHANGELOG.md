@@ -6,7 +6,8 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-_Nothing yet — new changes land here first._
+### Added
+- Public-facing "What's New" page in the Documentation Center (`documentation.php?page=changelog`), separate from this developer-facing changelog.
 
 ## [1.0.0] — 2026-08-24
 

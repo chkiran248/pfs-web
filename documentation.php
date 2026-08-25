@@ -20,6 +20,13 @@ $DOC_NAV = [
             'quick-start'      => 'Quick Start',
         ],
     ],
+    'whats-new' => [
+        'label' => "What's New",
+        'icon'  => 'megaphone',
+        'pages' => [
+            'changelog' => "What's New",
+        ],
+    ],
     'documents-statements' => [
         'label' => 'Documents & Statements',
         'icon'  => 'file-earmark-text',
