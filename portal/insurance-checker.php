@@ -50,7 +50,7 @@ require_once '../includes/portal-header.php';
     </div>
     <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:0.6rem;margin-top:0.6rem">
       <span style="font-weight:600;color:var(--cream)">Coverage Gap</span>
-      <span style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:700" id="t_gap">—</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:1.2rem;font-weight:700" id="t_gap">—</span>
     </div>
   </div>
 
@@ -103,7 +103,7 @@ require_once '../includes/portal-header.php';
     </div>
     <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:0.6rem;margin-top:0.6rem">
       <span style="font-weight:600;color:var(--cream)">Upgrade Needed</span>
-      <span style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:700" id="h_gap">—</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:1.2rem;font-weight:700" id="h_gap">—</span>
     </div>
   </div>
 

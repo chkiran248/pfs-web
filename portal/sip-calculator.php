@@ -88,7 +88,7 @@ require_once '../includes/portal-header.php';
     </div>
     <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:0.5rem;margin-top:0.5rem">
       <span style="color:var(--cream);font-weight:600">Final Corpus</span>
-      <span style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:var(--lime);font-weight:700" id="s_corpus">₹25,22,880</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:1.3rem;color:var(--lime);font-weight:700" id="s_corpus">₹25,22,880</span>
     </div>
   </div>
   <canvas id="sipChart" height="180" style="margin-top:1rem"></canvas>
@@ -128,7 +128,7 @@ require_once '../includes/portal-header.php';
   </div>
   <div style="background:var(--surface-2);border-radius:10px;padding:1.5rem;margin-top:0.5rem;text-align:center">
     <div style="font-size:0.75rem;font-family:'IBM Plex Mono',monospace;color:var(--lime);letter-spacing:0.15em;margin-bottom:0.5rem">MONTHLY SIP REQUIRED</div>
-    <div style="font-family:'Cormorant Garamond',serif;font-size:2.5rem;font-weight:700;color:var(--lime)" id="g_sip_result">₹4,347</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:2rem;font-weight:700;color:var(--lime)" id="g_sip_result">₹4,347</div>
     <div style="font-size:0.78rem;color:var(--text-secondary);margin-top:0.3rem" id="g_invested_note">Total invested: ₹5,21,640</div>
   </div>
 </div>
@@ -160,7 +160,7 @@ require_once '../includes/portal-header.php';
     </div>
     <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:0.5rem;margin-top:0.5rem">
       <span style="color:var(--cream);font-weight:600">Maturity Value</span>
-      <span style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:var(--lime);font-weight:700" id="l_maturity">₹3,10,585</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:1.3rem;color:var(--lime);font-weight:700" id="l_maturity">₹3,10,585</span>
     </div>
   </div>
 </div>

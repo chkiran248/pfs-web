@@ -119,7 +119,7 @@ require_once '../includes/portal-header.php';
   <div class="card-title">Diversification Score</div>
   <div style="display:flex;align-items:center;gap:2rem;flex-wrap:wrap">
     <div>
-      <div style="font-family:'Cormorant Garamond',serif;font-size:3rem;font-weight:700;color:<?= $div_score>=80?'var(--bright)':($div_score>=60?'var(--gold)':'var(--danger)') ?>"><?= $div_score ?>/100</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:2.5rem;font-weight:700;color:<?= $div_score>=80?'var(--bright)':($div_score>=60?'var(--gold)':'var(--danger)') ?>"><?= $div_score ?>/100</div>
       <div style="font-size:0.875rem;color:var(--text-secondary)"><?= $div_score>=80?'Well diversified':($div_score>=60?'Moderately diversified':'Concentrated portfolio') ?></div>
     </div>
     <div style="flex:1;min-width:200px">

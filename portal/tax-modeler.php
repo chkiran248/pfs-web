@@ -52,7 +52,7 @@ require_once '../includes/portal-header.php';
       </div>
       <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:0.75rem">
         <span style="color:var(--text-secondary)">Post-tax Proceeds</span>
-        <span style="font-family:'Cormorant Garamond',serif;font-size:1.35rem;color:var(--lime)" class="r-proceeds">—</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:1.1rem;color:var(--lime)" class="r-proceeds">—</span>
       </div>
       <div class="r-tip" style="margin-top:0.6rem;font-size:0.8rem;color:var(--gold)"></div>
     </div>

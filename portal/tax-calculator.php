@@ -86,7 +86,7 @@ require_once '../includes/portal-header.php';
         <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.3rem">Taxable Income</div>
         <div style="font-family:'IBM Plex Mono',monospace;color:var(--cream);margin-bottom:0.75rem" id="old_taxable">₹—</div>
         <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.3rem">Tax + Cess</div>
-        <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--gold)" id="old_tax">₹—</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:1.35rem;color:var(--gold)" id="old_tax">₹—</div>
         <div style="font-size:0.75rem;color:var(--text-secondary);margin-top:0.3rem">Monthly: <span id="old_monthly">₹—</span></div>
       </div>
       <!-- New regime -->
@@ -95,7 +95,7 @@ require_once '../includes/portal-header.php';
         <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.3rem">Taxable Income</div>
         <div style="font-family:'IBM Plex Mono',monospace;color:var(--cream);margin-bottom:0.75rem" id="new_taxable">₹—</div>
         <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.3rem">Tax + Cess</div>
-        <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--gold)" id="new_tax">₹—</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:1.35rem;color:var(--gold)" id="new_tax">₹—</div>
         <div style="font-size:0.75rem;color:var(--text-secondary);margin-top:0.3rem">Monthly: <span id="new_monthly">₹—</span></div>
       </div>
     </div>
