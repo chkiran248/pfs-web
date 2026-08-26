@@ -122,18 +122,18 @@ $page_title = 'Payment Status — Prime Financials';
 <title><?= htmlspecialchars($page_title, ENT_QUOTES, 'UTF-8') ?></title>
 <link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/portal.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-body { background: var(--bg); color: var(--text-primary); font-family: 'DM Sans', system-ui, sans-serif; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+body { background: var(--bg); color: var(--text-primary); font-family: 'Inter', system-ui, sans-serif; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
 .status-wrap { text-align: center; max-width: 460px; padding: 2rem 1.5rem; }
 .logo-link { display: inline-flex; align-items: center; gap: 0.6rem; text-decoration: none; margin-bottom: 2rem; }
-.logo-mark { width: 36px; height: 36px; background: var(--mid); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'DM Mono', monospace; font-size: 0.75rem; font-weight: 600; color: #fff; }
+.logo-mark { width: 36px; height: 36px; background: var(--mid); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; font-weight: 600; color: #fff; }
 .logo-name { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 700; color: var(--cream); }
 .status-card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px; padding: 2rem; }
 .status-icon { font-size: 2.5rem; margin-bottom: 1rem; }
 .status-title { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; font-weight: 700; color: var(--cream); margin-bottom: 0.75rem; }
 .status-msg { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.7; margin-bottom: 1.5rem; }
-.order-mono { font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--text-muted); margin-top: 1rem; }
+.order-mono { font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: var(--text-muted); margin-top: 1rem; }
 .btn-row { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
 </style>
 </head>

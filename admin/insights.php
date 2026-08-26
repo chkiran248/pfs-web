@@ -110,7 +110,7 @@ function autoSlug(){
         <tr>
           <td style="max-width:300px"><div style="font-weight:500;color:var(--cream);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><?= htmlspecialchars($ins['title'],ENT_QUOTES,'UTF-8') ?></div></td>
           <td><span class="badge badge-muted"><?= $cats[$ins['category']]??$ins['category'] ?></span></td>
-          <td style="font-family:'DM Mono',monospace;font-size:0.82rem"><?= $ins['views'] ?></td>
+          <td style="font-family:'IBM Plex Mono',monospace;font-size:0.82rem"><?= $ins['views'] ?></td>
           <td style="font-size:0.75rem;color:var(--text-muted)"><?= $ins['published_at']?date('d M Y',strtotime($ins['published_at'])):'—' ?></td>
           <td><span class="badge <?= $ins['is_published']?'badge-green':'badge-muted' ?>"><?= $ins['is_published']?'Published':'Draft' ?></span></td>
           <td><div style="display:flex;gap:0.4rem">

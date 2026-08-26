@@ -115,7 +115,7 @@ require_once '../includes/admin-header.php';
           <td style="font-size:0.82rem"><?= htmlspecialchars($r['sector']??'',ENT_QUOTES,'UTF-8') ?></td>
           <td><span class="badge badge-muted"><?= $cap_labels[$r['market_cap_type']]??$r['market_cap_type'] ?></span></td>
           <td style="font-size:0.75rem;color:var(--text-muted)"><?= $r['report_date']?date('d M Y',strtotime($r['report_date'])):'—' ?></td>
-          <td style="font-family:'DM Mono',monospace;font-size:0.82rem"><?= $r['views'] ?></td>
+          <td style="font-family:'IBM Plex Mono',monospace;font-size:0.82rem"><?= $r['views'] ?></td>
           <td><span class="badge <?= $r['is_published']?'badge-green':'badge-muted' ?>"><?= $r['is_published']?'Published':'Draft' ?></span></td>
           <td><div style="display:flex;gap:0.4rem">
             <a href="?edit=<?= $r['id'] ?>" class="btn-ghost btn-sm">Edit</a>

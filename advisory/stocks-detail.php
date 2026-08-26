@@ -57,7 +57,7 @@ require_once '../includes/portal-header.php';
   </div>
   <h1 style="font-family:'Cormorant Garamond',serif;font-size:2.25rem;font-weight:700;color:var(--cream);margin-bottom:0.25rem"><?= htmlspecialchars($stock['company_name'],ENT_QUOTES,'UTF-8') ?></h1>
   <?php if ($stock['report_title']): ?><p style="font-style:italic;color:var(--text-secondary);font-size:1rem"><?= htmlspecialchars($stock['report_title'],ENT_QUOTES,'UTF-8') ?></p><?php endif; ?>
-  <p style="font-size:0.78rem;color:var(--text-muted);font-family:'DM Mono',monospace;margin-top:0.5rem">
+  <p style="font-size:0.78rem;color:var(--text-muted);font-family:'IBM Plex Mono',monospace;margin-top:0.5rem">
     Report Date: <?= $stock['report_date']?date('d M Y',strtotime($stock['report_date'])):'—' ?>
     <?= $stock['price_at_report']?' · Price at report: ₹'.number_format((float)$stock['price_at_report'],2):'' ?>
     · <?= $stock['views'] ?> views
@@ -73,7 +73,7 @@ require_once '../includes/portal-header.php';
       <?php foreach ($key_metrics as $metric => $value): ?>
       <tr style="border-bottom:1px solid var(--border-light)">
         <td style="padding:0.5rem 0;color:var(--text-secondary);font-size:0.875rem"><?= htmlspecialchars($metric,ENT_QUOTES,'UTF-8') ?></td>
-        <td style="padding:0.5rem 0;text-align:right;font-family:'DM Mono',monospace;color:var(--cream);font-size:0.875rem"><?= htmlspecialchars($value,ENT_QUOTES,'UTF-8') ?></td>
+        <td style="padding:0.5rem 0;text-align:right;font-family:'IBM Plex Mono',monospace;color:var(--cream);font-size:0.875rem"><?= htmlspecialchars($value,ENT_QUOTES,'UTF-8') ?></td>
       </tr>
       <?php endforeach; ?>
     </table>

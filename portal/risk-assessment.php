@@ -100,7 +100,7 @@ require_once '../includes/portal-header.php';
     background:var(--surface-2); border:1.5px solid var(--border);
     border-radius:10px; color:var(--text-secondary); cursor:pointer;
     font-size:0.9rem; margin-bottom:0.5rem; transition:all 0.18s;
-    font-family:'DM Sans',system-ui,sans-serif;
+    font-family:'Inter',system-ui,sans-serif;
 }
 .opt-btn:hover  { border-color:var(--mid); color:var(--cream); }
 .opt-btn.chosen { border-color:var(--bright); background:rgba(76,175,80,0.1); color:var(--cream); }
@@ -108,7 +108,7 @@ require_once '../includes/portal-header.php';
 .progress-fill { height:100%; background:var(--bright); border-radius:2px; transition:width 0.4s ease; }
 .profile-badge {
     display:inline-block; padding:0.4rem 1.2rem; border-radius:20px;
-    font-family:'DM Mono',monospace; font-size:0.8rem; letter-spacing:0.1em; text-transform:uppercase;
+    font-family:'IBM Plex Mono',monospace; font-size:0.8rem; letter-spacing:0.1em; text-transform:uppercase;
 }
 .badge-conservative { background:rgba(76,175,80,0.15); border:1px solid var(--bright); color:var(--bright); }
 .badge-moderate     { background:rgba(201,168,76,0.15); border:1px solid var(--gold);   color:var(--gold);   }
@@ -121,7 +121,7 @@ require_once '../includes/portal-header.php';
 
 <div style="max-width:620px">
   <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
-  <div id="stepCounter" style="font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--lime);letter-spacing:0.15em;margin-top:-1.5rem;margin-bottom:1.5rem">QUESTION 1 OF 5</div>
+  <div id="stepCounter" style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--lime);letter-spacing:0.15em;margin-top:-1.5rem;margin-bottom:1.5rem">QUESTION 1 OF 5</div>
 
   <form method="POST" id="quizForm">
     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
@@ -148,7 +148,7 @@ require_once '../includes/portal-header.php';
     <!-- Result screen (shown before final submit) -->
     <div class="q-card portal-card" id="cardResult">
       <div style="text-align:center;padding:1rem 0">
-        <div style="font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--lime);letter-spacing:0.15em;margin-bottom:1rem">YOUR RISK PROFILE</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--lime);letter-spacing:0.15em;margin-bottom:1rem">YOUR RISK PROFILE</div>
         <div id="profileBadge" class="profile-badge" style="font-size:1.1rem;margin-bottom:1.5rem"></div>
         <div id="profileScore" style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:0.5rem"></div>
         <div id="profileDesc" style="font-size:0.9rem;color:var(--text-secondary);line-height:1.7;max-width:440px;margin:0 auto 2rem"></div>

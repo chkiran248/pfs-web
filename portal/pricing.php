@@ -56,7 +56,7 @@ require_once '../includes/portal-header.php';
   <!-- Explorer (Free) -->
   <?php $active = $current_plan==='free'; ?>
   <div class="portal-card" style="<?= $active?'border-color:var(--border);':'' ?>position:relative">
-    <div style="font-family:'DM Mono',monospace;font-size:0.62rem;letter-spacing:0.15em;color:var(--text-muted);margin-bottom:0.5rem">FREE PLAN</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.15em;color:var(--text-muted);margin-bottom:0.5rem">FREE PLAN</div>
     <div style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:700;color:var(--cream)">Explorer</div>
     <div style="font-size:2rem;font-weight:700;color:var(--cream);margin:0.5rem 0">₹0<span style="font-size:0.85rem;color:var(--text-muted)">/mo</span></div>
     <?php if ($active): ?><span class="badge badge-muted" style="margin-bottom:0.75rem">Current Plan</span><?php endif; ?>
@@ -77,8 +77,8 @@ require_once '../includes/portal-header.php';
   <!-- Active Investor -->
   <?php $active = $current_plan==='active_investor'; ?>
   <div class="portal-card" style="border-color:rgba(141,198,63,0.35);background:linear-gradient(135deg,var(--surface-1),rgba(27,94,42,0.08));position:relative">
-    <div style="position:absolute;top:-1px;left:50%;transform:translateX(-50%);background:var(--lime);color:#0c1a0c;font-family:'DM Mono',monospace;font-size:0.58rem;letter-spacing:0.1em;padding:0.2rem 0.75rem;border-radius:0 0 6px 6px;font-weight:700">MOST POPULAR</div>
-    <div style="font-family:'DM Mono',monospace;font-size:0.62rem;letter-spacing:0.15em;color:var(--lime);margin-bottom:0.5rem;margin-top:0.75rem">ACTIVE INVESTOR</div>
+    <div style="position:absolute;top:-1px;left:50%;transform:translateX(-50%);background:var(--lime);color:#0c1a0c;font-family:'IBM Plex Mono',monospace;font-size:0.58rem;letter-spacing:0.1em;padding:0.2rem 0.75rem;border-radius:0 0 6px 6px;font-weight:700">MOST POPULAR</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.15em;color:var(--lime);margin-bottom:0.5rem;margin-top:0.75rem">ACTIVE INVESTOR</div>
     <div style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:700;color:var(--cream)">Prime</div>
     <div style="font-size:1.5rem;font-weight:700;color:var(--lime);margin:0.5rem 0">Free <span style="font-size:0.78rem;color:var(--text-muted)">with coupon</span></div>
     <?php if ($active): ?><span class="badge badge-green" style="margin-bottom:0.75rem">✓ Active</span><?php endif; ?>
@@ -107,7 +107,7 @@ require_once '../includes/portal-header.php';
   <!-- Prime Member -->
   <?php $active = $current_plan==='premium'; ?>
   <div class="portal-card" style="<?= $active?'border-color:var(--gold);':'' ?>position:relative">
-    <div style="font-family:'DM Mono',monospace;font-size:0.62rem;letter-spacing:0.15em;color:var(--gold);margin-bottom:0.5rem">PRIME MEMBER</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.15em;color:var(--gold);margin-bottom:0.5rem">PRIME MEMBER</div>
     <div style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:700;color:var(--cream)">Member</div>
     <div style="font-size:1.75rem;font-weight:700;color:var(--cream);margin:0.5rem 0"><?= format_inr(499) ?><span style="font-size:0.85rem;color:var(--text-muted)">/mo</span></div>
     <div style="font-size:0.78rem;color:var(--gold);margin-bottom:0.5rem"><?= format_inr(4999) ?>/year — save 17%</div>

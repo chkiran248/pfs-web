@@ -8,6 +8,10 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 - Public-facing "What's New" page in the Documentation Center (`documentation.php?page=changelog`), separate from this developer-facing changelog.
+- Live "amount in words" caption (Indian lakh/crore numbering) on ~30 currency/amount fields across the client portal (SIP Calculator, Tax Calculator, NPS Projector, Insurance Checker, Cashflow Modeler, Portfolio, Goals) — `numberToWordsIndian()`/`amountToWordsCaption()` in `assets/js/portal.js`, auto-wired via a `.amount-input` class + companion `#id-words` hint element.
+
+### Changed
+- Site-wide font swap: body/UI text moved from DM Sans to Inter, numeric/label text moved from DM Mono to IBM Plex Mono (better digit clarity for financial figures). Cormorant Garamond headings unchanged. Applied across all 54 files that reference either font (CSS rules, inline styles, Google Fonts `&lt;link&gt;` tags).
 
 ## [1.0.0] — 2026-08-24
 

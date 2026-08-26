@@ -3,7 +3,7 @@
    All portal styles. Never modify the frozen style.css.
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
 /* ── CSS VARIABLES ── */
 :root {
@@ -79,7 +79,7 @@
 html { font-size: 16px; }
 
 body {
-  font-family: 'DM Sans', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   background: var(--bg);
   color: var(--text-primary);
   line-height: 1.6;
@@ -145,7 +145,7 @@ h1, h2, h3, h4, h5 {
 
 .sidebar-logo .logo-tagline {
   display: block;
-  font-family: 'DM Mono', monospace;
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 0.52rem;
   color: var(--lime);
   text-transform: uppercase;
@@ -194,7 +194,7 @@ h1, h2, h3, h4, h5 {
 }
 
 .sidebar-group-label {
-  font-family: 'DM Mono', monospace;
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 0.6rem;
   color: var(--lime);
   text-transform: uppercase;
@@ -323,7 +323,7 @@ h1, h2, h3, h4, h5 {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'DM Mono', monospace;
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 0.75rem;
   color: var(--lime);
   font-weight: 500;
@@ -353,7 +353,7 @@ h1, h2, h3, h4, h5 {
 
 .logout-link {
   font-size: 0.8rem;
-  font-family: 'DM Mono', monospace;
+  font-family: 'IBM Plex Mono', monospace;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -374,7 +374,7 @@ h1, h2, h3, h4, h5 {
 
 /* ── PAGE HEADER ── */
 .page-eyebrow {
-  font-family: 'DM Mono', monospace;
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 0.65rem;
   color: var(--lime);
   text-transform: uppercase;
@@ -442,7 +442,7 @@ h1, h2, h3, h4, h5 {
 }
 
 .stat-label {
-  font-family: 'DM Mono', monospace;
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 0.6rem;
   color: var(--lime);
   text-transform: uppercase;
@@ -482,7 +482,7 @@ h1, h2, h3, h4, h5 {
 
 .portal-table thead th {
   color: #ffffff;
-  font-family: 'DM Mono', monospace;
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 0.65rem;
   font-weight: 500;
   text-transform: uppercase;
@@ -516,7 +516,7 @@ h1, h2, h3, h4, h5 {
   gap: 0.4rem;
   padding: 0.55rem 1.25rem;
   border-radius: 7px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
@@ -579,7 +579,7 @@ h1, h2, h3, h4, h5 {
   border-radius: 7px;
   padding: 0.6rem 0.875rem;
   color: var(--text-primary);
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.9rem;
   transition: border-color 0.15s, box-shadow 0.15s;
   appearance: none;
@@ -610,6 +610,11 @@ h1, h2, h3, h4, h5 {
   font-size: 0.78rem;
   color: var(--text-secondary);
   margin-top: 0.3rem;
+}
+.form-hint--words {
+  font-family: 'IBM Plex Mono', monospace;
+  font-style: italic;
+  color: var(--lime);
 }
 
 .form-error {
@@ -650,7 +655,7 @@ h1, h2, h3, h4, h5 {
 /* ── BADGES / TAGS ── */
 .badge {
   display: inline-block;
-  font-family: 'DM Mono', monospace;
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 0.62rem;
   font-weight: 500;
   letter-spacing: 0.12em;
@@ -873,10 +878,10 @@ h1, h2, h3, h4, h5 {
 .rc-title { display:flex; align-items:center; gap:0.75rem; }
 .rc-icon { font-size:1.4rem; }
 .rc-title h2 { font-family:'Cormorant Garamond',serif; font-size:1.1rem; color:var(--cream); margin:0; }
-.rc-subtitle { font-family:'DM Mono',monospace; font-size:0.6rem; color:var(--lime); letter-spacing:0.1em; text-transform:uppercase; }
+.rc-subtitle { font-family:'IBM Plex Mono',monospace; font-size:0.6rem; color:var(--lime); letter-spacing:0.1em; text-transform:uppercase; }
 .rc-meta { display:flex; flex-direction:column; align-items:flex-end; gap:0.4rem; }
-.rc-last-run { font-size:0.7rem; color:var(--text-muted); font-family:'DM Mono',monospace; }
-.btn-rebalance { background:var(--mid); color:#fff; border:none; border-radius:6px; padding:0.55rem 1.1rem; font-size:0.82rem; cursor:pointer; transition:all 0.2s; font-family:'DM Sans',sans-serif; }
+.rc-last-run { font-size:0.7rem; color:var(--text-muted); font-family:'IBM Plex Mono',monospace; }
+.btn-rebalance { background:var(--mid); color:#fff; border:none; border-radius:6px; padding:0.55rem 1.1rem; font-size:0.82rem; cursor:pointer; transition:all 0.2s; font-family:'Inter',sans-serif; }
 .btn-rebalance:hover { background:var(--bright); }
 .btn-rebalance:disabled { background:var(--surface-2); color:var(--text-muted); cursor:not-allowed; }
 .rc-body { padding:1.25rem 1.5rem; }
@@ -888,7 +893,7 @@ h1, h2, h3, h4, h5 {
 @keyframes spin { to{ transform:rotate(360deg); } }
 .rc-score-bar { display:flex; align-items:baseline; gap:0.75rem; margin-bottom:0.75rem; }
 .rc-score { font-family:'Cormorant Garamond',serif; font-size:2rem; font-weight:700; color:var(--lime); }
-.rc-health-label { font-family:'DM Mono',monospace; font-size:0.63rem; letter-spacing:0.1em; color:var(--text-muted); }
+.rc-health-label { font-family:'IBM Plex Mono',monospace; font-size:0.63rem; letter-spacing:0.1em; color:var(--text-muted); }
 .rc-summary { font-size:0.875rem; color:var(--text-secondary); margin-bottom:1.25rem; line-height:1.65; }
 .rc-allocation { margin-bottom:1.25rem; display:flex; flex-direction:column; gap:0.6rem; }
 .alloc-row { display:flex; align-items:center; gap:0.75rem; font-size:0.78rem; flex-wrap:wrap; }
@@ -904,8 +909,8 @@ h1, h2, h3, h4, h5 {
 .rc-holding-card.priority--moderate{ border-left:3px solid var(--gold); }
 .rc-holding-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.5rem; gap:0.5rem; }
 .rc-fund-name { font-size:0.875rem; color:var(--cream); font-weight:500; line-height:1.3; }
-.verdict-badge { font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.06em; padding:0.25rem 0.6rem; border-radius:4px; white-space:nowrap; flex-shrink:0; font-weight:600; }
-.rc-holding-meta { display:flex; flex-wrap:wrap; gap:0.6rem; font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--text-muted); margin-bottom:0.5rem; }
+.verdict-badge { font-family:'IBM Plex Mono',monospace; font-size:0.6rem; letter-spacing:0.06em; padding:0.25rem 0.6rem; border-radius:4px; white-space:nowrap; flex-shrink:0; font-weight:600; }
+.rc-holding-meta { display:flex; flex-wrap:wrap; gap:0.6rem; font-family:'IBM Plex Mono',monospace; font-size:0.65rem; color:var(--text-muted); margin-bottom:0.5rem; }
 .sip-pill { border:1px solid currentColor; border-radius:10px; padding:0.1rem 0.5rem; }
 .gain--positive { color:var(--bright); }
 .gain--negative { color:#ef5350; }
@@ -914,7 +919,7 @@ h1, h2, h3, h4, h5 {
 .rc-action { font-size:0.8rem; color:var(--lime); margin-top:0.4rem; }
 .rc-tax-note { font-size:0.78rem; color:var(--gold); margin-bottom:0.35rem; }
 .rc-sectors,.rc-tax-opps,.rc-alerts,.rc-actions-summary { background:var(--surface-2); border:1px solid var(--border-light); border-radius:8px; padding:1rem; margin-bottom:1rem; }
-.rc-sectors h4,.rc-tax-opps h4,.rc-alerts h4,.rc-actions-summary h4 { font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.15em; color:var(--lime); margin-bottom:0.75rem; text-transform:uppercase; }
+.rc-sectors h4,.rc-tax-opps h4,.rc-alerts h4,.rc-actions-summary h4 { font-family:'IBM Plex Mono',monospace; font-size:0.6rem; letter-spacing:0.15em; color:var(--lime); margin-bottom:0.75rem; text-transform:uppercase; }
 .sector-row { display:flex; align-items:center; gap:0.5rem; padding:0.35rem 0; font-size:0.78rem; flex-wrap:wrap; }
 .sector-row--flagged { color:var(--gold); }
 .sector-name { width:80px; flex-shrink:0; }
@@ -933,10 +938,10 @@ h1, h2, h3, h4, h5 {
 /* ── CTA BARS ──────────────────────────────────────────── */
 .cta-bar { background:linear-gradient(135deg,var(--forest),var(--mid)); border-radius:12px; padding:1.25rem 1.5rem; margin:1.5rem 0; border:1px solid rgba(141,198,63,0.2); }
 .cta-bar__content { display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; }
-.cta-bar__eyebrow { font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.2em; color:var(--lime); display:block; text-transform:uppercase; }
+.cta-bar__eyebrow { font-family:'IBM Plex Mono',monospace; font-size:0.6rem; letter-spacing:0.2em; color:var(--lime); display:block; text-transform:uppercase; }
 .cta-bar__title { font-family:'Cormorant Garamond',serif; font-size:1.05rem; color:#fff; font-weight:600; }
 .cta-bar__actions { display:flex; gap:0.75rem; flex-wrap:wrap; }
-.cta-btn { display:inline-flex; align-items:center; gap:0.4rem; padding:0.55rem 1.1rem; border-radius:6px; font-size:0.82rem; font-weight:500; text-decoration:none; white-space:nowrap; transition:all 0.2s; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; }
+.cta-btn { display:inline-flex; align-items:center; gap:0.4rem; padding:0.55rem 1.1rem; border-radius:6px; font-size:0.82rem; font-weight:500; text-decoration:none; white-space:nowrap; transition:all 0.2s; border:none; cursor:pointer; font-family:'Inter',sans-serif; }
 .cta-btn--primary   { background:var(--lime); color:#0c1a0c; }
 .cta-btn--primary:hover { background:#a5d15f; transform:translateY(-1px); color:#0c1a0c; }
 .cta-btn--secondary { background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.3); }
@@ -956,7 +961,7 @@ h1, h2, h3, h4, h5 {
 
 /* ── SIDEBAR BADGE ── */
 .sidebar-badge {
-  font-family: 'DM Mono', monospace;
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 0.5rem;
   letter-spacing: 0.08em;
   background: var(--lime);
@@ -1049,7 +1054,7 @@ h1, h2, h3, h4, h5 {
 }
 
 .auth-logo-tagline {
-  font-family: 'DM Mono', monospace;
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 0.58rem;
   color: var(--lime);
   text-transform: uppercase;
@@ -1161,7 +1166,7 @@ h1, h2, h3, h4, h5 {
 }
 
 .strength-label {
-  font-family: 'DM Mono', monospace;
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 0.62rem;
   margin-top: 0.25rem;
   letter-spacing: 0.08em;
@@ -1171,7 +1176,7 @@ h1, h2, h3, h4, h5 {
 /* OTP input */
 .otp-input {
   text-align: center;
-  font-family: 'DM Mono', monospace;
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 2rem;
   font-weight: 500;
   letter-spacing: 0.5rem;
@@ -1197,7 +1202,7 @@ h1, h2, h3, h4, h5 {
 }
 
 .masked-email {
-  font-family: 'DM Mono', monospace;
+  font-family: 'IBM Plex Mono', monospace;
   color: var(--lime);
   font-size: 0.9rem;
 }
@@ -1249,7 +1254,7 @@ h1, h2, h3, h4, h5 {
     color: var(--text-secondary);
     text-decoration: none;
     font-size: 0.6rem;
-    font-family: 'DM Mono', monospace;
+    font-family: 'IBM Plex Mono', monospace;
     letter-spacing: 0.05em;
     text-transform: uppercase;
     transition: color 0.15s;

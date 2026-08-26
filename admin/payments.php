@@ -48,19 +48,19 @@ require_once '../includes/admin-header.php';
 <!-- Summary cards -->
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:1.5rem">
   <div class="portal-card" style="text-align:center">
-    <div style="font-family:'DM Mono',monospace;font-size:0.58rem;color:var(--lime);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:0.5rem">Total Revenue</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;color:var(--lime);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:0.5rem">Total Revenue</div>
     <div style="font-size:1.4rem;font-weight:700;color:var(--cream)">₹<?= number_format((float)($stats['total_revenue'] ?? 0)) ?></div>
   </div>
   <div class="portal-card" style="text-align:center">
-    <div style="font-family:'DM Mono',monospace;font-size:0.58rem;color:var(--lime);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:0.5rem">Paid Orders</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;color:var(--lime);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:0.5rem">Paid Orders</div>
     <div style="font-size:1.4rem;font-weight:700;color:var(--cream)"><?= (int)($stats['paid_count'] ?? 0) ?></div>
   </div>
   <div class="portal-card" style="text-align:center">
-    <div style="font-family:'DM Mono',monospace;font-size:0.58rem;color:var(--lime);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:0.5rem">Active Subscribers</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;color:var(--lime);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:0.5rem">Active Subscribers</div>
     <div style="font-size:1.4rem;font-weight:700;color:var(--cream)"><?= count($active_subs) ?></div>
   </div>
   <div class="portal-card" style="text-align:center">
-    <div style="font-family:'DM Mono',monospace;font-size:0.58rem;color:var(--gold);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:0.5rem">Monthly / Annual</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;color:var(--gold);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:0.5rem">Monthly / Annual</div>
     <div style="font-size:1.4rem;font-weight:700;color:var(--cream)"><?= (int)($stats['monthly_count'] ?? 0) ?> / <?= (int)($stats['annual_count'] ?? 0) ?></div>
   </div>
 </div>
@@ -87,7 +87,7 @@ require_once '../includes/admin-header.php';
             <?= $s['expires_at'] ? date('d M Y', strtotime($s['expires_at'])) : '∞' ?>
             <?php if ($days_left !== null && $days_left <= 14): ?> <span style="font-size:0.7rem">(<?= $days_left ?>d left)</span><?php endif; ?>
           </td>
-          <td style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--text-muted)"><?= htmlspecialchars($s['cashfree_order_id'] ?? '—', ENT_QUOTES, 'UTF-8') ?></td>
+          <td style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--text-muted)"><?= htmlspecialchars($s['cashfree_order_id'] ?? '—', ENT_QUOTES, 'UTF-8') ?></td>
         </tr>
         <?php endforeach; ?>
       </tbody>
@@ -111,7 +111,7 @@ require_once '../includes/admin-header.php';
             <?= htmlspecialchars($p['full_name'], ENT_QUOTES, 'UTF-8') ?>
             <div style="font-size:0.75rem;color:var(--text-muted)"><?= htmlspecialchars($p['email'], ENT_QUOTES, 'UTF-8') ?></div>
           </td>
-          <td style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--lime)"><?= htmlspecialchars($p['cashfree_order_id'], ENT_QUOTES, 'UTF-8') ?></td>
+          <td style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--lime)"><?= htmlspecialchars($p['cashfree_order_id'], ENT_QUOTES, 'UTF-8') ?></td>
           <td style="font-weight:600">₹<?= number_format((float)$p['amount']) ?></td>
           <td><span class="badge badge-muted"><?= ucfirst($p['billing_cycle']) ?></span></td>
           <td style="font-size:0.78rem;color:var(--text-secondary)"><?= htmlspecialchars($p['payment_method'] ?? '—', ENT_QUOTES, 'UTF-8') ?></td>

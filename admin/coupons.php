@@ -106,13 +106,13 @@ require_once '../includes/admin-header.php';
         <?php else: foreach ($coupons as $c): ?>
         <tr>
           <td>
-            <span style="font-family:'DM Mono',monospace;font-weight:600;color:var(--lime)"><?= htmlspecialchars($c['code'],ENT_QUOTES,'UTF-8') ?></span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--lime)"><?= htmlspecialchars($c['code'],ENT_QUOTES,'UTF-8') ?></span>
             <button onclick="navigator.clipboard.writeText('<?= htmlspecialchars($c['code'],ENT_QUOTES,'UTF-8') ?>').then(()=>alert('Copied!')).catch(()=>{})"
               style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:0.85rem;margin-left:0.4rem" title="Copy">📋</button>
           </td>
           <td style="font-size:0.82rem;color:var(--text-secondary)"><?= htmlspecialchars($c['description']??'',ENT_QUOTES,'UTF-8') ?></td>
           <td><span class="badge <?= $c['plan_code']==='premium'?'badge-gold':'badge-green' ?>"><?= ucfirst(str_replace('_',' ',$c['plan_code'])) ?></span></td>
-          <td style="font-family:'DM Mono',monospace;font-size:0.82rem"><?= $c['uses'] ?><?= $c['max_uses']>0?' / '.$c['max_uses']:' / ∞' ?></td>
+          <td style="font-family:'IBM Plex Mono',monospace;font-size:0.82rem"><?= $c['uses'] ?><?= $c['max_uses']>0?' / '.$c['max_uses']:' / ∞' ?></td>
           <td style="font-size:0.78rem;color:var(--text-muted)"><?= $c['valid_until']?date('d M Y',strtotime($c['valid_until'])):'No expiry' ?></td>
           <td><span class="badge <?= $c['is_active']?'badge-green':'badge-muted' ?>"><?= $c['is_active']?'Active':'Inactive' ?></span></td>
           <td>
@@ -138,7 +138,7 @@ require_once '../includes/admin-header.php';
       <tbody>
         <?php foreach ($usage_log as $u): ?>
         <tr>
-          <td><span style="font-family:'DM Mono',monospace;color:var(--lime)"><?= htmlspecialchars($u['code'],ENT_QUOTES,'UTF-8') ?></span></td>
+          <td><span style="font-family:'IBM Plex Mono',monospace;color:var(--lime)"><?= htmlspecialchars($u['code'],ENT_QUOTES,'UTF-8') ?></span></td>
           <td><?= htmlspecialchars($u['full_name'],ENT_QUOTES,'UTF-8') ?></td>
           <td style="font-size:0.8rem;color:var(--text-secondary)"><?= htmlspecialchars($u['email'],ENT_QUOTES,'UTF-8') ?></td>
           <td style="font-size:0.78rem;color:var(--text-muted)"><?= date('d M Y, g:i a',strtotime($u['used_at'])) ?></td>

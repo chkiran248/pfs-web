@@ -17,6 +17,51 @@ window.formatINRShort = function(n) {
   return window.formatINR(n);
 };
 
+// ── Amount in words (Indian numbering — lakh/crore) ──────────
+(function () {
+  const ONES = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten',
+                'Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+  const TENS = ['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+
+  function twoDigitWords(n) {
+    if (n < 20) return ONES[n];
+    const t = Math.floor(n / 10), o = n % 10;
+    return TENS[t] + (o ? ' ' + ONES[o] : '');
+  }
+
+  function threeDigitWords(n) {
+    let out = '';
+    if (n >= 100) {
+      out += ONES[Math.floor(n / 100)] + ' Hundred';
+      n = n % 100;
+      if (n) out += ' ';
+    }
+    if (n > 0) out += twoDigitWords(n);
+    return out;
+  }
+
+  window.numberToWordsIndian = function (num) {
+    num = Math.floor(Math.abs(+num || 0));
+    if (num === 0) return 'Zero';
+    const crore = Math.floor(num / 10000000); num %= 10000000;
+    const lakh  = Math.floor(num / 100000);    num %= 100000;
+    const thousand = Math.floor(num / 1000);   num %= 1000;
+    const hundred = num;
+    const parts = [];
+    if (crore) parts.push(threeDigitWords(crore) + ' Crore');
+    if (lakh) parts.push(threeDigitWords(lakh) + ' Lakh');
+    if (thousand) parts.push(threeDigitWords(thousand) + ' Thousand');
+    if (hundred) parts.push(threeDigitWords(hundred));
+    return parts.join(' ');
+  };
+
+  window.amountToWordsCaption = function (value) {
+    const n = Math.round(parseFloat(value));
+    if (!value || isNaN(n) || n <= 0) return '';
+    return window.numberToWordsIndian(n) + ' Rupees Only';
+  };
+})();
+
 (function () {
   'use strict';
 
@@ -100,6 +145,15 @@ window.formatINRShort = function(n) {
         header.classList.toggle('scrolled', window.scrollY > 20);
       }, { passive: true });
     }
+
+    // ── Live "amount in words" caption on currency fields ─
+    document.querySelectorAll('.amount-input').forEach(function (el) {
+      const hint = document.getElementById(el.id + '-words');
+      if (!hint) return;
+      const update = function () { hint.textContent = window.amountToWordsCaption(el.value); };
+      el.addEventListener('input', update);
+      update();
+    });
 
   }); // end DOMContentLoaded
 

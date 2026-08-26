@@ -98,7 +98,7 @@ require_once '../includes/portal-header.php';
             <div style="font-weight:500;color:var(--cream)"><?= htmlspecialchars($w['fund_name'], ENT_QUOTES,'UTF-8') ?></div>
             <?php if ($w['fund_house']): ?><div style="font-size:0.75rem;color:var(--text-secondary)"><?= htmlspecialchars($w['fund_house'], ENT_QUOTES,'UTF-8') ?></div><?php endif; ?>
           </td>
-          <td style="font-family:'DM Mono',monospace"><?= $w['current_nav']?'₹'.number_format((float)$w['current_nav'],2):'—' ?></td>
+          <td style="font-family:'IBM Plex Mono',monospace"><?= $w['current_nav']?'₹'.number_format((float)$w['current_nav'],2):'—' ?></td>
           <td style="color:var(--bright)"><?= $w['alert_nav_above']?'₹'.number_format((float)$w['alert_nav_above'],2):'—' ?></td>
           <td style="color:var(--danger)"><?= $w['alert_nav_below']?'₹'.number_format((float)$w['alert_nav_below'],2):'—' ?></td>
           <td style="font-size:0.8rem;color:var(--text-secondary);font-style:italic"><?= $w['advisor_note']?htmlspecialchars(mb_substr($w['advisor_note'],0,60), ENT_QUOTES,'UTF-8').'…':'—' ?></td>

@@ -46,9 +46,9 @@ require_once '../includes/portal-header.php';
     <!-- Result -->
     <div class="row-result" style="background:var(--surface-2);border-radius:10px;padding:1.25rem;margin-top:0.75rem;display:none">
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:0.75rem">
-        <div><div style="font-size:0.72rem;color:var(--text-muted);font-family:'DM Mono',monospace">GAIN/LOSS</div><div style="font-size:1.1rem;font-weight:600" class="r-gain">—</div></div>
-        <div><div style="font-size:0.72rem;color:var(--text-muted);font-family:'DM Mono',monospace">TAX TYPE</div><div style="font-size:1.1rem;font-weight:600" class="r-type">—</div></div>
-        <div><div style="font-size:0.72rem;color:var(--text-muted);font-family:'DM Mono',monospace">TAX DUE</div><div style="font-size:1.1rem;font-weight:600;color:var(--danger)" class="r-tax">—</div></div>
+        <div><div style="font-size:0.72rem;color:var(--text-muted);font-family:'IBM Plex Mono',monospace">GAIN/LOSS</div><div style="font-size:1.1rem;font-weight:600" class="r-gain">—</div></div>
+        <div><div style="font-size:0.72rem;color:var(--text-muted);font-family:'IBM Plex Mono',monospace">TAX TYPE</div><div style="font-size:1.1rem;font-weight:600" class="r-type">—</div></div>
+        <div><div style="font-size:0.72rem;color:var(--text-muted);font-family:'IBM Plex Mono',monospace">TAX DUE</div><div style="font-size:1.1rem;font-weight:600;color:var(--danger)" class="r-tax">—</div></div>
       </div>
       <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:0.75rem">
         <span style="color:var(--text-secondary)">Post-tax Proceeds</span>

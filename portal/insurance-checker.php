@@ -21,11 +21,13 @@ require_once '../includes/portal-header.php';
   <h2 class="section-header" style="font-size:1.15rem">🛡 Term Insurance Analysis</h2>
   <div class="form-group">
     <label class="form-label">Annual Income (₹)</label>
-    <input class="form-input" type="number" id="t_income" value="1200000" step="50000" oninput="calcInsurance()">
+    <input class="form-input amount-input" type="number" id="t_income" value="1200000" step="50000" oninput="calcInsurance()">
+    <div class="form-hint form-hint--words" id="t_income-words"></div>
   </div>
   <div class="form-group">
     <label class="form-label">Outstanding Loans (₹) <span style="color:var(--text-muted);font-size:0.78rem">home + car + personal</span></label>
-    <input class="form-input" type="number" id="t_loans" value="0" step="100000" oninput="calcInsurance()">
+    <input class="form-input amount-input" type="number" id="t_loans" value="0" step="100000" oninput="calcInsurance()">
+    <div class="form-hint form-hint--words" id="t_loans-words"></div>
   </div>
   <div class="form-group">
     <label class="form-label">Number of Dependents</label>
@@ -33,17 +35,18 @@ require_once '../includes/portal-header.php';
   </div>
   <div class="form-group">
     <label class="form-label">Existing Term Cover (₹)</label>
-    <input class="form-input" type="number" id="t_existing" value="0" step="500000" oninput="calcInsurance()">
+    <input class="form-input amount-input" type="number" id="t_existing" value="0" step="500000" oninput="calcInsurance()">
+    <div class="form-hint form-hint--words" id="t_existing-words"></div>
   </div>
 
   <div style="background:var(--surface-2);border-radius:10px;padding:1.25rem;margin-top:0.75rem">
     <div style="display:flex;justify-content:space-between;margin-bottom:0.6rem">
       <span style="color:var(--text-secondary);font-size:0.875rem">Recommended Cover</span>
-      <span style="font-family:'DM Mono',monospace;color:var(--cream)" id="t_recommended">—</span>
+      <span style="font-family:'IBM Plex Mono',monospace;color:var(--cream)" id="t_recommended">—</span>
     </div>
     <div style="display:flex;justify-content:space-between;margin-bottom:0.6rem">
       <span style="color:var(--text-secondary);font-size:0.875rem">Existing Cover</span>
-      <span style="font-family:'DM Mono',monospace;color:var(--cream)" id="t_existing_show">₹0</span>
+      <span style="font-family:'IBM Plex Mono',monospace;color:var(--cream)" id="t_existing_show">₹0</span>
     </div>
     <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:0.6rem;margin-top:0.6rem">
       <span style="font-weight:600;color:var(--cream)">Coverage Gap</span>
@@ -55,7 +58,7 @@ require_once '../includes/portal-header.php';
   <div style="margin-top:1rem">
     <div style="display:flex;justify-content:space-between;margin-bottom:0.4rem">
       <span style="font-size:0.8rem;color:var(--text-secondary)">Protection Score</span>
-      <span style="font-family:'DM Mono',monospace;font-size:0.85rem" id="t_score_label">0%</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:0.85rem" id="t_score_label">0%</span>
     </div>
     <div style="background:var(--surface-2);border-radius:6px;height:10px;overflow:hidden">
       <div id="t_score_bar" style="height:100%;width:0%;border-radius:6px;transition:width 0.5s,background 0.5s"></div>
@@ -85,17 +88,18 @@ require_once '../includes/portal-header.php';
   </div>
   <div class="form-group">
     <label class="form-label">Existing Health Cover (₹) <span style="color:var(--text-muted);font-size:0.78rem">incl. employer cover</span></label>
-    <input class="form-input" type="number" id="h_existing" value="300000" step="100000" oninput="calcInsurance()">
+    <input class="form-input amount-input" type="number" id="h_existing" value="300000" step="100000" oninput="calcInsurance()">
+    <div class="form-hint form-hint--words" id="h_existing-words"></div>
   </div>
 
   <div style="background:var(--surface-2);border-radius:10px;padding:1.25rem;margin-top:0.75rem">
     <div style="display:flex;justify-content:space-between;margin-bottom:0.6rem">
       <span style="color:var(--text-secondary);font-size:0.875rem">Recommended Cover</span>
-      <span style="font-family:'DM Mono',monospace;color:var(--cream)" id="h_recommended">—</span>
+      <span style="font-family:'IBM Plex Mono',monospace;color:var(--cream)" id="h_recommended">—</span>
     </div>
     <div style="display:flex;justify-content:space-between;margin-bottom:0.6rem">
       <span style="color:var(--text-secondary);font-size:0.875rem">Existing Cover</span>
-      <span style="font-family:'DM Mono',monospace;color:var(--cream)" id="h_existing_show">—</span>
+      <span style="font-family:'IBM Plex Mono',monospace;color:var(--cream)" id="h_existing_show">—</span>
     </div>
     <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:0.6rem;margin-top:0.6rem">
       <span style="font-weight:600;color:var(--cream)">Upgrade Needed</span>
@@ -107,7 +111,7 @@ require_once '../includes/portal-header.php';
   <div style="margin-top:1rem">
     <div style="display:flex;justify-content:space-between;margin-bottom:0.4rem">
       <span style="font-size:0.8rem;color:var(--text-secondary)">Health Cover Score</span>
-      <span style="font-family:'DM Mono',monospace;font-size:0.85rem" id="h_score_label">0%</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:0.85rem" id="h_score_label">0%</span>
     </div>
     <div style="background:var(--surface-2);border-radius:6px;height:10px;overflow:hidden">
       <div id="h_score_bar" style="height:100%;width:0%;border-radius:6px;transition:width 0.5s,background 0.5s"></div>

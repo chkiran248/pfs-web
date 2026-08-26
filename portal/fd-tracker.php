@@ -87,11 +87,11 @@ require_once '../includes/portal-header.php';
         <tr>
           <td style="font-weight:500;color:var(--cream)"><?= htmlspecialchars($fd['fund_name'], ENT_QUOTES, 'UTF-8') ?></td>
           <td><?= format_inr($invested) ?></td>
-          <td style="font-family:'DM Mono',monospace"><?= $rate ?>%</td>
+          <td style="font-family:'IBM Plex Mono',monospace"><?= $rate ?>%</td>
           <td style="font-size:0.82rem"><?= $fd['purchase_date'] ? date('d M Y', strtotime($fd['purchase_date'])) : '—' ?></td>
           <td style="font-size:0.82rem"><?= $maturity ? date('d M Y', strtotime($maturity)) : '—' ?></td>
-          <td style="color:var(--lime);font-family:'DM Mono',monospace"><?= format_inr($mat_val) ?></td>
-          <td style="font-family:'DM Mono',monospace;font-size:0.82rem"><?= is_null($days_left) ? '—' : ($days_left < 0 ? 'Matured' : $days_left.' days') ?></td>
+          <td style="color:var(--lime);font-family:'IBM Plex Mono',monospace"><?= format_inr($mat_val) ?></td>
+          <td style="font-family:'IBM Plex Mono',monospace;font-size:0.82rem"><?= is_null($days_left) ? '—' : ($days_left < 0 ? 'Matured' : $days_left.' days') ?></td>
           <td><span class="badge <?= $status['class'] ?>"><?= $status['label'] ?></span></td>
         </tr>
         <?php endforeach; ?>

@@ -153,18 +153,18 @@ require_once '../includes/portal-header.php';
     <p class="page-eyebrow">Overview</p>
     <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap">
       <h1 class="page-title" style="margin-bottom:0"><?= $greeting ?>, <?= htmlspecialchars($user_data['full_name'], ENT_QUOTES, 'UTF-8') ?>!</h1>
-      <span style="display:inline-flex;align-items:center;gap:0.3rem;font-family:'DM Mono',monospace;font-size:0.62rem;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;padding:0.28rem 0.65rem;border-radius:20px;border:1px solid <?= $pc['border'] ?>;background:<?= $pc['bg'] ?>;color:<?= $pc['colour'] ?>;vertical-align:middle">
+      <span style="display:inline-flex;align-items:center;gap:0.3rem;font-family:'IBM Plex Mono',monospace;font-size:0.62rem;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;padding:0.28rem 0.65rem;border-radius:20px;border:1px solid <?= $pc['border'] ?>;background:<?= $pc['bg'] ?>;color:<?= $pc['colour'] ?>;vertical-align:middle">
         <?= $pc['icon'] ?> <?= $pc['label'] ?>
       </span>
     </div>
-    <div style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--text-muted);margin-top:0.3rem;letter-spacing:0.06em">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--text-muted);margin-top:0.3rem;letter-spacing:0.06em">
       <?php if ($user_data['last_login']): ?>Last login: <?= date('d M Y, g:i a', strtotime($user_data['last_login'])) ?> · <?php endif; ?>
       Risk: <?= $user_data['risk_profile'] ? ucfirst($user_data['risk_profile']) : 'Not assessed' ?>
     </div>
   </div>
   <?php if ($plan === 'free'): ?>
   <a href="<?= SITE_URL ?>/portal/pricing.php"
-     style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--lime);letter-spacing:0.08em;text-decoration:none;border:1px solid rgba(141,198,63,0.25);padding:0.35rem 0.85rem;border-radius:4px;transition:all 0.2s;white-space:nowrap"
+     style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--lime);letter-spacing:0.08em;text-decoration:none;border:1px solid rgba(141,198,63,0.25);padding:0.35rem 0.85rem;border-radius:4px;transition:all 0.2s;white-space:nowrap"
      onmouseover="this.style.background='rgba(141,198,63,0.1)'" onmouseout="this.style.background=''">↑ Upgrade plan</a>
   <?php endif; ?>
 </div>
@@ -217,7 +217,7 @@ if (!$has_insurance):
 <!-- ── Retirement Income Card ─────────────────────────────── -->
 <div style="margin-bottom:1.5rem;background:linear-gradient(135deg,var(--surface-1),rgba(46,133,64,0.06));border:1px solid rgba(201,168,76,0.25);border-radius:12px;padding:1.5rem 1.75rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1.5rem">
   <div>
-    <div style="font-family:'DM Mono',monospace;font-size:0.58rem;color:var(--lime);letter-spacing:0.22em;text-transform:uppercase;margin-bottom:0.6rem;display:flex;align-items:center;gap:0.4rem">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;color:var(--lime);letter-spacing:0.22em;text-transform:uppercase;margin-bottom:0.6rem;display:flex;align-items:center;gap:0.4rem">
       <i class="bi bi-sunrise"></i> Your Monthly Income
     </div>
     <?php if ($investable_corpus > 0): ?>
@@ -228,8 +228,8 @@ if (!$has_insurance):
         <span style="font-size:0.82rem;color:var(--text-secondary)">If You Retire Today &nbsp;·&nbsp; 6% Safe Withdrawal Rate</span>
         <!-- Tooltip -->
         <span style="position:relative;display:inline-flex;align-items:center" class="retire-tip-wrap">
-          <span style="display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:rgba(46,133,64,0.2);border:1px solid rgba(46,133,64,0.35);color:var(--lime);font-size:0.55rem;font-family:'DM Mono',monospace;cursor:default;line-height:1">?</span>
-          <span class="retire-tip-box" style="position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:0.7rem 0.9rem;font-size:0.72rem;color:var(--text-secondary);line-height:1.6;width:260px;pointer-events:none;z-index:300;font-family:'DM Sans',sans-serif;white-space:normal">
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:rgba(46,133,64,0.2);border:1px solid rgba(46,133,64,0.35);color:var(--lime);font-size:0.55rem;font-family:'IBM Plex Mono',monospace;cursor:default;line-height:1">?</span>
+          <span class="retire-tip-box" style="position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:0.7rem 0.9rem;font-size:0.72rem;color:var(--text-secondary);line-height:1.6;width:260px;pointer-events:none;z-index:300;font-family:'Inter',sans-serif;white-space:normal">
             Calculated at <strong style="color:var(--cream)">6% Safe Withdrawal Rate</strong> on your <strong style="color:var(--cream)"><?= format_inr($investable_corpus) ?></strong> investable portfolio.<br><br>
             <strong style="color:var(--cream)">Excluded:</strong> Term Insurance, Health Insurance, Critical Illness & Personal Accident policies (no maturity value).<br><br>
             Crypto values use live INR prices via CoinGecko (30-min cache).
@@ -243,7 +243,7 @@ if (!$has_insurance):
     <?php endif; ?>
   </div>
   <div style="flex-shrink:0">
-    <a href="<?= SITE_URL ?>/portal/cashflow-modeler.php" style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--lime);letter-spacing:0.08em;text-decoration:none;border:1px solid rgba(141,198,63,0.25);padding:0.45rem 1rem;border-radius:4px;white-space:nowrap;display:inline-flex;align-items:center;gap:0.4rem;transition:background 0.2s" onmouseover="this.style.background='rgba(141,198,63,0.1)'" onmouseout="this.style.background=''">
+    <a href="<?= SITE_URL ?>/portal/cashflow-modeler.php" style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--lime);letter-spacing:0.08em;text-decoration:none;border:1px solid rgba(141,198,63,0.25);padding:0.45rem 1rem;border-radius:4px;white-space:nowrap;display:inline-flex;align-items:center;gap:0.4rem;transition:background 0.2s" onmouseover="this.style.background='rgba(141,198,63,0.1)'" onmouseout="this.style.background=''">
       <i class="bi bi-graph-up-arrow"></i> Full Retirement Planner →
     </a>
   </div>
@@ -393,7 +393,7 @@ if (!$has_insurance):
         <div style="font-size:0.82rem;color:var(--text-secondary);line-height:1.6">
           <?= htmlspecialchars(mb_substr($ins['excerpt'] ?? '', 0, 100), ENT_QUOTES, 'UTF-8') ?><?= strlen($ins['excerpt'] ?? '') > 100 ? '…' : '' ?>
         </div>
-        <div style="font-size:0.72rem;color:var(--text-muted);margin-top:0.75rem;font-family:'DM Mono',monospace">
+        <div style="font-size:0.72rem;color:var(--text-muted);margin-top:0.75rem;font-family:'IBM Plex Mono',monospace">
           <?= $ins['published_at'] ? date('d M Y', strtotime($ins['published_at'])) : '' ?>
         </div>
       </div>
@@ -423,7 +423,7 @@ document.addEventListener('DOMContentLoaded', function () {
       plugins: {
         legend: {
           position: 'bottom',
-          labels: { color: isDark ? '#85a885' : '#2a5a2a', font: { family: "'DM Mono'" }, padding: 14, boxWidth: 12 }
+          labels: { color: isDark ? '#85a885' : '#2a5a2a', font: { family: "'IBM Plex Mono'" }, padding: 14, boxWidth: 12 }
         },
         tooltip: {
           callbacks: {

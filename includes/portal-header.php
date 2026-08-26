@@ -71,17 +71,17 @@ function nav_link(string $href, string $icon, string $label, string $current): s
     <div style="width:56px;height:56px;border-radius:50%;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.25);display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem">
       <i class="bi bi-shield-lock" style="font-size:1.5rem;color:var(--gold)"></i>
     </div>
-    <div style="font-family:'DM Mono',monospace;font-size:0.58rem;color:var(--lime);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:0.5rem">Session Security</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;color:var(--lime);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:0.5rem">Session Security</div>
     <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--cream);margin:0 0 0.5rem">Still there?</h3>
     <p style="font-size:0.82rem;color:var(--text-secondary);line-height:1.6;margin:0 0 1.25rem">You've been inactive for a while. Your session will expire in</p>
     <div id="idle-countdown" style="font-family:'Cormorant Garamond',serif;font-size:3.5rem;font-weight:700;color:var(--gold);line-height:1;margin-bottom:1.5rem">60</div>
     <div style="display:flex;flex-direction:column;gap:0.6rem">
-      <button onclick="idleKeepAlive()" style="width:100%;padding:0.75rem;background:var(--mid);border:none;border-radius:8px;color:#fff;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;transition:background 0.2s" onmouseover="this.style.background='var(--bright)'" onmouseout="this.style.background='var(--mid)'">
+      <button onclick="idleKeepAlive()" style="width:100%;padding:0.75rem;background:var(--mid);border:none;border-radius:8px;color:#fff;font-family:'Inter',sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;transition:background 0.2s" onmouseover="this.style.background='var(--bright)'" onmouseout="this.style.background='var(--mid)'">
         <i class="bi bi-check-circle" style="margin-right:0.4rem"></i>Yes, keep me logged in
       </button>
       <form method="post" action="<?= SITE_URL ?>/auth/logout.php" style="width:100%;margin:0">
         <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
-        <button type="submit" style="width:100%;padding:0.65rem;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text-secondary);font-family:'DM Sans',sans-serif;font-size:0.82rem;cursor:pointer;transition:all 0.2s" onmouseover="this.style.borderColor='rgba(201,168,76,0.3)';this.style.color='var(--cream)'" onmouseout="this.style.borderColor='';this.style.color=''">
+        <button type="submit" style="width:100%;padding:0.65rem;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text-secondary);font-family:'Inter',sans-serif;font-size:0.82rem;cursor:pointer;transition:all 0.2s" onmouseover="this.style.borderColor='rgba(201,168,76,0.3)';this.style.color='var(--cream)'" onmouseout="this.style.borderColor='';this.style.color=''">
           Log out now
         </button>
       </form>
@@ -240,7 +240,7 @@ function nav_link(string $href, string $icon, string $label, string $current): s
         <div class="header-user">
           <div class="user-avatar"><?= htmlspecialchars($initials, ENT_QUOTES, 'UTF-8') ?></div>
           <span class="user-name"><?= htmlspecialchars(get_user_name(), ENT_QUOTES, 'UTF-8') ?></span>
-          <span style="font-family:'DM Mono',monospace;font-size:0.58rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;padding:0.18rem 0.5rem;border-radius:12px;border:1px solid <?= $_hdr_pc['border'] ?>;background:<?= $_hdr_pc['bg'] ?>;color:<?= $_hdr_pc['colour'] ?>"><?= $_hdr_pc['icon'] ?> <?= $_hdr_pc['label'] ?></span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;padding:0.18rem 0.5rem;border-radius:12px;border:1px solid <?= $_hdr_pc['border'] ?>;background:<?= $_hdr_pc['bg'] ?>;color:<?= $_hdr_pc['colour'] ?>"><?= $_hdr_pc['icon'] ?> <?= $_hdr_pc['label'] ?></span>
         </div>
 
         <form method="POST" action="<?= SITE_URL ?>/auth/logout.php" style="display:inline;margin:0">

@@ -43,15 +43,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['coupon_code'])) {
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem">
       <!-- Option 1: Coupon -->
       <div style="background:var(--surface-2);border:1px solid rgba(141,198,63,0.25);border-radius:10px;padding:1.25rem;text-align:left">
-        <div style="font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;color:var(--lime);margin-bottom:0.4rem">HAVE A COUPON?</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;color:var(--lime);margin-bottom:0.4rem">HAVE A COUPON?</div>
         <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:0.75rem">Already investing with us? Enter your code for free premium access.</p>
         <?php if ($coupon_error): ?><div class="flash-error" style="margin-bottom:0.5rem;font-size:0.8rem"><?= htmlspecialchars($coupon_error) ?></div><?php endif; ?>
         <form method="POST">
           <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrf_token(), ENT_QUOTES,'UTF-8') ?>">
           <div style="display:flex;gap:0.4rem">
             <input type="text" name="coupon_code" placeholder="e.g. GOPRIME" maxlength="50" required
-              style="flex:1;background:var(--surface-1);border:1px solid var(--border);border-radius:6px;padding:0.5rem 0.75rem;color:var(--cream);font-family:'DM Mono',monospace;font-size:0.85rem;text-transform:uppercase">
-            <button type="submit" style="background:var(--mid);color:#fff;border:none;border-radius:6px;padding:0.5rem 0.875rem;font-family:'DM Sans',sans-serif;font-size:0.82rem;cursor:pointer;white-space:nowrap">Apply</button>
+              style="flex:1;background:var(--surface-1);border:1px solid var(--border);border-radius:6px;padding:0.5rem 0.75rem;color:var(--cream);font-family:'IBM Plex Mono',monospace;font-size:0.85rem;text-transform:uppercase">
+            <button type="submit" style="background:var(--mid);color:#fff;border:none;border-radius:6px;padding:0.5rem 0.875rem;font-family:'Inter',sans-serif;font-size:0.82rem;cursor:pointer;white-space:nowrap">Apply</button>
           </div>
         </form>
         <a href="https://wa.me/<?= WHATSAPP_NUM ?>?text=<?= urlencode('Hi, I would like a coupon code for Prime Financials premium access.') ?>"
@@ -61,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['coupon_code'])) {
 
       <!-- Option 2: Subscribe -->
       <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:1.25rem;text-align:left">
-        <div style="font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;color:var(--text-muted);margin-bottom:0.4rem">SUBSCRIBE</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;color:var(--text-muted);margin-bottom:0.4rem">SUBSCRIBE</div>
         <div style="font-family:'Cormorant Garamond',serif;font-size:1.8rem;color:var(--cream);margin-bottom:0.15rem"><?= format_inr(499) ?><span style="font-size:0.9rem;color:var(--text-muted)">/mo</span></div>
         <p style="font-size:0.78rem;color:var(--text-muted);margin-bottom:0.75rem">or <?= format_inr(4999) ?>/year (save 17%)</p>
         <a href="<?= SITE_URL ?>/portal/pricing.php" style="display:block;text-align:center;background:var(--mid);color:#fff;padding:0.55rem 0.75rem;border-radius:6px;font-size:0.82rem;font-weight:500;text-decoration:none">View Plans →</a>

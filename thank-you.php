@@ -7,7 +7,7 @@
   <title><?php echo $page_title; ?></title>
   <script>(function(){var t=localStorage.getItem('pv-theme');if(t==='light')document.documentElement.setAttribute('data-theme','light');})()</script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;1,600&family=DM+Sans:wght@400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;1,600&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
   <style>
     .ty-page{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:2rem;position:relative;}
@@ -16,7 +16,7 @@
     .ty-box h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,4vw,3rem);color:var(--cream);margin-bottom:1rem;line-height:1.2;}
     .ty-box h1 em{color:var(--lime);font-style:italic;}
     .ty-box p{color:var(--text-secondary);line-height:1.8;margin-bottom:1.75rem;font-size:1rem;}
-    .ty-note{font-family:'DM Mono',monospace;font-size:0.7rem;letter-spacing:0.06em;color:var(--text-muted);border:1px solid var(--border);padding:1rem 1.5rem;border-radius:8px;background:var(--surface-1);margin-bottom:2rem;line-height:1.7;}
+    .ty-note{font-family:'IBM Plex Mono',monospace;font-size:0.7rem;letter-spacing:0.06em;color:var(--text-muted);border:1px solid var(--border);padding:1rem 1.5rem;border-radius:8px;background:var(--surface-1);margin-bottom:2rem;line-height:1.7;}
   </style>
 </head>
 <body>

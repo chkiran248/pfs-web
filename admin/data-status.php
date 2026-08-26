@@ -73,9 +73,9 @@ require_once '../includes/admin-header.php';
       foreach ($feeds as [$name, $script, $schedule, $status]): ?>
       <tr>
         <td style="font-weight:500;color:var(--cream)"><?= $name ?></td>
-        <td style="font-family:'DM Mono',monospace;font-size:0.78rem;color:var(--text-secondary)"><?= $script ?></td>
+        <td style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:var(--text-secondary)"><?= $script ?></td>
         <td style="font-size:0.82rem;color:var(--text-secondary)"><?= $schedule ?></td>
-        <td style="font-family:'DM Mono',monospace;font-size:0.82rem;color:<?= $status['color'] ?>"><?= $status['label'] ?></td>
+        <td style="font-family:'IBM Plex Mono',monospace;font-size:0.82rem;color:<?= $status['color'] ?>"><?= $status['label'] ?></td>
         <td><span class="badge <?= $status['ok']?'badge-green':'badge-muted' ?>"><?= $status['ok']?'OK':'Stale' ?></span></td>
       </tr>
       <?php endforeach; ?>
@@ -95,7 +95,7 @@ require_once '../includes/admin-header.php';
 <div class="portal-card">
   <div class="card-title">Manual Run (Local Dev)</div>
   <p style="color:var(--text-secondary);font-size:0.875rem;margin-bottom:1rem">On XAMPP, run these via terminal in your project root. On Hostinger, these run automatically via cPanel cron.</p>
-  <div style="background:var(--surface-2);border-radius:8px;padding:1rem;font-family:'DM Mono',monospace;font-size:0.78rem;color:var(--cream);line-height:2">
+  <div style="background:var(--surface-2);border-radius:8px;padding:1rem;font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:var(--cream);line-height:2">
     php data-fetcher/fetch-nav.php<br>
     php data-fetcher/fetch-benchmarks.php<br>
     php data-fetcher/fetch-stock-prices.php<br>
@@ -105,8 +105,8 @@ require_once '../includes/admin-header.php';
     php data-fetcher/score-funds.php
   </div>
   <div style="margin-top:1rem">
-    <div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--lime);letter-spacing:0.15em;margin-bottom:0.5rem">HOSTINGER CRON SCHEDULE</div>
-    <div style="background:var(--surface-2);border-radius:8px;padding:1rem;font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--text-secondary);line-height:2">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--lime);letter-spacing:0.15em;margin-bottom:0.5rem">HOSTINGER CRON SCHEDULE</div>
+    <div style="background:var(--surface-2);border-radius:8px;padding:1rem;font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:var(--text-secondary);line-height:2">
       0 6 * * * /usr/bin/php /home/u834452319/domains/primefin.in/public_html/data-fetcher/fetch-nav.php >> /home/u834452319/domains/primefin.in/logs/cron.log 2>&1<br>
       30 6 * * * /usr/bin/php /home/u834452319/domains/primefin.in/public_html/data-fetcher/fetch-benchmarks.php >> /home/u834452319/domains/primefin.in/logs/cron.log 2>&1<br>
       0 7 * * * /usr/bin/php /home/u834452319/domains/primefin.in/public_html/data-fetcher/fetch-stock-prices.php >> /home/u834452319/domains/primefin.in/logs/cron.log 2>&1<br>
@@ -117,7 +117,7 @@ require_once '../includes/admin-header.php';
     </div>
   </div>
   <p style="color:var(--text-secondary);font-size:0.8rem;margin-top:0.75rem">
-    <strong style="color:var(--lime)">First run:</strong> After deploying, run <code style="font-family:'DM Mono',monospace;color:var(--cream)">score-funds.php</code> manually once to populate tech scores for all existing funds.
+    <strong style="color:var(--lime)">First run:</strong> After deploying, run <code style="font-family:'IBM Plex Mono',monospace;color:var(--cream)">score-funds.php</code> manually once to populate tech scores for all existing funds.
   </p>
 </div>
 

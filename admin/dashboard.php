@@ -58,7 +58,7 @@ require_once '../includes/admin-header.php';
       <tr>
         <td><div style="font-weight:500;color:var(--cream)"><?= htmlspecialchars($c['full_name'],ENT_QUOTES,'UTF-8') ?></div><div style="font-size:0.75rem;color:var(--text-secondary)"><?= htmlspecialchars($c['email'],ENT_QUOTES,'UTF-8') ?></div></td>
         <td><span class="badge <?= $c['risk_profile']?'badge-green':'badge-muted' ?>"><?= $c['risk_profile']?ucfirst($c['risk_profile']):'—' ?></span></td>
-        <td style="font-family:'DM Mono',monospace;font-size:0.82rem">₹<?= number_format((float)$c['portfolio_val'],0) ?></td>
+        <td style="font-family:'IBM Plex Mono',monospace;font-size:0.82rem">₹<?= number_format((float)$c['portfolio_val'],0) ?></td>
         <td style="font-size:0.75rem;color:var(--text-muted)"><?= date('d M Y',strtotime($c['created_at'])) ?></td>
       </tr>
       <?php endforeach; ?>

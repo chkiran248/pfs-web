@@ -22,40 +22,56 @@ require_once '../includes/portal-header.php';
 
   <div class="form-group">
     <label class="form-label">Gross Annual Income (₹)</label>
-    <input class="form-input" type="number" id="income" value="1200000" step="10000" oninput="calcTax()">
+    <input class="form-input amount-input" type="number" id="income" value="1200000" step="10000" oninput="calcTax()">
+    <div class="form-hint form-hint--words" id="income-words"></div>
   </div>
 
-  <div style="margin:1.25rem 0 0.5rem;font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--lime);letter-spacing:0.18em;text-transform:uppercase">Section 80C Deductions (max ₹1,50,000)</div>
+  <div style="margin:1.25rem 0 0.5rem;font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--lime);letter-spacing:0.18em;text-transform:uppercase">Section 80C Deductions (max ₹1,50,000)</div>
   <?php $items80c = ['EPF Contribution'=>'epf','PPF Contribution'=>'ppf','ELSS / Tax Saver MF'=>'elss','LIC Premium'=>'lic','Home Loan Principal'=>'hlp','Tuition Fees'=>'tuition']; ?>
   <?php foreach ($items80c as $label => $id): ?>
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem">
-    <label style="font-size:0.85rem;color:var(--text-secondary)"><?= $label ?></label>
-    <input type="number" id="<?= $id ?>" value="0" step="1000" oninput="calcTax()"
-      style="width:140px;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:0.4rem 0.6rem;color:var(--text-primary);font-family:'DM Mono',monospace;font-size:0.85rem;text-align:right">
+  <div style="margin-bottom:0.6rem">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <label style="font-size:0.85rem;color:var(--text-secondary)"><?= $label ?></label>
+      <input type="number" id="<?= $id ?>" class="amount-input" value="0" step="1000" oninput="calcTax()"
+        style="width:140px;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:0.4rem 0.6rem;color:var(--text-primary);font-family:'IBM Plex Mono',monospace;font-size:0.85rem;text-align:right">
+    </div>
+    <div class="form-hint form-hint--words" id="<?= $id ?>-words" style="text-align:right"></div>
   </div>
   <?php endforeach; ?>
-  <div style="text-align:right;font-size:0.75rem;color:var(--lime);font-family:'DM Mono',monospace">Total 80C: <span id="total80c">₹0</span> / ₹1,50,000</div>
+  <div style="text-align:right;font-size:0.75rem;color:var(--lime);font-family:'IBM Plex Mono',monospace">Total 80C: <span id="total80c">₹0</span> / ₹1,50,000</div>
 
-  <div style="margin:1.25rem 0 0.5rem;font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--lime);letter-spacing:0.18em;text-transform:uppercase">Section 80D — Health Insurance</div>
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem">
-    <label style="font-size:0.85rem;color:var(--text-secondary)">Self & Family premium</label>
-    <input type="number" id="health_self" value="0" step="1000" oninput="calcTax()" style="width:140px;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:0.4rem 0.6rem;color:var(--text-primary);font-family:'DM Mono',monospace;font-size:0.85rem;text-align:right">
+  <div style="margin:1.25rem 0 0.5rem;font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--lime);letter-spacing:0.18em;text-transform:uppercase">Section 80D — Health Insurance</div>
+  <div style="margin-bottom:0.5rem">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <label style="font-size:0.85rem;color:var(--text-secondary)">Self & Family premium</label>
+      <input type="number" id="health_self" class="amount-input" value="0" step="1000" oninput="calcTax()" style="width:140px;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:0.4rem 0.6rem;color:var(--text-primary);font-family:'IBM Plex Mono',monospace;font-size:0.85rem;text-align:right">
+    </div>
+    <div class="form-hint form-hint--words" id="health_self-words" style="text-align:right"></div>
   </div>
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem">
-    <label style="font-size:0.85rem;color:var(--text-secondary)">Parents premium <span style="font-size:0.72rem;color:var(--text-muted)">(max ₹50K if senior)</span></label>
-    <input type="number" id="health_parents" value="0" step="1000" oninput="calcTax()" style="width:140px;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:0.4rem 0.6rem;color:var(--text-primary);font-family:'DM Mono',monospace;font-size:0.85rem;text-align:right">
+  <div style="margin-bottom:0.5rem">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <label style="font-size:0.85rem;color:var(--text-secondary)">Parents premium <span style="font-size:0.72rem;color:var(--text-muted)">(max ₹50K if senior)</span></label>
+      <input type="number" id="health_parents" class="amount-input" value="0" step="1000" oninput="calcTax()" style="width:140px;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:0.4rem 0.6rem;color:var(--text-primary);font-family:'IBM Plex Mono',monospace;font-size:0.85rem;text-align:right">
+    </div>
+    <div class="form-hint form-hint--words" id="health_parents-words" style="text-align:right"></div>
   </div>
 
-  <div style="margin:1.25rem 0 0.5rem;font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--lime);letter-spacing:0.18em;text-transform:uppercase">80CCD(1B) — NPS (max ₹50,000)</div>
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem">
-    <label style="font-size:0.85rem;color:var(--text-secondary)">NPS Contribution</label>
-    <input type="number" id="nps" value="0" step="1000" oninput="calcTax()" style="width:140px;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:0.4rem 0.6rem;color:var(--text-primary);font-family:'DM Mono',monospace;font-size:0.85rem;text-align:right">
+  <div style="margin:1.25rem 0 0.5rem;font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--lime);letter-spacing:0.18em;text-transform:uppercase">80CCD(1B) — NPS (max ₹50,000)</div>
+  <div style="margin-bottom:0.5rem">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <label style="font-size:0.85rem;color:var(--text-secondary)">NPS Contribution</label>
+      <input type="number" id="nps" class="amount-input" value="0" step="1000" oninput="calcTax()" style="width:140px;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:0.4rem 0.6rem;color:var(--text-primary);font-family:'IBM Plex Mono',monospace;font-size:0.85rem;text-align:right">
+    </div>
+    <div class="form-hint form-hint--words" id="nps-words" style="text-align:right"></div>
   </div>
 
-  <div style="margin:1.25rem 0 0.5rem;font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--lime);letter-spacing:0.18em;text-transform:uppercase">Other</div>
-  <div style="display:flex;align-items:center;justify-content:space-between">
-    <label style="font-size:0.85rem;color:var(--text-secondary)">HRA Exemption</label>
-    <input type="number" id="hra" value="0" step="10000" oninput="calcTax()" style="width:140px;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:0.4rem 0.6rem;color:var(--text-primary);font-family:'DM Mono',monospace;font-size:0.85rem;text-align:right">
+  <div style="margin:1.25rem 0 0.5rem;font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--lime);letter-spacing:0.18em;text-transform:uppercase">Other</div>
+  <div>
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <label style="font-size:0.85rem;color:var(--text-secondary)">HRA Exemption</label>
+      <input type="number" id="hra" class="amount-input" value="0" step="10000" oninput="calcTax()" style="width:140px;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:0.4rem 0.6rem;color:var(--text-primary);font-family:'IBM Plex Mono',monospace;font-size:0.85rem;text-align:right">
+    </div>
+    <div class="form-hint form-hint--words" id="hra-words" style="text-align:right"></div>
   </div>
 </div>
 
@@ -66,18 +82,18 @@ require_once '../includes/portal-header.php';
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
       <!-- Old regime -->
       <div style="background:var(--surface-2);border-radius:10px;padding:1.25rem;border:1px solid var(--border)">
-        <div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--text-muted);letter-spacing:0.15em;margin-bottom:0.75rem">OLD REGIME</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--text-muted);letter-spacing:0.15em;margin-bottom:0.75rem">OLD REGIME</div>
         <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.3rem">Taxable Income</div>
-        <div style="font-family:'DM Mono',monospace;color:var(--cream);margin-bottom:0.75rem" id="old_taxable">₹—</div>
+        <div style="font-family:'IBM Plex Mono',monospace;color:var(--cream);margin-bottom:0.75rem" id="old_taxable">₹—</div>
         <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.3rem">Tax + Cess</div>
         <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--gold)" id="old_tax">₹—</div>
         <div style="font-size:0.75rem;color:var(--text-secondary);margin-top:0.3rem">Monthly: <span id="old_monthly">₹—</span></div>
       </div>
       <!-- New regime -->
       <div style="background:var(--surface-2);border-radius:10px;padding:1.25rem;border:1px solid var(--border)" id="new_card">
-        <div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--text-muted);letter-spacing:0.15em;margin-bottom:0.75rem">NEW REGIME</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--text-muted);letter-spacing:0.15em;margin-bottom:0.75rem">NEW REGIME</div>
         <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.3rem">Taxable Income</div>
-        <div style="font-family:'DM Mono',monospace;color:var(--cream);margin-bottom:0.75rem" id="new_taxable">₹—</div>
+        <div style="font-family:'IBM Plex Mono',monospace;color:var(--cream);margin-bottom:0.75rem" id="new_taxable">₹—</div>
         <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.3rem">Tax + Cess</div>
         <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--gold)" id="new_tax">₹—</div>
         <div style="font-size:0.75rem;color:var(--text-secondary);margin-top:0.3rem">Monthly: <span id="new_monthly">₹—</span></div>

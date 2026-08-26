@@ -33,7 +33,7 @@
   cursor: pointer;
   list-style: none;
   border-radius: 7px;
-  font-family: 'DM Mono', monospace;
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 0.7rem;
   letter-spacing: 0.12em;
   color: var(--text-secondary);
@@ -85,7 +85,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.92rem;
   font-weight: 500;
   color: var(--cream);
@@ -127,7 +127,7 @@
 }
 
 .docs-article h3 {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 1.05rem;
   font-weight: 600;
   color: var(--cream);
@@ -160,7 +160,7 @@
 .docs-article a:hover { color: var(--cream); }
 
 .docs-article code {
-  font-family: 'DM Mono', monospace;
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 0.88em;
   background: var(--surface-2);
   border: 1px solid var(--border);
@@ -230,7 +230,7 @@
   border-radius: 50%;
   background: rgba(141, 198, 63, 0.12);
   color: var(--lime);
-  font-family: 'DM Mono', monospace;
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 0.75rem;
   flex-shrink: 0;
 }

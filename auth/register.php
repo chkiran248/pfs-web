@@ -254,12 +254,12 @@ require_once __DIR__ . '/auth-layout.php';
 
 <div style="display:flex;align-items:center;gap:0.75rem;margin:1.5rem 0">
   <div style="flex:1;height:1px;background:var(--border)"></div>
-  <span style="font-size:0.75rem;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:0.1em">OR</span>
+  <span style="font-size:0.75rem;color:var(--text-muted);font-family:'IBM Plex Mono',monospace;letter-spacing:0.1em">OR</span>
   <div style="flex:1;height:1px;background:var(--border)"></div>
 </div>
 
 <a href="<?= SITE_URL ?>/auth/google-login.php"
-   style="display:flex;align-items:center;justify-content:center;gap:0.75rem;width:100%;padding:0.7rem 1rem;background:#fff;border:1px solid #dadce0;border-radius:8px;color:#3c4043;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:500;text-decoration:none;transition:box-shadow 0.2s"
+   style="display:flex;align-items:center;justify-content:center;gap:0.75rem;width:100%;padding:0.7rem 1rem;background:#fff;border:1px solid #dadce0;border-radius:8px;color:#3c4043;font-family:'Inter',sans-serif;font-size:0.9rem;font-weight:500;text-decoration:none;transition:box-shadow 0.2s"
    onmouseover="this.style.boxShadow='0 1px 4px rgba(0,0,0,0.2)'" onmouseout="this.style.boxShadow=''">
   <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
     <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>

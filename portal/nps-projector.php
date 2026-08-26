@@ -29,14 +29,15 @@ require_once '../includes/portal-header.php';
   </div>
   <div class="form-group">
     <label class="form-label">Monthly NPS Contribution (₹)</label>
-    <input class="form-input" type="number" id="monthly" value="5000" step="500" oninput="calcNps()">
+    <input class="form-input amount-input" type="number" id="monthly" value="5000" step="500" oninput="calcNps()">
+    <div class="form-hint form-hint--words" id="monthly-words"></div>
   </div>
   <div class="form-group">
     <label class="form-label">Expected Annual Return (% p.a.)</label>
     <input class="form-input" type="number" id="ret" value="10" step="0.5" min="6" max="15" oninput="calcNps()">
   </div>
 
-  <div style="margin:1rem 0 0.5rem;font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--lime);letter-spacing:0.18em;text-transform:uppercase">Asset Allocation (must total 100%)</div>
+  <div style="margin:1rem 0 0.5rem;font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--lime);letter-spacing:0.18em;text-transform:uppercase">Asset Allocation (must total 100%)</div>
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem">
     <?php foreach (['eq'=>['Equity (E)','75'],'gb'=>['Govt Bonds (G)','15'],'cb'=>['Corp Bonds (C)','10']] as $id=>[$label,$val]): ?>
     <div class="form-group" style="margin-bottom:0">
@@ -45,7 +46,7 @@ require_once '../includes/portal-header.php';
     </div>
     <?php endforeach; ?>
   </div>
-  <div style="text-align:right;font-size:0.75rem;margin-top:0.4rem;font-family:'DM Mono',monospace" id="alloc_check" style="color:var(--lime)">Total: 100%</div>
+  <div style="text-align:right;font-size:0.75rem;margin-top:0.4rem;font-family:'IBM Plex Mono',monospace" id="alloc_check" style="color:var(--lime)">Total: 100%</div>
 </div>
 
 <div>
@@ -63,15 +64,15 @@ require_once '../includes/portal-header.php';
     <div style="display:flex;flex-direction:column;gap:0.6rem">
       <div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid var(--border-light)">
         <span style="color:var(--text-secondary);font-size:0.875rem">Under 80CCD(1) in 80C limit</span>
-        <span style="font-family:'DM Mono',monospace;color:var(--cream)" id="tax80c">—</span>
+        <span style="font-family:'IBM Plex Mono',monospace;color:var(--cream)" id="tax80c">—</span>
       </div>
       <div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid var(--border-light)">
         <span style="color:var(--text-secondary);font-size:0.875rem">Additional 80CCD(1B) — up to ₹50,000</span>
-        <span style="font-family:'DM Mono',monospace;color:var(--cream)" id="tax80ccd">—</span>
+        <span style="font-family:'IBM Plex Mono',monospace;color:var(--cream)" id="tax80ccd">—</span>
       </div>
       <div style="display:flex;justify-content:space-between;padding:0.5rem 0">
         <span style="color:var(--cream);font-weight:500">Est. Annual Tax Saved (30% bracket)</span>
-        <span style="font-family:'DM Mono',monospace;color:var(--lime);font-size:1.1rem" id="taxsaved">—</span>
+        <span style="font-family:'IBM Plex Mono',monospace;color:var(--lime);font-size:1.1rem" id="taxsaved">—</span>
       </div>
     </div>
   </div>
@@ -137,7 +138,7 @@ function calcNps(){
     var months=y*12, corp=r>0?monthly*((Math.pow(1+r,months)-1)/r)*(1+r):monthly*months;
     var age=curAge+y;
     if(y<=5 || y>years-5 || y===years){
-      tbody+='<tr><td>'+age+'</td><td>'+(new Date().getFullYear()+y)+'</td><td>₹'+Math.round(annual).toLocaleString('en-IN')+'</td><td style="color:var(--lime);font-family:\'DM Mono\',monospace">₹'+Math.round(corp).toLocaleString('en-IN')+'</td></tr>';
+      tbody+='<tr><td>'+age+'</td><td>'+(new Date().getFullYear()+y)+'</td><td>₹'+Math.round(annual).toLocaleString('en-IN')+'</td><td style="color:var(--lime);font-family:\'IBM Plex Mono\',monospace">₹'+Math.round(corp).toLocaleString('en-IN')+'</td></tr>';
     }
     if(y%3===0||y===years){ labels.push('Age '+(curAge+y)); data.push(Math.round(corp)); }
   }

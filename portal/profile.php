@@ -198,7 +198,7 @@ $assessment_url = SITE_URL . '/portal/risk-assessment.php?redirect=profile';
       <span style="font-weight:600;font-size:1.05rem;color:<?= $rbc['color'] ?>"><?= ucfirst($rp) ?></span>
     </div>
     <?php if ($rs !== null): ?>
-    <span style="font-family:'DM Mono',monospace;font-size:0.78rem;color:var(--text-secondary)">
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:var(--text-secondary)">
       Score: <strong style="color:var(--cream)"><?= $rs ?>/20</strong>
     </span>
     <?php endif; ?>
@@ -216,14 +216,14 @@ $assessment_url = SITE_URL . '/portal/risk-assessment.php?redirect=profile';
   <!-- Score breakdown bar -->
   <?php if ($rs !== null): ?>
   <div style="margin-bottom:1rem">
-    <div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--lime);letter-spacing:0.12em;margin-bottom:0.4rem">RISK SCORE SPECTRUM</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--lime);letter-spacing:0.12em;margin-bottom:0.4rem">RISK SCORE SPECTRUM</div>
     <div style="position:relative;height:8px;background:var(--surface-2);border-radius:4px;overflow:hidden">
       <div style="position:absolute;left:0;top:0;height:100%;width:30%;background:var(--bright);opacity:0.5;border-radius:4px 0 0 4px"></div>
       <div style="position:absolute;left:30%;top:0;height:100%;width:35%;background:var(--gold);opacity:0.5"></div>
       <div style="position:absolute;left:65%;top:0;height:100%;width:35%;background:#ff6b35;opacity:0.5;border-radius:0 4px 4px 0"></div>
       <div style="position:absolute;top:-2px;height:12px;width:12px;border-radius:50%;background:var(--cream);border:2px solid var(--bg);left:calc(<?= round($rs / 20 * 100) ?>% - 6px);transition:left 0.4s"></div>
     </div>
-    <div style="display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--text-muted);margin-top:0.35rem">
+    <div style="display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:var(--text-muted);margin-top:0.35rem">
       <span>Conservative (0–6)</span><span>Moderate (7–13)</span><span>Aggressive (14–20)</span>
     </div>
   </div>
@@ -231,7 +231,7 @@ $assessment_url = SITE_URL . '/portal/risk-assessment.php?redirect=profile';
 
   <!-- Recommended fund types -->
   <div style="background:var(--surface-2);border-radius:10px;padding:1rem;margin-bottom:1rem">
-    <div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--lime);letter-spacing:0.12em;margin-bottom:0.6rem">SUITABLE FUND CATEGORIES</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--lime);letter-spacing:0.12em;margin-bottom:0.6rem">SUITABLE FUND CATEGORIES</div>
     <?php
     $suggestions = [
         'conservative' => [['Liquid / Overnight', 'Lowest risk — park emergency funds'],['Short Duration Debt', 'Stable income, low volatility'],['Conservative Hybrid', 'Mostly debt with small equity kicker'],['Arbitrage Funds', 'Equity taxation, debt-level risk']],

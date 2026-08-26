@@ -58,7 +58,7 @@ $groups = [
       <div style="font-size:1.75rem;margin-bottom:0.75rem;color:var(--lime)"><?= $icon ?></div>
       <div style="font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:600;color:var(--cream);margin-bottom:0.4rem"><?= $name ?></div>
       <div style="font-size:0.845rem;color:var(--text-secondary);line-height:1.6;flex:1"><?= $desc ?></div>
-      <div style="margin-top:1rem;font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--lime);letter-spacing:0.15em;text-transform:uppercase">Open →</div>
+      <div style="margin-top:1rem;font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--lime);letter-spacing:0.15em;text-transform:uppercase">Open →</div>
     </a>
     <?php endforeach; ?>
   </div>

@@ -53,7 +53,7 @@ require_once '../includes/portal-header.php';
 <div style="display:flex;gap:0;margin-bottom:1.5rem;border-bottom:1px solid var(--border)">
   <?php foreach (['sip'=>'SIP to Corpus','goal'=>'Goal to SIP','lumpsum'=>'Lumpsum'] as $t=>$l): ?>
   <button onclick="switchTab('<?= $t ?>')" id="tab-<?= $t ?>"
-    style="padding:0.65rem 1.25rem;border:none;background:none;color:var(--text-secondary);font-family:'DM Sans',sans-serif;font-size:0.875rem;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.15s">
+    style="padding:0.65rem 1.25rem;border:none;background:none;color:var(--text-secondary);font-family:'Inter',sans-serif;font-size:0.875rem;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.15s">
     <?= $l ?>
   </button>
   <?php endforeach; ?>
@@ -66,7 +66,8 @@ require_once '../includes/portal-header.php';
   <div class="card-title">Monthly SIP → Final Corpus</div>
   <div class="form-group">
     <label class="form-label">Monthly SIP Amount (₹)</label>
-    <input class="form-input" type="number" id="s_sip" value="5000" min="500" oninput="calcSip()">
+    <input class="form-input amount-input" type="number" id="s_sip" value="5000" min="500" oninput="calcSip()">
+    <div class="form-hint form-hint--words" id="s_sip-words"></div>
   </div>
   <div class="form-group">
     <label class="form-label">Expected Return (% p.a.)</label>
@@ -79,11 +80,11 @@ require_once '../includes/portal-header.php';
   <div style="background:var(--surface-2);border-radius:10px;padding:1.25rem;margin-top:0.5rem">
     <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem">
       <span style="color:var(--text-secondary);font-size:0.85rem">Total Invested</span>
-      <span style="font-family:'DM Mono',monospace;color:var(--cream)" id="s_invested">₹9,00,000</span>
+      <span style="font-family:'IBM Plex Mono',monospace;color:var(--cream)" id="s_invested">₹9,00,000</span>
     </div>
     <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem">
       <span style="color:var(--text-secondary);font-size:0.85rem">Est. Returns</span>
-      <span style="font-family:'DM Mono',monospace;color:var(--bright)" id="s_returns">₹16,22,880</span>
+      <span style="font-family:'IBM Plex Mono',monospace;color:var(--bright)" id="s_returns">₹16,22,880</span>
     </div>
     <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:0.5rem;margin-top:0.5rem">
       <span style="color:var(--cream);font-weight:600">Final Corpus</span>
@@ -114,7 +115,8 @@ require_once '../includes/portal-header.php';
   <div class="card-title">Target Corpus → Monthly SIP</div>
   <div class="form-group">
     <label class="form-label">Target Amount (₹)</label>
-    <input class="form-input" type="number" id="g_target" value="1000000" oninput="calcGoal()">
+    <input class="form-input amount-input" type="number" id="g_target" value="1000000" oninput="calcGoal()">
+    <div class="form-hint form-hint--words" id="g_target-words"></div>
   </div>
   <div class="form-group">
     <label class="form-label">Expected Return (% p.a.)</label>
@@ -125,7 +127,7 @@ require_once '../includes/portal-header.php';
     <input class="form-input" type="number" id="g_years" value="10" min="1" max="40" oninput="calcGoal()">
   </div>
   <div style="background:var(--surface-2);border-radius:10px;padding:1.5rem;margin-top:0.5rem;text-align:center">
-    <div style="font-size:0.75rem;font-family:'DM Mono',monospace;color:var(--lime);letter-spacing:0.15em;margin-bottom:0.5rem">MONTHLY SIP REQUIRED</div>
+    <div style="font-size:0.75rem;font-family:'IBM Plex Mono',monospace;color:var(--lime);letter-spacing:0.15em;margin-bottom:0.5rem">MONTHLY SIP REQUIRED</div>
     <div style="font-family:'Cormorant Garamond',serif;font-size:2.5rem;font-weight:700;color:var(--lime)" id="g_sip_result">₹4,347</div>
     <div style="font-size:0.78rem;color:var(--text-secondary);margin-top:0.3rem" id="g_invested_note">Total invested: ₹5,21,640</div>
   </div>
@@ -136,7 +138,8 @@ require_once '../includes/portal-header.php';
   <div class="card-title">Lumpsum Investment Growth</div>
   <div class="form-group">
     <label class="form-label">Lumpsum Amount (₹)</label>
-    <input class="form-input" type="number" id="l_amount" value="100000" oninput="calcLump()">
+    <input class="form-input amount-input" type="number" id="l_amount" value="100000" oninput="calcLump()">
+    <div class="form-hint form-hint--words" id="l_amount-words"></div>
   </div>
   <div class="form-group">
     <label class="form-label">Expected Return (% p.a.)</label>
@@ -149,11 +152,11 @@ require_once '../includes/portal-header.php';
   <div style="background:var(--surface-2);border-radius:10px;padding:1.25rem;margin-top:0.5rem">
     <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem">
       <span style="color:var(--text-secondary);font-size:0.85rem">Amount Invested</span>
-      <span style="font-family:'DM Mono',monospace;color:var(--cream)" id="l_invested">₹1,00,000</span>
+      <span style="font-family:'IBM Plex Mono',monospace;color:var(--cream)" id="l_invested">₹1,00,000</span>
     </div>
     <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem">
       <span style="color:var(--text-secondary);font-size:0.85rem">Wealth Gained</span>
-      <span style="font-family:'DM Mono',monospace;color:var(--bright)" id="l_gain">₹2,10,585</span>
+      <span style="font-family:'IBM Plex Mono',monospace;color:var(--bright)" id="l_gain">₹2,10,585</span>
     </div>
     <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:0.5rem;margin-top:0.5rem">
       <span style="color:var(--cream);font-weight:600">Maturity Value</span>
@@ -176,7 +179,7 @@ require_once '../includes/portal-header.php';
             <td><?= htmlspecialchars($p['goal_name'] ?: 'SIP Plan', ENT_QUOTES, 'UTF-8') ?></td>
             <td><?= format_inr((float)$p['monthly_sip']) ?></td>
             <td><?= $p['duration_years'] ?>yr</td>
-            <td style="color:var(--lime);font-family:'DM Mono',monospace"><?= format_inr((float)$p['calculated_corpus']) ?></td>
+            <td style="color:var(--lime);font-family:'IBM Plex Mono',monospace"><?= format_inr((float)$p['calculated_corpus']) ?></td>
           </tr>
           <?php endforeach; ?>
         </tbody>
@@ -221,7 +224,7 @@ function updateSipChart(inv, ret){
       labels:['Invested','Returns'],
       datasets:[{data:[inv,ret],backgroundColor:['#1B5E2A','#8DC63F'],borderColor:'#0c140c',borderWidth:3}]
     },
-    options:{cutout:'65%',plugins:{legend:{position:'bottom',labels:{color:'#85a885',font:{family:"'DM Mono'"},padding:12,boxWidth:12}}}}
+    options:{cutout:'65%',plugins:{legend:{position:'bottom',labels:{color:'#85a885',font:{family:"'IBM Plex Mono'"},padding:12,boxWidth:12}}}}
   });
 }
 

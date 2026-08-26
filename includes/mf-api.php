@@ -100,5 +100,5 @@ function mf_format_return(?float $val): string {
     if ($val === null) return '—';
     $color = $val >= 0 ? 'var(--bright)' : 'var(--danger)';
     $sign  = $val >= 0 ? '+' : '';
-    return "<span style=\"color:{$color};font-family:'DM Mono',monospace\">{$sign}{$val}%</span>";
+    return "<span style=\"color:{$color};font-family:'IBM Plex Mono',monospace\">{$sign}{$val}%</span>";
 }

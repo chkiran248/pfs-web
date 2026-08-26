@@ -72,7 +72,7 @@ require_once '../includes/portal-header.php';
       <?php foreach ($p['holdings'] as $h): ?>
       <tr style="border-bottom:1px solid var(--border-light)">
         <td style="padding:0.4rem 0;color:var(--text-secondary)"><?= htmlspecialchars($h[0],ENT_QUOTES,'UTF-8') ?></td>
-        <td style="padding:0.4rem 0;text-align:right;font-family:'DM Mono',monospace;color:var(--lime)"><?= $h[1] ?>%</td>
+        <td style="padding:0.4rem 0;text-align:right;font-family:'IBM Plex Mono',monospace;color:var(--lime)"><?= $h[1] ?>%</td>
       </tr>
       <?php endforeach; ?>
     </table>
@@ -85,7 +85,7 @@ require_once '../includes/portal-header.php';
     new Chart(document.getElementById('<?= $chartId ?>'),{
       type:'doughnut',
       data:{labels:<?= json_encode($labels) ?>,datasets:[{data:<?= json_encode($data) ?>,backgroundColor:<?= json_encode(array_slice($chart_colors, 0, count($labels))) ?>,borderColor:'#0c140c',borderWidth:3,hoverOffset:4}]},
-      options:{cutout:'62%',plugins:{legend:{position:'bottom',labels:{color:'#85a885',font:{family:"'DM Mono'"},padding:10,boxWidth:10,font:{size:11}}},tooltip:{callbacks:{label:ctx=>ctx.label+': '+ctx.raw+'%'}}}}
+      options:{cutout:'62%',plugins:{legend:{position:'bottom',labels:{color:'#85a885',font:{family:"'IBM Plex Mono'"},padding:10,boxWidth:10,font:{size:11}}},tooltip:{callbacks:{label:ctx=>ctx.label+': '+ctx.raw+'%'}}}}
     });
   });
   </script>

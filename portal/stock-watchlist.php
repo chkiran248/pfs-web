@@ -100,9 +100,9 @@ require_once '../includes/portal-header.php';
             <div><span class="badge badge-muted"><?= htmlspecialchars($w['ticker_symbol'], ENT_QUOTES,'UTF-8') ?></span></div>
           </td>
           <td><span class="badge badge-muted"><?= $w['exchange'] ?></span></td>
-          <td style="font-family:'DM Mono',monospace"><?= $w['added_price']?'₹'.number_format((float)$w['added_price'],2):'—' ?></td>
-          <td style="color:var(--bright);font-family:'DM Mono',monospace"><?= $w['target_price']?'₹'.number_format((float)$w['target_price'],2):'—' ?></td>
-          <td style="color:var(--danger);font-family:'DM Mono',monospace"><?= $w['stop_loss']?'₹'.number_format((float)$w['stop_loss'],2):'—' ?></td>
+          <td style="font-family:'IBM Plex Mono',monospace"><?= $w['added_price']?'₹'.number_format((float)$w['added_price'],2):'—' ?></td>
+          <td style="color:var(--bright);font-family:'IBM Plex Mono',monospace"><?= $w['target_price']?'₹'.number_format((float)$w['target_price'],2):'—' ?></td>
+          <td style="color:var(--danger);font-family:'IBM Plex Mono',monospace"><?= $w['stop_loss']?'₹'.number_format((float)$w['stop_loss'],2):'—' ?></td>
           <td><?= $w['report_title']?'<a href="'.SITE_URL.'/advisory/stocks-detail.php?id='.htmlspecialchars($w['research_id'],ENT_QUOTES,'UTF-8').'" class="auth-link" style="font-size:0.78rem">View →</a>':'—' ?></td>
           <td style="font-size:0.8rem;color:var(--text-secondary)"><?= $w['client_notes']?htmlspecialchars($w['client_notes'], ENT_QUOTES,'UTF-8'):'—' ?></td>
           <td>

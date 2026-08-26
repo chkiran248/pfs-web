@@ -208,7 +208,7 @@ require_once __DIR__ . '/auth-layout.php';
 <?php if (!empty($_SESSION['dev_otp']) && APP_ENV === 'development'): ?>
   <div class="flash-info" style="margin-bottom:1.25rem;text-align:center">
     <strong>🛠 Dev mode — your OTP is:</strong><br>
-    <span style="font-family:'DM Mono',monospace;font-size:1.75rem;letter-spacing:0.4rem;color:var(--lime)"><?= htmlspecialchars($_SESSION['dev_otp'], ENT_QUOTES, 'UTF-8') ?></span><br>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:1.75rem;letter-spacing:0.4rem;color:var(--lime)"><?= htmlspecialchars($_SESSION['dev_otp'], ENT_QUOTES, 'UTF-8') ?></span><br>
     <small style="color:var(--text-secondary)">This box only appears in development mode</small>
   </div>
 <?php endif; ?>

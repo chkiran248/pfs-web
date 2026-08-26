@@ -75,5 +75,5 @@ function stock_price_badge(?float $price, ?float $change_pct): string {
     $color = ($change_pct ?? 0) >= 0 ? 'var(--bright)' : 'var(--danger)';
     $sign  = ($change_pct ?? 0) >= 0 ? '▲' : '▼';
     $pct   = $change_pct !== null ? abs($change_pct) . '%' : '';
-    return "<span style=\"font-family:'DM Mono',monospace;font-size:0.78rem;color:{$color}\">₹" . number_format($price, 2) . " {$sign} {$pct}</span>";
+    return "<span style=\"font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:{$color}\">₹" . number_format($price, 2) . " {$sign} {$pct}</span>";
 }

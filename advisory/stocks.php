@@ -79,7 +79,7 @@ require_once '../includes/portal-header.php';
     <?php if ($s['report_title']): ?><div style="font-style:italic;color:var(--text-secondary);font-size:0.875rem;margin-bottom:0.5rem"><?= htmlspecialchars($s['report_title'],ENT_QUOTES,'UTF-8') ?></div><?php endif; ?>
     <?php if ($s['analyst_view']): ?><div style="font-size:0.82rem;color:var(--text-secondary);line-height:1.6;margin-bottom:0.75rem"><?= htmlspecialchars(mb_substr($s['analyst_view'],0,120),ENT_QUOTES,'UTF-8') ?><?= strlen($s['analyst_view'])>120?'…':'' ?></div><?php endif; ?>
     <div style="display:flex;justify-content:space-between;align-items:center">
-      <div style="font-size:0.75rem;color:var(--text-muted);font-family:'DM Mono',monospace">
+      <div style="font-size:0.75rem;color:var(--text-muted);font-family:'IBM Plex Mono',monospace">
         <?= $s['report_date']?date('d M Y',strtotime($s['report_date'])):'—' ?><?= $s['price_at_report']?' · ₹'.number_format((float)$s['price_at_report'],2).' at report':'' ?>
       </div>
       <a href="<?= SITE_URL ?>/advisory/stocks-detail.php?id=<?= $s['id'] ?>" class="btn-outline btn-sm">Read Report →</a>

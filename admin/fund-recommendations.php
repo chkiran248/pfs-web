@@ -161,7 +161,7 @@ require_once '../includes/portal-header.php';
           </td>
           <td>
             <?php if ($has_code): ?>
-              <span style="font-family:'DM Mono',monospace;font-size:0.8rem;color:var(--lime)"><?= htmlspecialchars($f['scheme_code'], ENT_QUOTES, 'UTF-8') ?></span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:0.8rem;color:var(--lime)"><?= htmlspecialchars($f['scheme_code'], ENT_QUOTES, 'UTF-8') ?></span>
             <?php else: ?>
               <span style="color:var(--danger);font-size:0.75rem"><i class="bi bi-exclamation-triangle"></i> Not set</span>
             <?php endif; ?>
@@ -170,21 +170,21 @@ require_once '../includes/portal-header.php';
             <span class="badge badge-muted"><?= htmlspecialchars($f['category'] ?? '', ENT_QUOTES, 'UTF-8') ?></span><br>
             <span class="badge <?= $risk_badge[$f['risk_level']] ?? 'badge-muted' ?>" style="margin-top:3px"><?= ucfirst(str_replace('_', ' ', $f['risk_level'] ?? '')) ?></span>
           </td>
-          <td style="text-align:right;font-family:'DM Mono',monospace;color:var(--cream)"><?= $f['current_nav'] ? '&#8377;'.number_format((float)$f['current_nav'], 4) : '&mdash;' ?></td>
-          <td style="text-align:right;font-family:'DM Mono',monospace;color:<?= $f['return_1yr'] !== null ? 'var(--bright)' : 'var(--text-muted)' ?>"><?= $f['return_1yr'] !== null ? round((float)$f['return_1yr'],2).'%' : '&mdash;' ?></td>
-          <td style="text-align:right;font-family:'DM Mono',monospace;color:<?= $f['return_3yr'] !== null ? 'var(--bright)' : 'var(--text-muted)' ?>"><?= $f['return_3yr'] !== null ? round((float)$f['return_3yr'],2).'%' : '&mdash;' ?></td>
-          <td style="text-align:right;font-family:'DM Mono',monospace;color:<?= $f['return_5yr'] !== null ? 'var(--bright)' : 'var(--text-muted)' ?>"><?= $f['return_5yr'] !== null ? round((float)$f['return_5yr'],2).'%' : '&mdash;' ?></td>
+          <td style="text-align:right;font-family:'IBM Plex Mono',monospace;color:var(--cream)"><?= $f['current_nav'] ? '&#8377;'.number_format((float)$f['current_nav'], 4) : '&mdash;' ?></td>
+          <td style="text-align:right;font-family:'IBM Plex Mono',monospace;color:<?= $f['return_1yr'] !== null ? 'var(--bright)' : 'var(--text-muted)' ?>"><?= $f['return_1yr'] !== null ? round((float)$f['return_1yr'],2).'%' : '&mdash;' ?></td>
+          <td style="text-align:right;font-family:'IBM Plex Mono',monospace;color:<?= $f['return_3yr'] !== null ? 'var(--bright)' : 'var(--text-muted)' ?>"><?= $f['return_3yr'] !== null ? round((float)$f['return_3yr'],2).'%' : '&mdash;' ?></td>
+          <td style="text-align:right;font-family:'IBM Plex Mono',monospace;color:<?= $f['return_5yr'] !== null ? 'var(--bright)' : 'var(--text-muted)' ?>"><?= $f['return_5yr'] !== null ? round((float)$f['return_5yr'],2).'%' : '&mdash;' ?></td>
           <?php /* Tech Score with colour bar */ ?>
           <td style="text-align:right">
             <?php if (isset($f['tech_score']) && $f['tech_score'] !== null): $ts = (int)$f['tech_score']; $tc = $ts >= 70 ? 'var(--bright)' : ($ts >= 50 ? 'var(--gold)' : 'var(--text-muted)'); ?>
-            <div style="font-family:'DM Mono',monospace;font-size:0.82rem;color:<?= $tc ?>;font-weight:600"><?= $ts ?></div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:0.82rem;color:<?= $tc ?>;font-weight:600"><?= $ts ?></div>
             <div style="height:3px;width:<?= min(100,$ts) ?>%;background:<?= $tc ?>;border-radius:2px;margin-top:3px;margin-left:auto"></div>
             <?php else: ?><span style="color:var(--text-muted);font-size:0.75rem">—</span><?php endif; ?>
           </td>
-          <td style="text-align:right;font-family:'DM Mono',monospace;font-size:0.8rem;color:<?= isset($f['sharpe_ratio']) && $f['sharpe_ratio'] !== null ? (((float)$f['sharpe_ratio']) >= 1 ? 'var(--bright)' : 'var(--gold)') : 'var(--text-muted)' ?>"><?= isset($f['sharpe_ratio']) && $f['sharpe_ratio'] !== null ? round((float)$f['sharpe_ratio'],2) : '&mdash;' ?></td>
-          <td style="text-align:right;font-family:'DM Mono',monospace;font-size:0.8rem;color:<?= isset($f['max_drawdown']) && $f['max_drawdown'] !== null ? ((float)$f['max_drawdown'] > -20 ? 'var(--bright)' : 'var(--danger)') : 'var(--text-muted)' ?>"><?= isset($f['max_drawdown']) && $f['max_drawdown'] !== null ? round((float)$f['max_drawdown'],1).'%' : '&mdash;' ?></td>
-          <td style="text-align:right;font-family:'DM Mono',monospace;font-size:0.8rem;color:<?= isset($f['alpha']) && $f['alpha'] !== null ? ((float)$f['alpha'] >= 0 ? 'var(--bright)' : 'var(--danger)') : 'var(--text-muted)' ?>"><?= isset($f['alpha']) && $f['alpha'] !== null ? round((float)$f['alpha'],1) : '&mdash;' ?></td>
-          <td style="font-size:0.75rem;color:<?= $is_stale ? 'var(--danger)' : 'var(--bright)' ?>;font-family:'DM Mono',monospace"><?= $f['last_data_refresh'] ? date('d M, H:i', strtotime($f['last_data_refresh'])) : 'Never' ?></td>
+          <td style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:0.8rem;color:<?= isset($f['sharpe_ratio']) && $f['sharpe_ratio'] !== null ? (((float)$f['sharpe_ratio']) >= 1 ? 'var(--bright)' : 'var(--gold)') : 'var(--text-muted)' ?>"><?= isset($f['sharpe_ratio']) && $f['sharpe_ratio'] !== null ? round((float)$f['sharpe_ratio'],2) : '&mdash;' ?></td>
+          <td style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:0.8rem;color:<?= isset($f['max_drawdown']) && $f['max_drawdown'] !== null ? ((float)$f['max_drawdown'] > -20 ? 'var(--bright)' : 'var(--danger)') : 'var(--text-muted)' ?>"><?= isset($f['max_drawdown']) && $f['max_drawdown'] !== null ? round((float)$f['max_drawdown'],1).'%' : '&mdash;' ?></td>
+          <td style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:0.8rem;color:<?= isset($f['alpha']) && $f['alpha'] !== null ? ((float)$f['alpha'] >= 0 ? 'var(--bright)' : 'var(--danger)') : 'var(--text-muted)' ?>"><?= isset($f['alpha']) && $f['alpha'] !== null ? round((float)$f['alpha'],1) : '&mdash;' ?></td>
+          <td style="font-size:0.75rem;color:<?= $is_stale ? 'var(--danger)' : 'var(--bright)' ?>;font-family:'IBM Plex Mono',monospace"><?= $f['last_data_refresh'] ? date('d M, H:i', strtotime($f['last_data_refresh'])) : 'Never' ?></td>
           <td><span class="badge <?= $f['is_active'] ? 'badge-green' : 'badge-muted' ?>"><?= $f['is_active'] ? 'Active' : 'Hidden' ?></span></td>
           <td>
             <div style="display:flex;gap:0.4rem">
@@ -360,7 +360,7 @@ document.getElementById('fundModal').addEventListener('click', function(e) { if 
             var he = d.fundHouse.replace(/&/g,'&amp;').replace(/</g,'&lt;');
             var na = d.schemeName.replace(/"/g,'&quot;');
             var ha = d.fundHouse.replace(/"/g,'&quot;');
-            return '<div class="mfs" data-code="'+d.schemeCode+'" data-name="'+na+'" data-house="'+ha+'" style="padding:0.7rem 1rem;cursor:pointer;border-bottom:1px solid var(--border-light)"><div style="color:var(--cream);font-size:0.875rem">'+ne+'</div><div style="font-size:0.7rem;color:var(--text-secondary);margin-top:2px;font-family:\'DM Mono\',monospace">'+he+' &middot; Code: '+d.schemeCode+'</div></div>';
+            return '<div class="mfs" data-code="'+d.schemeCode+'" data-name="'+na+'" data-house="'+ha+'" style="padding:0.7rem 1rem;cursor:pointer;border-bottom:1px solid var(--border-light)"><div style="color:var(--cream);font-size:0.875rem">'+ne+'</div><div style="font-size:0.7rem;color:var(--text-secondary);margin-top:2px;font-family:\'IBM Plex Mono\',monospace">'+he+' &middot; Code: '+d.schemeCode+'</div></div>';
           }).join('');
           suggestEl.style.display = 'block';
           suggestEl.querySelectorAll('.mfs').forEach(function(el) {

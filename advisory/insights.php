@@ -48,7 +48,7 @@ require_once '../includes/portal-header.php';
     <div style="font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:600;color:var(--cream);line-height:1.3;margin-bottom:0.5rem"><?= htmlspecialchars($ins['title'],ENT_QUOTES,'UTF-8') ?></div>
     <?php if ($ins['excerpt']): ?><div style="font-size:0.82rem;color:var(--text-secondary);line-height:1.6;margin-bottom:0.75rem"><?= htmlspecialchars(mb_substr($ins['excerpt'],0,150),ENT_QUOTES,'UTF-8') ?><?= strlen($ins['excerpt'])>150?'…':'' ?></div><?php endif; ?>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:auto">
-      <span style="font-size:0.72rem;color:var(--text-muted);font-family:'DM Mono',monospace"><?= $ins['published_at']?date('d M Y',strtotime($ins['published_at'])):'—' ?> · <?= $ins['views'] ?> views</span>
+      <span style="font-size:0.72rem;color:var(--text-muted);font-family:'IBM Plex Mono',monospace"><?= $ins['published_at']?date('d M Y',strtotime($ins['published_at'])):'—' ?> · <?= $ins['views'] ?> views</span>
       <button onclick="openInsight(<?= $ins['id'] ?>)" class="btn-ghost btn-sm">Read →</button>
     </div>
   </div>
@@ -63,7 +63,7 @@ require_once '../includes/portal-header.php';
       <button onclick="closeInsight()" style="background:none;border:none;color:var(--text-secondary);font-size:1.5rem;cursor:pointer">×</button>
     </div>
     <h2 style="font-family:'Cormorant Garamond',serif;font-size:1.8rem;color:var(--cream);margin-bottom:0.5rem" id="modal-title"></h2>
-    <div style="font-size:0.75rem;color:var(--text-muted);font-family:'DM Mono',monospace;margin-bottom:1.5rem" id="modal-date"></div>
+    <div style="font-size:0.75rem;color:var(--text-muted);font-family:'IBM Plex Mono',monospace;margin-bottom:1.5rem" id="modal-date"></div>
     <div id="modal-content" style="color:var(--text-secondary);line-height:1.8;font-size:0.9rem"></div>
   </div>
 </div>

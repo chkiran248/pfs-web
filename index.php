@@ -31,7 +31,7 @@ $contact_csrf = $_SESSION['contact_csrf'];
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="assets/css/bootstrap-icons.min.css" />
   <style>
@@ -442,7 +442,7 @@ $contact_csrf = $_SESSION['contact_csrf'];
           <p class="pc-eyebrow">FOR SUBSCRIBERS</p>
           <h3 class="pc-plan-name">Member</h3>
           <div class="pc-price"><span class="pc-amount">₹499</span><span class="pc-period">/ month</span></div>
-          <p class="pc-tagline" style="color:var(--gold);font-family:'DM Mono',monospace;font-size:0.65rem">or ₹4,999/year — save 17%</p>
+          <p class="pc-tagline" style="color:var(--gold);font-family:'IBM Plex Mono',monospace;font-size:0.65rem">or ₹4,999/year — save 17%</p>
           <a href="/auth/register.php?plan=member" class="btn btn--ghost pc-cta">Subscribe →</a>
           <p class="pc-sub-note"><a href="https://calendly.com/primefin/financial-success" target="_blank" rel="noopener noreferrer"><i class="bi bi-calendar-check"></i> Book a free session first</a></p>
         </div>

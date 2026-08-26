@@ -77,10 +77,10 @@ $rbc = $risk_badge_cfg[$risk_profile] ?? null;
 <!-- ── Profile chip ───────────────────────────────────────────────────────── -->
 <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem">
   <div style="display:flex;align-items:center;gap:0.6rem;background:<?= $rbc['bg'] ?>;border:1px solid <?= $rbc['color'] ?>;border-radius:24px;padding:0.4rem 1rem">
-    <span style="font-size:0.65rem;font-family:'DM Mono',monospace;color:var(--text-secondary);letter-spacing:0.1em">RISK PROFILE</span>
+    <span style="font-size:0.65rem;font-family:'IBM Plex Mono',monospace;color:var(--text-secondary);letter-spacing:0.1em">RISK PROFILE</span>
     <span style="font-weight:600;color:<?= $rbc['color'] ?>;font-size:0.9rem"><?= $rbc['label'] ?></span>
     <?php if ($risk_score !== null): ?>
-    <span style="font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--text-muted)"><?= $risk_score ?>/20</span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--text-muted)"><?= $risk_score ?>/20</span>
     <?php endif; ?>
   </div>
   <?php if ($assessed_at): ?>
@@ -106,7 +106,7 @@ $risk_badge   = ['low'=>'badge-green','moderate'=>'badge-gold','high'=>'badge-go
 
 <?php if (!empty($recommended)): ?>
 <!-- ── Recommended section ────────────────────────────────────────────────── -->
-<div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--lime);letter-spacing:0.2em;margin-bottom:0.75rem">
+<div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--lime);letter-spacing:0.2em;margin-bottom:0.75rem">
   ★ RECOMMENDED FOR YOU (<?= count($recommended) ?> fund<?= count($recommended)!==1?'s':'' ?>)
 </div>
 <div class="grid-2" style="margin-bottom:2rem">
@@ -118,12 +118,12 @@ $risk_badge   = ['low'=>'badge-green','moderate'=>'badge-gold','high'=>'badge-go
 
 <?php if (!empty($consider) || !empty($other)): ?>
 <!-- ── Other funds toggle ────────────────────────────────────────────────── -->
-<button id="toggleOther" onclick="toggleOtherFunds()" style="background:none;border:none;color:var(--lime);font-size:0.82rem;cursor:pointer;padding:0;margin-bottom:1rem;font-family:'DM Mono',monospace;letter-spacing:0.1em">
+<button id="toggleOther" onclick="toggleOtherFunds()" style="background:none;border:none;color:var(--lime);font-size:0.82rem;cursor:pointer;padding:0;margin-bottom:1rem;font-family:'IBM Plex Mono',monospace;letter-spacing:0.1em">
   ▶ SHOW OTHER FUNDS (<?= count($consider) + count($other) ?>)
 </button>
 <div id="otherFunds" style="display:none">
   <?php if (!empty($consider)): ?>
-  <div style="font-family:'DM Mono',monospace;font-size:0.58rem;color:var(--text-muted);letter-spacing:0.15em;margin-bottom:0.75rem">CONSIDER (lower fit for your profile)</div>
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;color:var(--text-muted);letter-spacing:0.15em;margin-bottom:0.75rem">CONSIDER (lower fit for your profile)</div>
   <div class="grid-2" style="margin-bottom:1.5rem">
     <?php foreach ($consider as $f): ?>
     <?php render_fund_card($f, $risk_badge, $uid, $db, true); ?>
@@ -131,7 +131,7 @@ $risk_badge   = ['low'=>'badge-green','moderate'=>'badge-gold','high'=>'badge-go
   </div>
   <?php endif; ?>
   <?php if (!empty($other)): ?>
-  <div style="font-family:'DM Mono',monospace;font-size:0.58rem;color:var(--text-muted);letter-spacing:0.15em;margin-bottom:0.75rem">OTHER FUNDS (different risk profile)</div>
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;color:var(--text-muted);letter-spacing:0.15em;margin-bottom:0.75rem">OTHER FUNDS (different risk profile)</div>
   <div class="grid-2">
     <?php foreach ($other as $f): ?>
     <?php render_fund_card($f, $risk_badge, $uid, $db, true); ?>
@@ -162,7 +162,7 @@ $risk_badge   = ['low'=>'badge-green','moderate'=>'badge-gold','high'=>'badge-go
       </div>
     </div>
     <div style="background:var(--surface-2);border-radius:10px;padding:1.25rem">
-      <div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--lime);letter-spacing:0.15em;margin-bottom:0.75rem">QUICK ELSS CALCULATOR</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--lime);letter-spacing:0.15em;margin-bottom:0.75rem">QUICK ELSS CALCULATOR</div>
       <div class="form-group"><label class="form-label">Monthly ELSS SIP (₹)</label><input class="form-input" type="number" id="elss_sip" value="12500" oninput="calcElss()"></div>
       <div style="margin-top:0.75rem;font-size:0.85rem;color:var(--text-secondary)">Annual investment: <span style="color:var(--cream)" id="elss_annual">₹1,50,000</span></div>
       <div style="font-size:0.85rem;color:var(--text-secondary)">Tax saved (30% bracket): <span style="color:var(--lime)" id="elss_saved">₹46,800</span></div>
@@ -209,10 +209,10 @@ function render_fund_card(array $f, array $risk_badge, int $uid, PDO $db, bool $
       <!-- Match badge -->
       <?php if ($label): ?>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem">
-        <span style="font-family:'DM Mono',monospace;font-size:0.6rem;color:<?= $score_color ?>;letter-spacing:0.1em">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:<?= $score_color ?>;letter-spacing:0.1em">
           <?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?>
         </span>
-        <span style="font-family:'DM Mono',monospace;font-size:0.72rem;color:<?= $score_color ?>;font-weight:600">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:<?= $score_color ?>;font-weight:600">
           <?= $score ?>% match
         </span>
       </div>
@@ -238,7 +238,7 @@ function render_fund_card(array $f, array $risk_badge, int $uid, PDO $db, bool $
       <?php if (!empty($reasons)): ?>
       <div style="display:flex;flex-wrap:wrap;gap:0.35rem;margin-bottom:0.75rem">
         <?php foreach ($reasons as $r): ?>
-        <span style="font-size:0.68rem;font-family:'DM Mono',monospace;color:var(--lime);background:rgba(76,175,80,0.08);border:1px solid rgba(76,175,80,0.2);padding:0.15rem 0.5rem;border-radius:10px">
+        <span style="font-size:0.68rem;font-family:'IBM Plex Mono',monospace;color:var(--lime);background:rgba(76,175,80,0.08);border:1px solid rgba(76,175,80,0.2);padding:0.15rem 0.5rem;border-radius:10px">
           <?= htmlspecialchars($r, ENT_QUOTES, 'UTF-8') ?>
         </span>
         <?php endforeach; ?>
@@ -249,11 +249,11 @@ function render_fund_card(array $f, array $risk_badge, int $uid, PDO $db, bool $
       <?php if ($f['current_nav']): ?>
       <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:0.6rem">
         <div>
-          <div style="font-family:'DM Mono',monospace;font-size:0.58rem;color:var(--lime);letter-spacing:0.1em;margin-bottom:2px">CURRENT NAV</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;color:var(--lime);letter-spacing:0.1em;margin-bottom:2px">CURRENT NAV</div>
           <div style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:600;color:var(--cream)">&#8377;<?= number_format((float)$f['current_nav'],4) ?></div>
         </div>
         <?php if ($f['last_data_refresh']): ?>
-        <span style="font-family:'DM Mono',monospace;font-size:0.58rem;color:var(--bright);background:rgba(76,175,80,0.1);border:1px solid rgba(76,175,80,0.2);padding:0.2rem 0.5rem;border-radius:10px">&#9679; Live</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;color:var(--bright);background:rgba(76,175,80,0.1);border:1px solid rgba(76,175,80,0.2);padding:0.2rem 0.5rem;border-radius:10px">&#9679; Live</span>
         <?php endif; ?>
       </div>
       <?php endif; ?>
@@ -262,8 +262,8 @@ function render_fund_card(array $f, array $risk_badge, int $uid, PDO $db, bool $
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.4rem;background:var(--surface-2);border-radius:8px;padding:0.65rem;margin-bottom:0.65rem">
         <?php foreach (['return_1yr'=>'1yr','return_3yr'=>'3yr','return_5yr'=>'5yr'] as $col=>$lbl): ?>
         <div style="text-align:center">
-          <div style="font-size:0.58rem;color:var(--text-muted);font-family:'DM Mono',monospace"><?= $lbl ?> CAGR</div>
-          <div style="font-family:'DM Mono',monospace;font-size:0.88rem;color:<?= $f[$col]!==null?(((float)$f[$col])>=0?'var(--bright)':'var(--danger)'):'var(--text-muted)' ?>">
+          <div style="font-size:0.58rem;color:var(--text-muted);font-family:'IBM Plex Mono',monospace"><?= $lbl ?> CAGR</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:0.88rem;color:<?= $f[$col]!==null?(((float)$f[$col])>=0?'var(--bright)':'var(--danger)'):'var(--text-muted)' ?>">
             <?= $f[$col] !== null ? round((float)$f[$col],1).'%' : '—' ?>
           </div>
         </div>
@@ -272,7 +272,7 @@ function render_fund_card(array $f, array $risk_badge, int $uid, PDO $db, bool $
 
       <!-- Tech metrics row (if scored) -->
       <?php if (!empty($f['sharpe_ratio']) || !empty($f['max_drawdown'])): ?>
-      <div style="display:flex;gap:1rem;font-size:0.72rem;color:var(--text-secondary);margin-bottom:0.65rem;font-family:'DM Mono',monospace">
+      <div style="display:flex;gap:1rem;font-size:0.72rem;color:var(--text-secondary);margin-bottom:0.65rem;font-family:'IBM Plex Mono',monospace">
         <?php if (!empty($f['sharpe_ratio'])): ?>
         <span>Sharpe <strong style="color:var(--cream)"><?= round((float)$f['sharpe_ratio'],2) ?></strong></span>
         <?php endif; ?>

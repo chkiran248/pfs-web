@@ -146,7 +146,7 @@ document.addEventListener('DOMContentLoaded', function(){
         return {label:name,data:[r1[i],r3[i],r5[i]],backgroundColor:cols[i],borderRadius:4};
       })
     },
-    options:{plugins:{legend:{position:'bottom',labels:{color:'#85a885',font:{family:"'DM Mono'"},padding:12}}},scales:{y:{ticks:{callback:v=>v+'%',color:'#85a885'},grid:{color:'rgba(46,133,64,0.1)'}},x:{ticks:{color:'#85a885'},grid:{display:false}}}}
+    options:{plugins:{legend:{position:'bottom',labels:{color:'#85a885',font:{family:"'IBM Plex Mono'"},padding:12}}},scales:{y:{ticks:{callback:v=>v+'%',color:'#85a885'},grid:{color:'rgba(46,133,64,0.1)'}},x:{ticks:{color:'#85a885'},grid:{display:false}}}}
   });
 });
 </script>

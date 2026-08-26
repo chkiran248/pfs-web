@@ -64,11 +64,11 @@ require_once '../includes/portal-header.php';
   ?>
   <div class="portal-card">
     <div style="font-weight:600;color:var(--cream);margin-bottom:0.75rem;font-size:0.9rem"><?= htmlspecialchars($h['fund_name'], ENT_QUOTES, 'UTF-8') ?></div>
-    <div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--lime);letter-spacing:0.15em;margin-bottom:0.6rem">ILLUSTRATIVE TOP 10 HOLDINGS</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--lime);letter-spacing:0.15em;margin-bottom:0.6rem">ILLUSTRATIVE TOP 10 HOLDINGS</div>
     <?php foreach ($stocks as $i => $s): ?>
     <div style="display:flex;align-items:center;justify-content:space-between;padding:0.25rem 0;border-bottom:1px solid var(--border-light);font-size:0.8rem">
       <span style="color:var(--text-secondary)"><?= $i+1 ?>. <?= htmlspecialchars($s, ENT_QUOTES, 'UTF-8') ?></span>
-      <span style="font-family:'DM Mono',monospace;color:var(--cream)"><?= number_format(rand(4,14) + 0.1*rand(0,9), 1) ?>%</span>
+      <span style="font-family:'IBM Plex Mono',monospace;color:var(--cream)"><?= number_format(rand(4,14) + 0.1*rand(0,9), 1) ?>%</span>
     </div>
     <?php endforeach; ?>
   </div>
@@ -106,7 +106,7 @@ require_once '../includes/portal-header.php';
         <tr>
           <td style="font-size:0.82rem"><?= htmlspecialchars(substr($o['f1'],0,25), ENT_QUOTES,'UTF-8') ?> vs <?= htmlspecialchars(substr($o['f2'],0,25), ENT_QUOTES,'UTF-8') ?></td>
           <td style="text-align:center"><?= $o['common'] ?>/10</td>
-          <td style="font-family:'DM Mono',monospace;color:<?= $col ?>"><?= $o['pct'] ?>%</td>
+          <td style="font-family:'IBM Plex Mono',monospace;color:<?= $col ?>"><?= $o['pct'] ?>%</td>
           <td><span class="badge" style="background:<?= $col ?>22;color:<?= $col ?>"><?= $label ?></span></td>
         </tr>
         <?php endforeach; ?>

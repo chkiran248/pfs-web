@@ -255,7 +255,8 @@ require_once '../includes/portal-header.php';
             </div>
             <div class="form-group">
               <label class="form-label">Invested Amount (₹)</label>
-              <input class="form-input" type="number" name="invested_amount" id="ia_mf" step="0.01" value="<?= ($init_asset==='mutual_fund'&&$edit_holding)?($edit_holding['invested_amount']??''):'' ?>" placeholder="Auto-calculated">
+              <input class="form-input amount-input" type="number" name="invested_amount" id="ia_mf" step="0.01" value="<?= ($init_asset==='mutual_fund'&&$edit_holding)?($edit_holding['invested_amount']??''):'' ?>" placeholder="Auto-calculated">
+              <div class="form-hint form-hint--words" id="ia_mf-words"></div>
             </div>
           </div>
           <div class="form-row">
@@ -275,7 +276,8 @@ require_once '../includes/portal-header.php';
           <div id="sip-fields" style="display:<?= ($edit_holding&&($edit_holding['sip_active']??0))?'flex':'none' ?>;gap:1rem;flex-wrap:wrap">
             <div class="form-group" style="flex:1;min-width:160px">
               <label class="form-label">Monthly SIP Amount (₹)</label>
-              <input class="form-input" type="number" name="sip_amount" value="<?= $edit_holding['sip_amount']??'' ?>" placeholder="5000">
+              <input class="form-input amount-input" type="number" name="sip_amount" id="sip_amount" value="<?= $edit_holding['sip_amount']??'' ?>" placeholder="5000">
+              <div class="form-hint form-hint--words" id="sip_amount-words"></div>
             </div>
             <div class="form-group" style="flex:1;min-width:120px">
               <label class="form-label">SIP Date (day 1–28)</label>
@@ -313,7 +315,8 @@ require_once '../includes/portal-header.php';
             </div>
             <div class="form-group">
               <label class="form-label">Total Invested (₹)</label>
-              <input class="form-input" type="number" name="invested_amount" id="ia_stock" step="0.01" value="<?= ($init_asset==='stock'&&$edit_holding)?($edit_holding['invested_amount']??''):'' ?>" placeholder="Auto-calculated">
+              <input class="form-input amount-input" type="number" name="invested_amount" id="ia_stock" step="0.01" value="<?= ($init_asset==='stock'&&$edit_holding)?($edit_holding['invested_amount']??''):'' ?>" placeholder="Auto-calculated">
+              <div class="form-hint form-hint--words" id="ia_stock-words"></div>
             </div>
           </div>
           <div class="form-group">
@@ -339,7 +342,8 @@ require_once '../includes/portal-header.php';
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Principal Amount (₹) *</label>
-              <input class="form-input" type="number" name="invested_amount" id="ia_fd" step="0.01" value="<?= ($init_ft==='fd'&&$edit_holding)?($edit_holding['invested_amount']??''):'' ?>" placeholder="1,00,000">
+              <input class="form-input amount-input" type="number" name="invested_amount" id="ia_fd" step="0.01" value="<?= ($init_ft==='fd'&&$edit_holding)?($edit_holding['invested_amount']??''):'' ?>" placeholder="1,00,000">
+              <div class="form-hint form-hint--words" id="ia_fd-words"></div>
             </div>
             <div class="form-group">
               <label class="form-label">Interest Rate (% p.a.) *</label>
@@ -361,7 +365,8 @@ require_once '../includes/portal-header.php';
           </div>
           <div class="form-group" style="margin-top:0.75rem">
             <label class="form-label">Maturity Value (₹) <span style="color:var(--text-muted)">(optional — leave blank to auto-calculate)</span></label>
-            <input class="form-input" type="number" name="current_nav" step="0.01" value="<?= ($init_ft==='fd'&&$edit_holding)?($edit_holding['current_nav']??''):'' ?>" placeholder="Auto-calculated" style="max-width:260px">
+            <input class="form-input amount-input" type="number" name="current_nav" id="cn_fd" step="0.01" value="<?= ($init_ft==='fd'&&$edit_holding)?($edit_holding['current_nav']??''):'' ?>" placeholder="Auto-calculated" style="max-width:260px">
+            <div class="form-hint form-hint--words" id="cn_fd-words"></div>
           </div>
           <input type="hidden" name="units_held" value="1">
           <input type="hidden" name="avg_nav" value="0">
@@ -393,11 +398,13 @@ require_once '../includes/portal-header.php';
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Current Corpus (₹) *</label>
-              <input class="form-input" type="number" name="current_nav" step="0.01" value="<?= ($init_ft==='nps'&&$edit_holding)?($edit_holding['current_nav']??''):'' ?>" placeholder="2,50,000">
+              <input class="form-input amount-input" type="number" name="current_nav" id="cn_nps" step="0.01" value="<?= ($init_ft==='nps'&&$edit_holding)?($edit_holding['current_nav']??''):'' ?>" placeholder="2,50,000">
+              <div class="form-hint form-hint--words" id="cn_nps-words"></div>
             </div>
             <div class="form-group">
               <label class="form-label">Total Contributed (₹)</label>
-              <input class="form-input" type="number" name="invested_amount" step="0.01" value="<?= ($init_ft==='nps'&&$edit_holding)?($edit_holding['invested_amount']??''):'' ?>" placeholder="2,00,000">
+              <input class="form-input amount-input" type="number" name="invested_amount" id="ia_nps" step="0.01" value="<?= ($init_ft==='nps'&&$edit_holding)?($edit_holding['invested_amount']??''):'' ?>" placeholder="2,00,000">
+              <div class="form-hint form-hint--words" id="ia_nps-words"></div>
             </div>
           </div>
           <div class="form-group">
@@ -868,12 +875,12 @@ if (<?= ($edit_holding['sip_active']??0) ? 'true' : 'false' ?>) toggleSip();
             <div style="font-size:0.75rem;color:var(--text-secondary)"><?= htmlspecialchars($h['fund_house']??'',ENT_QUOTES,'UTF-8') ?></div>
           </td>
           <td><span class="badge <?= $type_colours[$h['fund_type']]??'badge-muted' ?>" style="white-space:nowrap"><?= htmlspecialchars(fund_type_display($h['fund_type'], $h['fund_name']), ENT_QUOTES, 'UTF-8') ?></span></td>
-          <td style="font-family:'DM Mono',monospace;font-size:0.82rem"><?= number_format((float)$h['units_held'],4) ?></td>
-          <td style="font-family:'DM Mono',monospace;font-size:0.82rem">₹<?= number_format((float)$h['avg_nav'],2) ?></td>
-          <td style="font-family:'DM Mono',monospace;font-size:0.82rem">₹<?= number_format((float)$h['current_nav'],2) ?></td>
+          <td style="font-family:'IBM Plex Mono',monospace;font-size:0.82rem"><?= number_format((float)$h['units_held'],4) ?></td>
+          <td style="font-family:'IBM Plex Mono',monospace;font-size:0.82rem">₹<?= number_format((float)$h['avg_nav'],2) ?></td>
+          <td style="font-family:'IBM Plex Mono',monospace;font-size:0.82rem">₹<?= number_format((float)$h['current_nav'],2) ?></td>
           <td><?= format_inr((float)$h["invested_amount"]) ?></td>
           <td><?= format_inr((float)$h["current_value"]) ?></td>
-          <td style="color:<?= $ret>=0?'var(--bright)':'var(--danger)' ?>;font-family:'DM Mono',monospace;font-size:0.82rem">
+          <td style="color:<?= $ret>=0?'var(--bright)':'var(--danger)' ?>;font-family:'IBM Plex Mono',monospace;font-size:0.82rem">
             <?= $ret>=0?'+':'' ?><?= number_format($ret,2) ?>%
           </td>
           <td>
@@ -944,7 +951,7 @@ document.addEventListener('DOMContentLoaded', function(){
     options: {
       cutout: '65%',
       plugins: {
-        legend: { position:'bottom', labels:{ color: isDark?'#85a885':'#2a5a2a', font:{family:"'DM Mono'"}, padding:12, boxWidth:12 }},
+        legend: { position:'bottom', labels:{ color: isDark?'#85a885':'#2a5a2a', font:{family:"'IBM Plex Mono'"}, padding:12, boxWidth:12 }},
         tooltip: { callbacks: { label: ctx => ' ₹' + ctx.raw.toLocaleString('en-IN',{maximumFractionDigits:0}) }}
       }
     }

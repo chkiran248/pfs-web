@@ -195,7 +195,8 @@ require_once '../includes/portal-header.php';
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Target Amount (₹) *</label>
-          <input class="form-input" type="number" name="target_amount" id="g_target" value="<?= $edit_goal['target_amount']??'' ?>" required placeholder="5000000" oninput="recalcSip()">
+          <input class="form-input amount-input" type="number" name="target_amount" id="g_target" value="<?= $edit_goal['target_amount']??'' ?>" required placeholder="5000000" oninput="recalcSip()">
+          <div class="form-hint form-hint--words" id="g_target-words"></div>
         </div>
         <div class="form-group">
           <label class="form-label">Target Year *</label>
@@ -205,7 +206,8 @@ require_once '../includes/portal-header.php';
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Current Savings (₹)</label>
-          <input class="form-input" type="number" name="current_savings" id="g_savings" value="<?= $edit_goal['current_savings']??0 ?>" placeholder="0" oninput="recalcSip()">
+          <input class="form-input amount-input" type="number" name="current_savings" id="g_savings" value="<?= $edit_goal['current_savings']??0 ?>" placeholder="0" oninput="recalcSip()">
+          <div class="form-hint form-hint--words" id="g_savings-words"></div>
         </div>
         <div class="form-group">
           <label class="form-label">Expected Annual Return (%)</label>
@@ -214,9 +216,10 @@ require_once '../includes/portal-header.php';
       </div>
       <div class="form-group">
         <label class="form-label">Monthly SIP Required</label>
-        <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:7px;padding:0.6rem 0.875rem;font-family:'DM Mono',monospace;color:var(--lime);font-size:1rem" id="sip_display">₹ —</div>
+        <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:7px;padding:0.6rem 0.875rem;font-family:'IBM Plex Mono',monospace;color:var(--lime);font-size:1rem" id="sip_display">₹ —</div>
         <div class="form-hint">Auto-calculated · you can also enter manually:</div>
-        <input class="form-input" type="number" name="monthly_sip" id="g_sip" value="<?= $edit_goal['monthly_sip']??'' ?>" placeholder="Auto-calculated" style="margin-top:0.4rem">
+        <input class="form-input amount-input" type="number" name="monthly_sip" id="g_sip" value="<?= $edit_goal['monthly_sip']??'' ?>" placeholder="Auto-calculated" style="margin-top:0.4rem">
+        <div class="form-hint form-hint--words" id="g_sip-words"></div>
       </div>
       <div class="form-group">
         <label class="form-label">Notes</label>

@@ -44,16 +44,16 @@ require_once '../includes/portal-header.php';
 .primo-logo { display:flex; align-items:center; gap:0.6rem; }
 .primo-logo-icon { font-size:1.25rem; color:var(--lime); }
 .primo-logo-name { font-family:'Cormorant Garamond',serif; font-size:1.25rem; font-weight:600; color:var(--cream); }
-.primo-logo-sub { font-family:'DM Mono',monospace; font-size:0.55rem; color:var(--lime); text-transform:uppercase; letter-spacing:0.15em; display:block; }
+.primo-logo-sub { font-family:'IBM Plex Mono',monospace; font-size:0.55rem; color:var(--lime); text-transform:uppercase; letter-spacing:0.15em; display:block; }
 .primo-actions { display:flex; gap:0.5rem; align-items:center; }
 .context-panel { position:relative; }
-.context-toggle { font-size:0.78rem; font-family:'DM Mono',monospace; color:var(--text-secondary); background:var(--surface-2); border:1px solid var(--border); padding:0.3rem 0.7rem; border-radius:5px; cursor:pointer; }
+.context-toggle { font-size:0.78rem; font-family:'IBM Plex Mono',monospace; color:var(--text-secondary); background:var(--surface-2); border:1px solid var(--border); padding:0.3rem 0.7rem; border-radius:5px; cursor:pointer; }
 .context-dropdown { display:none; position:absolute; right:0; top:calc(100% + 0.4rem); background:var(--surface-1); border:1px solid var(--border); border-radius:10px; padding:1rem; min-width:260px; z-index:50; box-shadow:0 8px 24px rgba(0,0,0,0.3); }
 .context-dropdown.open { display:block; }
 .context-row { display:flex; justify-content:space-between; padding:0.35rem 0; border-bottom:1px solid var(--border-light); font-size:0.82rem; }
 .context-row:last-child { border-bottom:none; }
 .context-label { color:var(--text-secondary); }
-.context-value { color:var(--cream); font-family:'DM Mono',monospace; }
+.context-value { color:var(--cream); font-family:'IBM Plex Mono',monospace; }
 .primo-messages { flex:1; overflow-y:auto; padding:1.25rem; background:var(--bg); border-left:1px solid var(--border); border-right:1px solid var(--border); display:flex; flex-direction:column; gap:1rem; scroll-behavior:smooth; }
 .msg { display:flex; gap:0.6rem; max-width:85%; }
 .msg.user { align-self:flex-end; flex-direction:row-reverse; }
@@ -64,7 +64,7 @@ require_once '../includes/portal-header.php';
 .msg-bubble { padding:0.75rem 1rem; border-radius:16px; font-size:0.875rem; line-height:1.65; }
 .msg.assistant .msg-bubble { background:var(--surface-2); color:var(--text-primary); border-radius:4px 16px 16px 16px; }
 .msg.user .msg-bubble { background:var(--mid); color:#fff; border-radius:16px 4px 16px 16px; }
-.msg-time { font-family:'DM Mono',monospace; font-size:0.6rem; color:var(--text-muted); margin-top:0.25rem; text-align:right; }
+.msg-time { font-family:'IBM Plex Mono',monospace; font-size:0.6rem; color:var(--text-muted); margin-top:0.25rem; text-align:right; }
 .msg.assistant .msg-time { text-align:left; }
 .typing-dots { display:flex; gap:4px; padding:0.5rem 0; }
 .typing-dot { width:7px; height:7px; border-radius:50%; background:var(--lime); opacity:0.4; animation:dot-pulse 1.4s infinite; }
@@ -75,7 +75,7 @@ require_once '../includes/portal-header.php';
 .sugg-btn { font-size:0.78rem; padding:0.35rem 0.75rem; border:1px solid var(--border); border-radius:20px; background:var(--surface-2); color:var(--text-secondary); cursor:pointer; transition:all 0.15s; white-space:nowrap; }
 .sugg-btn:hover { border-color:var(--mid); color:var(--cream); background:var(--mid-pale); }
 .primo-input-area { display:flex; gap:0.6rem; padding:0.875rem 1rem; background:var(--surface-1); border:1px solid var(--border); border-radius:0 0 12px 12px; flex-shrink:0; align-items:flex-end; }
-.primo-textarea { flex:1; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:0.6rem 0.875rem; color:var(--text-primary); font-family:'DM Sans',sans-serif; font-size:0.875rem; resize:none; line-height:1.5; max-height:120px; overflow-y:auto; }
+.primo-textarea { flex:1; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:0.6rem 0.875rem; color:var(--text-primary); font-family:'Inter',sans-serif; font-size:0.875rem; resize:none; line-height:1.5; max-height:120px; overflow-y:auto; }
 .primo-textarea:focus { outline:none; border-color:var(--bright); }
 .primo-textarea::placeholder { color:var(--text-muted); }
 .primo-send { background:var(--mid); color:#fff; border:none; border-radius:8px; padding:0.6rem 1rem; cursor:pointer; font-size:0.875rem; transition:background 0.15s; flex-shrink:0; }
@@ -83,7 +83,7 @@ require_once '../includes/portal-header.php';
 .primo-send:disabled { opacity:0.5; cursor:not-allowed; }
 .primo-msg-content strong { color:var(--bright); }
 .msg.user .primo-msg-content strong { color:#fff; font-weight:600; }
-.primo-msg-content code { background:rgba(255,255,255,0.1); padding:0.1em 0.35em; border-radius:3px; font-family:'DM Mono',monospace; font-size:0.82em; }
+.primo-msg-content code { background:rgba(255,255,255,0.1); padding:0.1em 0.35em; border-radius:3px; font-family:'IBM Plex Mono',monospace; font-size:0.82em; }
 .primo-msg-content ul { padding-left:1.25rem; margin:0.2rem 0; }
 .primo-msg-content ol { padding-left:1.25rem; margin:0.2rem 0; }
 .primo-msg-content li { margin-bottom:0.15rem; }
@@ -119,7 +119,7 @@ require_once '../includes/portal-header.php';
       <div class="context-panel">
         <button class="context-toggle" onclick="toggleContext()">Portfolio Context ▾</button>
         <div class="context-dropdown" id="contextDropdown">
-          <div style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--lime);letter-spacing:0.15em;margin-bottom:0.6rem">LIVE DATA — PRIMO KNOWS THIS</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:var(--lime);letter-spacing:0.15em;margin-bottom:0.6rem">LIVE DATA — PRIMO KNOWS THIS</div>
           <div class="context-row"><span class="context-label">Invested</span><span class="context-value"><?= format_inr((float)$snap['inv']) ?></span></div>
           <div class="context-row"><span class="context-label">Current Value</span><span class="context-value"><?= format_inr((float)$snap['cur']) ?></span></div>
           <div class="context-row"><span class="context-label">Overall Return</span><span class="context-value" style="color:<?= $snap_gain_pct>=0?'var(--bright)':'var(--danger)' ?>"><?= $snap_gain_pct>=0?'+':'' ?><?= $snap_gain_pct ?>%</span></div>
@@ -236,7 +236,7 @@ function renderMarkdown(raw) {
   // Matches: header row | separator row | data rows
   t = t.replace(/^(\|.+\|)\n\|[-| :]+\|\n((?:\|.+\|\n?)*)/gm, (match, header, body) => {
     const th = header.split('|').filter(c => c.trim()).map(c =>
-      `<th style="padding:0.5rem 0.75rem;text-align:left;font-family:'DM Mono',monospace;font-size:0.65rem;letter-spacing:0.08em;font-weight:500;white-space:nowrap">${c.trim()}</th>`
+      `<th style="padding:0.5rem 0.75rem;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:0.65rem;letter-spacing:0.08em;font-weight:500;white-space:nowrap">${c.trim()}</th>`
     ).join('');
     const rows = body.trim().split('\n').map(row => {
       const tds = row.split('|').filter(c => c !== '' && c !== undefined)
@@ -247,7 +247,7 @@ function renderMarkdown(raw) {
   });
 
   // 3. Inline code
-  t = t.replace(/`([^`]+)`/g, '<code style="background:rgba(255,255,255,0.09);padding:0.1em 0.45em;border-radius:3px;font-family:\'DM Mono\',monospace;font-size:0.84em">$1</code>');
+  t = t.replace(/`([^`]+)`/g, '<code style="background:rgba(255,255,255,0.09);padding:0.1em 0.45em;border-radius:3px;font-family:\'IBM Plex Mono\',monospace;font-size:0.84em">$1</code>');
 
   // 4. Bold + italic
   t = t.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
@@ -286,7 +286,7 @@ function renderMarkdown(raw) {
 
   // 11. Restore code blocks
   t = t.replace(/\x00CODE(\d+)\x00/g, (_, i) =>
-    '<pre style="background:var(--surface-2);border:1px solid var(--border);padding:0.75rem 1rem;border-radius:7px;overflow-x:auto;margin:0.5rem 0;font-family:\'DM Mono\',monospace;font-size:0.82em;line-height:1.5;white-space:pre">' +
+    '<pre style="background:var(--surface-2);border:1px solid var(--border);padding:0.75rem 1rem;border-radius:7px;overflow-x:auto;margin:0.5rem 0;font-family:\'IBM Plex Mono\',monospace;font-size:0.82em;line-height:1.5;white-space:pre">' +
     codeBlocks[+i].replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
   );
 
@@ -408,8 +408,8 @@ async function sendMessage() {
     if (questions.length) {
       const followEl = document.createElement('div');
       followEl.style.cssText = 'margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid rgba(46,133,64,0.15)';
-      followEl.innerHTML = '<div style="font-family:\'DM Mono\',monospace;font-size:0.6rem;color:var(--lime);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:0.4rem">Continue exploring</div>' +
-        questions.map(q => `<button onclick="sendSuggestion(this)" style="display:inline-block;margin:0.2rem 0.2rem 0 0;font-size:0.78rem;padding:0.3rem 0.7rem;border:1px solid var(--border);border-radius:14px;background:var(--surface-2);color:var(--text-secondary);cursor:pointer;transition:all 0.15s;font-family:\'DM Sans\',sans-serif" onmouseover="this.style.borderColor=\'var(--mid)\';this.style.color=\'var(--cream)\'" onmouseout="this.style.borderColor=\'\';this.style.color=\'\'">${q}</button>`).join('');
+      followEl.innerHTML = '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.6rem;color:var(--lime);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:0.4rem">Continue exploring</div>' +
+        questions.map(q => `<button onclick="sendSuggestion(this)" style="display:inline-block;margin:0.2rem 0.2rem 0 0;font-size:0.78rem;padding:0.3rem 0.7rem;border:1px solid var(--border);border-radius:14px;background:var(--surface-2);color:var(--text-secondary);cursor:pointer;transition:all 0.15s;font-family:\'Inter\',sans-serif" onmouseover="this.style.borderColor=\'var(--mid)\';this.style.color=\'var(--cream)\'" onmouseout="this.style.borderColor=\'\';this.style.color=\'\'">${q}</button>`).join('');
       primoBubble.parentNode.appendChild(followEl);
       scrollBottom();
     }
@@ -425,10 +425,10 @@ async function sendMessage() {
           Your question wasn't lost — please try sending it again.
         </div>
         <div style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-top:0.2rem">
-          <button onclick="document.getElementById('primoInput').focus()" style="font-size:0.75rem;font-family:'DM Mono',monospace;padding:0.3rem 0.75rem;border:1px solid var(--border);border-radius:4px;background:var(--surface-2);color:var(--lime);cursor:pointer">
+          <button onclick="document.getElementById('primoInput').focus()" style="font-size:0.75rem;font-family:'IBM Plex Mono',monospace;padding:0.3rem 0.75rem;border:1px solid var(--border);border-radius:4px;background:var(--surface-2);color:var(--lime);cursor:pointer">
             Try again
           </button>
-          <a href="https://wa.me/919980001338" target="_blank" rel="noopener" style="font-size:0.75rem;font-family:'DM Mono',monospace;padding:0.3rem 0.75rem;border:1px solid rgba(141,198,63,0.2);border-radius:4px;background:transparent;color:var(--text-secondary);text-decoration:none">
+          <a href="https://wa.me/919980001338" target="_blank" rel="noopener" style="font-size:0.75rem;font-family:'IBM Plex Mono',monospace;padding:0.3rem 0.75rem;border:1px solid rgba(141,198,63,0.2);border-radius:4px;background:transparent;color:var(--text-secondary);text-decoration:none">
             <i class="bi bi-whatsapp"></i> Chat with Kiran instead
           </a>
         </div>
@@ -565,11 +565,11 @@ scrollBottom();
         </label>
         <input type="password" id="pdfPassword" class="form-input"
                placeholder="Leave blank if no password"
-               style="font-family:'DM Mono',monospace;letter-spacing:0.1em">
+               style="font-family:'IBM Plex Mono',monospace;letter-spacing:0.1em">
         <div style="margin-top:0.5rem;background:var(--surface-2);border-radius:6px;padding:0.6rem 0.75rem;font-size:0.75rem;color:var(--text-secondary);line-height:1.6">
           🔐 <strong style="color:var(--cream)">Common statement passwords:</strong><br>
-          • NSDL / CDSL demat statement → <span style="font-family:'DM Mono',monospace;color:var(--lime)">PAN in CAPITALS</span> (e.g. ABCDE1234F)<br>
-          • CAMS / KFintech CAS → <span style="font-family:'DM Mono',monospace;color:var(--lime)">PAN in CAPITALS</span><br>
+          • NSDL / CDSL demat statement → <span style="font-family:'IBM Plex Mono',monospace;color:var(--lime)">PAN in CAPITALS</span> (e.g. ABCDE1234F)<br>
+          • CAMS / KFintech CAS → <span style="font-family:'IBM Plex Mono',monospace;color:var(--lime)">PAN in CAPITALS</span><br>
           • Broker statements (Zerodha/Groww) → usually not password protected<br>
           Don't have your statement yet? <a href="<?= SITE_URL ?>/documentation.php?page=cas-nsdl-statement" style="color:var(--lime)">See how to get one →</a>
         </div>
@@ -768,8 +768,8 @@ function showHoldingsPreview(holdings, msg) {
     html+=`<tr><td><input type="checkbox" checked data-i="${i}" class="hcheck" style="accent-color:var(--mid)"></td>
       <td><strong style="color:var(--cream)">${h.fund_name}</strong>${h.fund_house?'<br><small style="color:var(--text-secondary)">'+h.fund_house+'</small>':''}${h.folio_number?'<br><small style="color:var(--text-muted)">Folio: '+h.folio_number+'</small>':''}</td>
       <td><span class="badge badge-muted">${(h.fund_type||'equity').toUpperCase()}</span></td>
-      <td style="font-family:'DM Mono',monospace;font-size:0.82rem">${inv}</td>
-      <td style="font-family:'DM Mono',monospace;font-size:0.82rem">${val}</td></tr>`;
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:0.82rem">${inv}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:0.82rem">${val}</td></tr>`;
   });
   html+=`</tbody></table></div>`;
   document.getElementById('scanResults').innerHTML=html;
@@ -811,13 +811,13 @@ async function confirmHoldings() {
     </p>
     <div style="display:flex;gap:0.75rem;justify-content:center">
       <button onclick="hideClearModal()"
-        style="flex:1;padding:0.6rem 1.25rem;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);color:var(--text-secondary);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.875rem;transition:all 0.15s"
+        style="flex:1;padding:0.6rem 1.25rem;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);color:var(--text-secondary);cursor:pointer;font-family:'Inter',sans-serif;font-size:0.875rem;transition:all 0.15s"
         onmouseover="this.style.borderColor='var(--mid)';this.style.color='var(--cream)'"
         onmouseout="this.style.borderColor='';this.style.color=''">
         Cancel
       </button>
       <button onclick="clearChat()"
-        style="flex:1;padding:0.6rem 1.25rem;border-radius:8px;border:none;background:#ef5350;color:#fff;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.875rem;font-weight:500;transition:opacity 0.15s"
+        style="flex:1;padding:0.6rem 1.25rem;border-radius:8px;border:none;background:#ef5350;color:#fff;cursor:pointer;font-family:'Inter',sans-serif;font-size:0.875rem;font-weight:500;transition:opacity 0.15s"
         onmouseover="this.style.opacity='0.85'"
         onmouseout="this.style.opacity='1'">
         Yes, Clear Chat

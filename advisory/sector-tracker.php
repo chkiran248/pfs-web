@@ -49,7 +49,7 @@ require_once '../includes/portal-header.php';
     <div style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:700;color:<?= $color ?>;margin-bottom:0.4rem">
       <?= $s['ytd'] > 0 ? '+' : '' ?><?= $s['ytd'] ?>%
     </div>
-    <div style="font-size:0.72rem;color:var(--text-muted);font-family:'DM Mono',monospace;margin-bottom:0.6rem">YTD RETURN (ILLUSTRATIVE)</div>
+    <div style="font-size:0.72rem;color:var(--text-muted);font-family:'IBM Plex Mono',monospace;margin-bottom:0.6rem">YTD RETURN (ILLUSTRATIVE)</div>
     <div style="background:var(--surface-2);border-radius:6px;height:4px;overflow:hidden;margin-bottom:0.75rem">
       <div style="width:<?= abs($s['ytd'])/40*100 ?>%;height:100%;background:<?= $color ?>;border-radius:4px"></div>
     </div>

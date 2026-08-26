@@ -14,9 +14,9 @@ require_once '../includes/portal-header.php';
 
 <style>
 .tip-wrap{position:relative;display:inline-flex;align-items:center;gap:0.35rem}
-.tip-icon{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:rgba(46,133,64,0.2);border:1px solid rgba(46,133,64,0.35);color:var(--lime);font-size:0.55rem;font-family:'DM Mono',monospace;cursor:default;flex-shrink:0;line-height:1}
+.tip-icon{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:rgba(46,133,64,0.2);border:1px solid rgba(46,133,64,0.35);color:var(--lime);font-size:0.55rem;font-family:'IBM Plex Mono',monospace;cursor:default;flex-shrink:0;line-height:1}
 .tip-icon:hover + .tip-box,.tip-wrap:hover .tip-box{opacity:1;pointer-events:auto;transform:translateY(0)}
-.tip-box{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%) translateY(4px);background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:0.6rem 0.75rem;font-size:0.72rem;color:var(--text-secondary);line-height:1.5;width:220px;opacity:0;pointer-events:none;transition:opacity 0.18s,transform 0.18s;z-index:200;font-family:'DM Sans',sans-serif;font-weight:400;text-transform:none;letter-spacing:0}
+.tip-box{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%) translateY(4px);background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:0.6rem 0.75rem;font-size:0.72rem;color:var(--text-secondary);line-height:1.5;width:220px;opacity:0;pointer-events:none;transition:opacity 0.18s,transform 0.18s;z-index:200;font-family:'Inter',sans-serif;font-weight:400;text-transform:none;letter-spacing:0}
 .tip-box::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--border)}
 </style>
 
@@ -31,16 +31,17 @@ require_once '../includes/portal-header.php';
     <div class="form-group"><label class="form-label">Current Age</label><input class="form-input" type="number" id="c_age" value="30" min="20" max="60" oninput="model()"></div>
     <div class="form-group"><label class="form-label">Retirement Age</label><input class="form-input" type="number" id="c_ret" value="60" min="45" max="70" oninput="model()"></div>
   </div>
-  <div class="form-group"><label class="form-label">Monthly Income (₹)</label><input class="form-input" type="number" id="c_income" value="100000" step="5000" oninput="model()"></div>
-  <div class="form-group"><label class="form-label">Monthly Expenses (₹)</label><input class="form-input" type="number" id="c_expense" value="60000" step="5000" oninput="model()"></div>
+  <div class="form-group"><label class="form-label">Monthly Income (₹)</label><input class="form-input amount-input" type="number" id="c_income" value="100000" step="5000" oninput="model()"><div class="form-hint form-hint--words" id="c_income-words"></div></div>
+  <div class="form-group"><label class="form-label">Monthly Expenses (₹)</label><input class="form-input amount-input" type="number" id="c_expense" value="60000" step="5000" oninput="model()"><div class="form-hint form-hint--words" id="c_expense-words"></div></div>
   <div class="form-group">
     <label class="form-label">Monthly Savings / Investments (₹)
-      <span style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--lime);margin-left:0.5rem" id="sav_pct"></span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:var(--lime);margin-left:0.5rem" id="sav_pct"></span>
     </label>
-    <input class="form-input" type="number" id="c_savings" value="30000" step="1000" oninput="model()">
+    <input class="form-input amount-input" type="number" id="c_savings" value="30000" step="1000" oninput="model()">
+    <div class="form-hint form-hint--words" id="c_savings-words"></div>
     <div style="font-size:0.75rem;color:var(--text-secondary);margin-top:0.35rem">Amount you actually invest each month (SIPs, PPF, RD, etc.)</div>
   </div>
-  <div class="form-group"><label class="form-label">Current Corpus / Savings (₹)</label><input class="form-input" type="number" id="c_corpus" value="500000" step="50000" oninput="model()"></div>
+  <div class="form-group"><label class="form-label">Current Corpus / Savings (₹)</label><input class="form-input amount-input" type="number" id="c_corpus" value="500000" step="50000" oninput="model()"><div class="form-hint form-hint--words" id="c_corpus-words"></div></div>
   <div class="form-row">
     <div class="form-group"><label class="form-label">Savings Growth (% p.a.)</label><input class="form-input" type="number" id="c_igrow" value="5" step="0.5" oninput="model()"></div>
     <div class="form-group"><label class="form-label">Expense Inflation (% p.a.)</label><input class="form-input" type="number" id="c_egrow" value="6" step="0.5" oninput="model()"></div>
@@ -50,7 +51,7 @@ require_once '../includes/portal-header.php';
     <div class="form-group"><label class="form-label">Post-Retirement Return (% p.a.)</label><input class="form-input" type="number" id="c_post_rate" value="7" step="0.5" oninput="model()"></div>
   </div>
 
-  <div style="margin:1.25rem 0 0.75rem;font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--lime);letter-spacing:0.18em;text-transform:uppercase">Life Events (optional)</div>
+  <div style="margin:1.25rem 0 0.75rem;font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--lime);letter-spacing:0.18em;text-transform:uppercase">Life Events (optional)</div>
   <div class="check-row" style="margin-bottom:0.6rem"><input type="checkbox" id="e_marriage" onchange="model()"><label for="e_marriage">Marriage — ₹5L one-time expense in year</label><input type="number" id="e_marriage_yr" value="5" min="1" max="40" style="width:60px;margin-left:0.5rem;background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:0.25rem 0.4rem;color:var(--cream);font-size:0.82rem" oninput="model()"></div>
   <div class="check-row" style="margin-bottom:0.6rem"><input type="checkbox" id="e_child" onchange="model()"><label for="e_child">Child born in year</label><input type="number" id="e_child_yr" value="7" min="1" max="30" style="width:60px;margin-left:0.5rem;background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:0.25rem 0.4rem;color:var(--cream);font-size:0.82rem" oninput="model()"><label style="margin-left:0.3rem;font-size:0.82rem;color:var(--text-secondary)">+₹3K/month for 18yr</label></div>
   <div class="check-row"><input type="checkbox" id="e_edu" onchange="model()"><label for="e_edu">Child education (₹10L lumpsum) in year</label><input type="number" id="e_edu_yr" value="25" min="1" max="40" style="width:60px;margin-left:0.5rem;background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:0.25rem 0.4rem;color:var(--cream);font-size:0.82rem" oninput="model()"></div>

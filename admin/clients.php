@@ -124,7 +124,7 @@ require_once '../includes/admin-header.php';
           <td style="font-size:0.75rem;color:var(--text-muted)"><?= date('d M Y',strtotime($c['created_at'])) ?></td>
           <td style="font-size:0.75rem;color:var(--text-muted)"><?= $c['last_login']?date('d M Y',strtotime($c['last_login'])):'Never' ?></td>
           <td><span class="badge <?= $c['risk_profile']?'badge-green':'badge-muted' ?>"><?= $c['risk_profile']?ucfirst($c['risk_profile']):'—' ?></span></td>
-          <td style="font-family:'DM Mono',monospace;font-size:0.82rem">₹<?= number_format((float)$c['portfolio_val'],0) ?></td>
+          <td style="font-family:'IBM Plex Mono',monospace;font-size:0.82rem">₹<?= number_format((float)$c['portfolio_val'],0) ?></td>
           <td><a href="?view=<?= $c['id'] ?>" class="btn-ghost btn-sm">View</a></td>
         </tr>
         <?php endforeach; ?>

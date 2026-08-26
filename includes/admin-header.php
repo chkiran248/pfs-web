@@ -84,7 +84,7 @@ function admin_link(string $href, string $icon, string $label, string $current):
     <header class="portal-header" id="portal-header">
       <div class="header-left">
         <button class="hamburger" id="hamburger">☰</button>
-        <span style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--gold);letter-spacing:0.2em;padding:0.2rem 0.6rem;border:1px solid rgba(201,168,76,0.3);border-radius:4px">ADMIN</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;color:var(--gold);letter-spacing:0.2em;padding:0.2rem 0.6rem;border:1px solid rgba(201,168,76,0.3);border-radius:4px">ADMIN</span>
       </div>
       <div class="header-right">
         <button class="theme-toggle" id="theme-toggle" title="Toggle theme">☀️</button>

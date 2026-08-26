@@ -90,7 +90,7 @@ require_once '../includes/admin-header.php';
       <div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;border-bottom:1px solid var(--border-light)">
         <div><div style="font-size:0.875rem;color:var(--cream)"><?= htmlspecialchars($h['instrument_name'],ENT_QUOTES,'UTF-8') ?></div><div style="font-size:0.72rem;color:var(--text-muted)"><?= ucfirst(str_replace('_',' ',$h['instrument_type'])) ?></div></div>
         <div style="display:flex;align-items:center;gap:0.75rem">
-          <span style="font-family:'DM Mono',monospace;color:var(--lime)"><?= $h['allocation_pct'] ?>%</span>
+          <span style="font-family:'IBM Plex Mono',monospace;color:var(--lime)"><?= $h['allocation_pct'] ?>%</span>
           <form method="POST" style="display:inline"><input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrf_token(),ENT_QUOTES,'UTF-8') ?>"><input type="hidden" name="action" value="delete_holding"><input type="hidden" name="holding_id" value="<?= $h['id'] ?>"><input type="hidden" name="portfolio_id" value="<?= $edit_id ?>"><button type="submit" class="btn-danger btn-sm" onclick="return confirm('Remove?')">×</button></form>
         </div>
       </div>
@@ -119,7 +119,7 @@ require_once '../includes/admin-header.php';
   <div class="portal-card">
     <span class="badge <?= ['conservative'=>'badge-green','moderate'=>'badge-gold','aggressive'=>'badge-muted'][$p['risk_profile']] ?>"><?= ucfirst($p['risk_profile']) ?></span>
     <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.25rem;color:var(--cream);margin:0.75rem 0 0.4rem"><?= htmlspecialchars($p['portfolio_name'],ENT_QUOTES,'UTF-8') ?></h3>
-    <div style="font-family:'DM Mono',monospace;color:var(--lime);font-size:0.85rem;margin-bottom:1rem"><?= $p['target_return'] ?>% target · <?= ucfirst($p['rebalance_freq']) ?></div>
+    <div style="font-family:'IBM Plex Mono',monospace;color:var(--lime);font-size:0.85rem;margin-bottom:1rem"><?= $p['target_return'] ?>% target · <?= ucfirst($p['rebalance_freq']) ?></div>
     <a href="?edit=<?= $p['id'] ?>" class="btn-outline btn-sm">Edit Holdings →</a>
   </div>
   <?php endforeach; ?>
