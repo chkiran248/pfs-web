@@ -20,7 +20,7 @@ if (!empty($_SESSION['flash'])) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title><?= htmlspecialchars($page_title ?? 'Prime Financials', ENT_QUOTES, 'UTF-8') ?></title>
   <script>(function(){var t=localStorage.getItem('pv-theme');if(t==='light')document.documentElement.setAttribute('data-theme','light');})()</script>
-  <link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/portal.css" />
+  <link rel="stylesheet" href="<?= SITE_URL ?>/assets/css/portal.css?v=20260826" />
 </head>
 <body>
 

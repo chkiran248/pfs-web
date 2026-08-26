@@ -49,6 +49,6 @@ $_bnav = match(true) {
   </a>
 </nav>
 
-<script src="<?= SITE_URL ?>/assets/js/portal.js"></script>
+<script src="<?= SITE_URL ?>/assets/js/portal.js?v=20260826"></script>
 </body>
 </html>
