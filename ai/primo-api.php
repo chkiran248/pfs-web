@@ -5,6 +5,7 @@ require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/subscription.php';
 require_once __DIR__ . '/context-builder.php';
+require_once __DIR__ . '/ai-helpers.php';
 
 // POST only
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -89,45 +90,16 @@ $db->prepare("INSERT INTO primo_conversations (user_id, role, message, session_k
 // Standard JSON response (no SSE streaming — works reliably on XAMPP/Windows/shared hosting)
 header('Content-Type: application/json');
 
-// Call Claude API (non-streaming — get full response at once)
-$api_payload = [
-    'model'      => PRIMO_MODEL,
-    'max_tokens' => PRIMO_MAX_TOKENS,
-    'system'     => $system_prompt,
-    'messages'   => $messages,
-];
-
-$ch = curl_init('https://api.anthropic.com/v1/messages');
-curl_setopt_array($ch, [
-    CURLOPT_POST           => true,
-    CURLOPT_POSTFIELDS     => json_encode($api_payload),
-    CURLOPT_HTTPHEADER     => [
-        'Content-Type: application/json',
-        'x-api-key: ' . CLAUDE_API_KEY,
-        'anthropic-version: 2023-06-01',
-    ],
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_SSL_VERIFYPEER => false,
-    CURLOPT_TIMEOUT        => 60,
-]);
-
-$response = curl_exec($ch);
-$curl_err  = curl_error($ch);
 $full_response = '';
 $tokens_used   = 0;
-curl_close($ch);
 
-if ($curl_err) {
-    exit(json_encode(['error' => 'AI service unavailable. Please try again.']));
+try {
+    $llm = call_llm($system_prompt, $messages, PRIMO_MAX_TOKENS);
+    $full_response = $llm['text'];
+    $tokens_used   = $llm['tokens'];
+} catch (RuntimeException $e) {
+    exit(json_encode(['error' => $e->getMessage()]));
 }
-
-$data = json_decode($response, true);
-if (isset($data['error'])) {
-    exit(json_encode(['error' => $data['error']['message'] ?? 'Claude API error.']));
-}
-
-$full_response = trim($data['content'][0]['text'] ?? '');
-$tokens_used   = $data['usage']['output_tokens'] ?? 0;
 
 if (!$full_response) {
     exit(json_encode(['error' => 'Empty response from AI. Please try again.']));

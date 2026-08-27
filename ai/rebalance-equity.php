@@ -3,7 +3,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/auth.php';
-require_once __DIR__ . '/ai-helpers.php';
+require_once __DIR__ . '/ai-helpers.php';     // call_llm(), extract_json_from_claude()
 require_once __DIR__ . '/fund-classifier.php';
 set_time_limit(300);
 
@@ -141,33 +141,9 @@ $user_prompt = "EQUITY PORTFOLIO ANALYSIS REQUEST\n\nHOLDINGS ({$total_equity} t
     ($research_text ? "\nADVISOR RESEARCH NOTES AVAILABLE:\n{$research_text}\n" : '') .
     "\nProvide educational portfolio analysis. Identify concentration risks, tax opportunities, and sectors. Use soft language appropriate for a research note, not personalised advice.";
 
-$payload = [
-    'model'      => PRIMO_MODEL,
-    'max_tokens' => 6000,
-    'system'     => $system,
-    'messages'   => [['role'=>'user','content'=>$user_prompt]],
-];
-
-$ch = curl_init('https://api.anthropic.com/v1/messages');
-curl_setopt_array($ch, [
-    CURLOPT_POST           => true,
-    CURLOPT_POSTFIELDS     => json_encode($payload),
-    CURLOPT_HTTPHEADER     => ['Content-Type: application/json','x-api-key: '.CLAUDE_API_KEY,'anthropic-version: 2023-06-01'],
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_SSL_VERIFYPEER => false,
-    CURLOPT_CONNECTTIMEOUT => 15,
-    CURLOPT_TIMEOUT        => 60,
-]);
-$response = curl_exec($ch);
-$curl_err  = curl_error($ch);
-curl_close($ch);
-
-if ($curl_err) exit(json_encode(['success'=>false,'error'=>'AI service unavailable. Please try again.']));
-
-$api_data = json_decode($response, true);
-if (isset($api_data['error'])) exit(json_encode(['success'=>false,'error'=>$api_data['error']['message']??'Claude API error']));
-
-$raw    = trim($api_data['content'][0]['text'] ?? '');
+$llm    = call_llm($system, [['role' => 'user', 'content' => $user_prompt]], 6000);
+$raw    = $llm['text'];
+error_log("Equity rebalancer response via {$llm['model']} (300): " . substr($raw, 0, 300));
 $result = extract_json_from_claude($raw);
 
 if (!is_array($result)) {

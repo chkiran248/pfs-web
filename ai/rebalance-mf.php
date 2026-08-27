@@ -3,7 +3,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/auth.php';
-require_once __DIR__ . '/ai-helpers.php';
+require_once __DIR__ . '/ai-helpers.php';     // call_llm(), extract_json_from_claude()
 require_once __DIR__ . '/fund-classifier.php';
 
 header('Content-Type: application/json');
@@ -95,31 +95,11 @@ function build_holdings_text(array $holdings, float $total_current): string {
     return $text;
 }
 
-// ── Helper: one Claude API call ───────────────────────────────────────
+// ── Helper: one LLM call (Claude → Gemini fallback) ──────────────────
 function call_claude(string $system, string $user_msg): mixed {
-    $payload = [
-        'model'      => PRIMO_MODEL,
-        'max_tokens' => 6000,
-        'system'     => $system,
-        'messages'   => [['role' => 'user', 'content' => $user_msg]],
-    ];
-    $ch = curl_init('https://api.anthropic.com/v1/messages');
-    curl_setopt_array($ch, [
-        CURLOPT_POST           => true,
-        CURLOPT_POSTFIELDS     => json_encode($payload),
-        CURLOPT_HTTPHEADER     => ['Content-Type: application/json', 'x-api-key: ' . CLAUDE_API_KEY, 'anthropic-version: 2023-06-01'],
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_SSL_VERIFYPEER => false,
-        CURLOPT_TIMEOUT        => 90,
-    ]);
-    $resp = curl_exec($ch);
-    $err  = curl_error($ch);
-    curl_close($ch);
-    if ($err) throw new RuntimeException("API connection error: $err");
-    $data = json_decode($resp, true);
-    if (isset($data['error'])) throw new RuntimeException("Claude: " . ($data['error']['message'] ?? 'Unknown'));
-    $raw = trim($data['content'][0]['text'] ?? '');
-    error_log("Claude MF response (300): " . substr($raw, 0, 300));
+    $llm = call_llm($system, [['role' => 'user', 'content' => $user_msg]], 6000);
+    $raw = $llm['text'];
+    error_log("MF rebalancer response via {$llm['model']} (300): " . substr($raw, 0, 300));
     return extract_json_from_claude($raw);
 }
 
