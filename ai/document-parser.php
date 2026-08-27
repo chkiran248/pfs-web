@@ -45,25 +45,27 @@ function parse_financial_document(
 
 function format_doc_type(string $t): string {
     return match($t) {
-        'CAS_MUTUAL_FUND'  => 'CAS Statement',
-        'BROKER_STATEMENT' => 'Broker Statement',
-        'DEMAT_STATEMENT'  => 'Demat Statement',
-        'FD_CERTIFICATE'   => 'FD Certificate',
-        'INSURANCE_POLICY' => 'Insurance Policy',
-        default            => 'Financial Document',
+        'CAS_MUTUAL_FUND'      => 'CAS Statement',
+        'PORTFOLIO_VALUATION'  => 'Portfolio Valuation Report',
+        'BROKER_STATEMENT'     => 'Broker Statement',
+        'DEMAT_STATEMENT'      => 'Demat Statement',
+        'FD_CERTIFICATE'       => 'FD Certificate',
+        'INSURANCE_POLICY'     => 'Insurance Policy',
+        default                => 'Financial Document',
     };
 }
 
 /**
  * Try pdftotext first (Linux/Hostinger), fall back to empty string
  * so Claude reads the PDF directly via base64.
+ * Limits to first 10 pages to keep payload manageable.
  */
 function extract_pdf_text_smart(string $file_path): string {
     if (function_exists('shell_exec') && !str_contains(PHP_OS, 'WIN')) {
         $which = trim((string)(shell_exec('which pdftotext 2>/dev/null') ?? ''));
         if ($which) {
-            $text = (string)(shell_exec('pdftotext ' . escapeshellarg($file_path) . ' - 2>/dev/null') ?? '');
-            if (strlen(trim($text)) > 100) return $text;
+            $text = (string)(shell_exec('pdftotext -l 10 ' . escapeshellarg($file_path) . ' - 2>/dev/null') ?? '');
+            if (strlen(trim($text)) > 50) return $text;
         }
     }
     return ''; // triggers Claude vision fallback
@@ -72,6 +74,7 @@ function extract_pdf_text_smart(string $file_path): string {
 function detect_document_type(string $text, string $filename): string {
     $lower = strtolower($text . ' ' . $filename);
     if (str_contains($lower, 'consolidated account statement') || str_contains($lower, 'cams') || str_contains($lower, 'kfintech') || str_contains($lower, 'karvy')) return 'CAS_MUTUAL_FUND';
+    if (str_contains($lower, 'portfolio valuation') || str_contains($lower, 'valuation report') || str_contains($lower, 'valueplus') || str_contains($lower, 'assetplus') || str_contains($lower, 'portfolio statement')) return 'PORTFOLIO_VALUATION';
     if (str_contains($lower, 'zerodha') || str_contains($lower, 'groww') || str_contains($lower, 'upstox') || str_contains($lower, 'angel')) return 'BROKER_STATEMENT';
     if (str_contains($lower, 'nsdl') || str_contains($lower, 'cdsl') || str_contains($lower, 'demat')) return 'DEMAT_STATEMENT';
     if (str_contains($lower, 'fixed deposit') || str_contains($lower, 'fd certificate') || str_contains($lower, 'term deposit')) return 'FD_CERTIFICATE';
@@ -85,6 +88,11 @@ function build_extraction_prompt(string $text, string $doc_type, string $file_pa
     $instructions = match($doc_type) {
         'CAS_MUTUAL_FUND' => "Extract ALL mutual fund holdings from this CAMS/KFintech Consolidated Account Statement.
 For each holding return: fund_name, fund_house, fund_type (equity/debt/hybrid/elss/index/international/liquid/gold), folio_number, units_held (decimal), avg_nav, current_nav, invested_amount, current_value, purchase_date (YYYY-MM-DD), sip_active (true/false), sip_amount (monthly).",
+
+        'PORTFOLIO_VALUATION' => "Extract ALL mutual fund holdings from this Portfolio Valuation Report (Valueplus/AssetPlus or similar).
+Each fund row typically shows: Scheme Name, Scheme Type/Category, Market Value (current value), Investment Value or Cost Value (amount invested), Units, NAV or Current NAV, and sometimes XIRR/Returns.
+For each fund return: fund_name (full scheme name), fund_house (AMC name — extract from scheme name e.g. 'Mirae Asset' from 'Mirae Asset Large Cap Fund'), fund_type (equity/debt/hybrid/elss/index/international/liquid/gold — infer from scheme name or category column), units_held (units, decimal), current_nav (NAV value), invested_amount (Investment Value / Cost Value), current_value (Market Value), purchase_date (null — not typically shown in valuation reports), folio_number (if visible).
+IMPORTANT: Extract EVERY single fund row. Reports can have 30-50+ funds. Do not stop early.",
 
         'DEMAT_STATEMENT' => "Extract ALL holdings from this NSDL/CDSL Demat Account Statement. NSDL statements show: ISIN, Company/Issuer Name, Market Type, Quantity, Current Market Value. For each holding return: fund_name (full company name), fund_house ('NSE' or 'BSE' or 'NSDL'), fund_type ('equity' for shares, 'debt' for bonds/debentures), units_held (quantity as number), avg_nav (0 if not shown), current_nav (0 if not shown), invested_amount (0 if not shown), current_value (current market value — extract this), purchase_date (null if not shown), ticker_symbol (NSE/BSE symbol if shown). Extract EVERY row even if some fields are missing.",
 
@@ -104,12 +112,20 @@ If nothing found, return exactly: []
 All monetary values: plain numbers without ₹ or commas (e.g. 150000 not 1,50,000).
 All dates: YYYY-MM-DD format. Percentages: plain numbers (7.5 not 7.5%).";
 
+    // Larger limit for multi-holding reports to capture all funds
+    $text_limit = in_array($doc_type, ['PORTFOLIO_VALUATION', 'DEMAT_STATEMENT', 'CAS_MUTUAL_FUND']) ? 25000 : 12000;
+
     $user_content = [];
     if ($has_text) {
-        $user_content[] = ['type' => 'text', 'text' => $instructions . "\n\nDocument text:\n" . mb_substr($text, 0, 12000)];
+        $user_content[] = ['type' => 'text', 'text' => $instructions . "\n\nDocument text:\n" . mb_substr($text, 0, $text_limit)];
     } else {
+        // Guard: refuse to base64-encode files > 3 MB — they will time out the API call
+        $file_size = filesize($file_path);
+        if ($file_size > 3 * 1024 * 1024) {
+            throw new Exception("This PDF is too large to process automatically ({$file_size} bytes). Please upload a text-based PDF (not a scanned image), or contact support for help importing your holdings.");
+        }
         // Send PDF as base64 for Claude vision
-        $pdf_b64 = base64_encode(file_get_contents($file_path));
+        $pdf_b64 = base64_encode((string)file_get_contents($file_path));
         $user_content[] = ['type' => 'document', 'source' => ['type' => 'base64', 'media_type' => 'application/pdf', 'data' => $pdf_b64]];
         $user_content[] = ['type' => 'text', 'text' => $instructions];
     }
@@ -178,6 +194,7 @@ function call_claude_extraction(array $prompt): array {
         CURLOPT_HTTPHEADER     => ['Content-Type: application/json', 'x-api-key: ' . CLAUDE_API_KEY, 'anthropic-version: 2023-06-01'],
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_CONNECTTIMEOUT => 15,   // fail fast on connection issues
         CURLOPT_TIMEOUT        => 120,
     ]);
     $response = curl_exec($ch);
