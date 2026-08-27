@@ -213,6 +213,10 @@ const RB_STEPS = {
     { t: 27, msg: 'AI is generating rebalancing recommendations…' },
     { t: 38, msg: 'Processing AI output & building your report…' },
     { t: 50, msg: 'Saving results — almost done…' },
+    { t: 65, msg: 'Large portfolio — AI is still working, please wait…' },
+    { t: 80, msg: 'Still processing — this can take up to 2 minutes…' },
+    { t: 100, msg: 'Almost there — finalising your recommendations…' },
+    { t: 120, msg: 'Taking a bit longer than usual — still running…' },
   ],
   equity: [
     { t:  0, msg: 'Fetching your equity holdings…' },
@@ -223,6 +227,10 @@ const RB_STEPS = {
     { t: 26, msg: 'AI is reviewing research notes & patterns…' },
     { t: 38, msg: 'Processing recommendations & alerts…' },
     { t: 50, msg: 'Saving results — almost done…' },
+    { t: 65, msg: 'Still working — AI is finalising insights…' },
+    { t: 80, msg: 'This can take up to 2 minutes for large portfolios…' },
+    { t: 100, msg: 'Almost there — wrapping up your report…' },
+    { t: 120, msg: 'Taking a bit longer than usual — still running…' },
   ],
 };
 
@@ -263,6 +271,12 @@ async function runRebalancer(type) {
           msgEl.style.opacity = '1';
         }
       }, 200);
+    }
+    // Beyond all steps — pulse the last message every 20s so it never looks frozen
+    const isLast = stepIdx === steps.length - 1;
+    if (isLast && elapsed > steps[stepIdx].t && (elapsed - steps[stepIdx].t) % 20 === 0 && elapsed > steps[stepIdx].t) {
+      msgEl.style.opacity = '0';
+      setTimeout(() => { if (msgEl.isConnected) msgEl.style.opacity = '1'; }, 300);
     }
   }, 500);
 
