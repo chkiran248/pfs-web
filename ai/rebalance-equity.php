@@ -22,6 +22,8 @@ if ($today_runs >= 5) {
     exit(json_encode(['success'=>false,'error'=>'Daily limit reached (5 runs/day). Try again tomorrow.']));
 }
 
+try {
+
 // 1. All 'equity' type holdings
 $hold_stmt = $db->prepare("SELECT fund_name, fund_house, fund_type, invested_amount, current_value, units_held, avg_nav, current_nav, purchase_date FROM portfolio_entries WHERE user_id=:uid AND fund_type='equity' ORDER BY current_value DESC LIMIT 50");
 $hold_stmt->execute([':uid'=>$user_id]);
@@ -153,6 +155,7 @@ curl_setopt_array($ch, [
     CURLOPT_HTTPHEADER     => ['Content-Type: application/json','x-api-key: '.CLAUDE_API_KEY,'anthropic-version: 2023-06-01'],
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_SSL_VERIFYPEER => false,
+    CURLOPT_CONNECTTIMEOUT => 15,
     CURLOPT_TIMEOUT        => 60,
 ]);
 $response = curl_exec($ch);
@@ -190,3 +193,12 @@ try {
 } catch (PDOException $e) { error_log('Equity rebalancer save error: '.$e->getMessage()); }
 
 echo json_encode(['success'=>true,'data'=>$result]);
+
+} catch (Throwable $e) {
+    error_log('Equity Rebalancer error user_id=' . $user_id . ': ' . $e->getMessage());
+    http_response_code(500);
+    $user_msg = str_contains($e->getMessage(), 'API') || str_contains($e->getMessage(), 'timed out')
+        ? 'AI service temporarily unavailable. Please try again in a minute.'
+        : 'Analysis failed. Please try again.';
+    echo json_encode(['success' => false, 'error' => $user_msg]);
+}

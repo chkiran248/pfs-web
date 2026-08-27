@@ -22,6 +22,8 @@ if ($today_runs >= 3) {
     exit(json_encode(['success'=>false,'error'=>'Daily limit reached (3 runs/day). Try again tomorrow.']));
 }
 
+try {
+
 // Auto-reclassify holdings using fund name patterns
 reclassify_portfolio($user_id, $db);
 
@@ -214,3 +216,12 @@ try {
 } catch (PDOException $e) { error_log('MF Rebalancer save error: ' . $e->getMessage()); }
 
 echo json_encode(['success' => true, 'data' => $result, 'total_funds' => $total_count, 'batches' => $num_batches]);
+
+} catch (Throwable $e) {
+    error_log('MF Rebalancer error user_id=' . $user_id . ': ' . $e->getMessage());
+    http_response_code(500);
+    $user_msg = str_contains($e->getMessage(), 'API connection error') || str_contains($e->getMessage(), 'timed out')
+        ? 'AI service temporarily unavailable. Please try again in a minute.'
+        : 'Analysis failed. Please try again.';
+    echo json_encode(['success' => false, 'error' => $user_msg]);
+}
