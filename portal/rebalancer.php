@@ -203,17 +203,68 @@ const CSRF   = document.querySelector('meta[name="csrf-token"]').content;
 
 function e(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
+const RB_STEPS = {
+  mutual_fund: [
+    { t:  0, msg: 'Fetching your mutual fund holdings…' },
+    { t:  4, msg: 'Classifying fund types & categories…' },
+    { t:  9, msg: 'Calculating portfolio weights & drift…' },
+    { t: 14, msg: 'Comparing allocation against your risk profile…' },
+    { t: 19, msg: 'Sending portfolio to PrimoAI for analysis…' },
+    { t: 27, msg: 'AI is generating rebalancing recommendations…' },
+    { t: 38, msg: 'Processing AI output & building your report…' },
+    { t: 50, msg: 'Saving results — almost done…' },
+  ],
+  equity: [
+    { t:  0, msg: 'Fetching your equity holdings…' },
+    { t:  4, msg: 'Filtering individual stocks…' },
+    { t:  8, msg: 'Analysing sector concentration & weights…' },
+    { t: 13, msg: 'Checking LTCG / STCG tax positions…' },
+    { t: 18, msg: 'Sending holdings to PrimoAI for analysis…' },
+    { t: 26, msg: 'AI is reviewing research notes & patterns…' },
+    { t: 38, msg: 'Processing recommendations & alerts…' },
+    { t: 50, msg: 'Saving results — almost done…' },
+  ],
+};
+
 async function runRebalancer(type) {
   const isMF = type === 'mutual_fund';
   const btn  = document.getElementById(isMF ? 'runMF' : 'runEQ');
   const body = document.getElementById(isMF ? 'mfBody' : 'eqBody');
-  const lbl  = isMF ? 'mutual fund' : 'equity';
 
   btn.disabled = true;
   btn.textContent = 'Analysing…';
-  body.innerHTML = `<div class="rb-loading"><div class="rb-spinner"></div>
-    <p style="color:var(--text-secondary);font-size:0.875rem">PrimoAI is analysing your ${lbl} portfolio…</p>
-    <p class="rb-note">This takes 15–30 seconds</p></div>`;
+
+  body.innerHTML = `
+    <div class="rb-loading">
+      <div class="rb-spinner"></div>
+      <p class="rb-status-msg" style="color:var(--cream);font-size:0.9rem;font-weight:500;margin-bottom:0.25rem;transition:opacity 0.4s">
+        Fetching your ${isMF ? 'mutual fund' : 'equity'} holdings…
+      </p>
+      <p class="rb-note rb-elapsed" style="font-variant-numeric:tabular-nums">0s elapsed</p>
+    </div>`;
+
+  const msgEl     = body.querySelector('.rb-status-msg');
+  const elapsedEl = body.querySelector('.rb-elapsed');
+  const steps     = RB_STEPS[type];
+  const startTime = Date.now();
+  let stepIdx     = 0;
+
+  const ticker = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    elapsedEl.textContent = elapsed + 's elapsed';
+
+    // Advance step if the next step's time threshold is passed
+    if (stepIdx + 1 < steps.length && elapsed >= steps[stepIdx + 1].t) {
+      stepIdx++;
+      msgEl.style.opacity = '0';
+      setTimeout(() => {
+        if (msgEl.isConnected) {
+          msgEl.textContent = steps[stepIdx].msg;
+          msgEl.style.opacity = '1';
+        }
+      }, 200);
+    }
+  }, 500);
 
   try {
     const resp = await fetch(isMF ? MF_URL : EQ_URL, {
@@ -228,6 +279,7 @@ async function runRebalancer(type) {
   } catch(err) {
     body.innerHTML = `<div class="rb-error">⚠ ${e(err.message)}<br><small style="color:var(--text-muted)">Please try again in a moment.</small></div>`;
   } finally {
+    clearInterval(ticker);
     btn.disabled = false;
     btn.textContent = 'Re-run →';
   }
