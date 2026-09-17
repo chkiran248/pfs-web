@@ -1,17 +1,15 @@
 <?php
+declare(strict_types=1);
 /**
  * Cron: check-watchlist-alerts.php
- * Schedule: 0 9 * * * (daily at 9am)
- * Checks fund_watchlist for NAV alerts and logs them.
- * NOTE: Actual NAV data must be updated via an external API feed.
- *       This script checks stored current_nav against alert thresholds.
+ * Schedule: 0 9 * * * (daily at 9am, after fetch-nav.php at 6am)
+ * Checks fund_watchlist for NAV threshold breaches and sends email alerts.
+ * NAVs are auto-refreshed by data-fetcher/fetch-nav.php from AMFI before this runs.
  */
 if (php_sapi_name() !== 'cli') {
     http_response_code(403);
     exit('CLI only.');
 }
-
-declare(strict_types=1);
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/mailer.php';

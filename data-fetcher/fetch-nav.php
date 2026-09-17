@@ -51,4 +51,29 @@ foreach ($funds as $fund) {
 }
 
 echo "Updated $updated fund NAVs\n";
+
+// ── Refresh fund_watchlist current_nav using same AMFI data ─────────
+$wl_names = $db->query(
+    "SELECT DISTINCT fund_name FROM fund_watchlist WHERE fund_name != '' AND fund_name IS NOT NULL"
+)->fetchAll(PDO::FETCH_COLUMN);
+
+if (!empty($wl_names)) {
+    $upd_wl    = $db->prepare("UPDATE fund_watchlist SET current_nav = :nav WHERE LOWER(fund_name) = LOWER(:fn)");
+    $wl_updated = 0;
+    foreach ($wl_names as $wl_name) {
+        $words = array_filter(explode(' ', strtolower((string)$wl_name)), fn($w) => strlen($w) > 3);
+        if (empty($words)) continue;
+        $wc = count($words);
+        foreach ($nav_map as $entry) {
+            $hits = count(array_filter($words, fn($w) => str_contains(strtolower($entry['name']), $w)));
+            if ($hits >= max(2, (int)($wc * 0.6))) {
+                $upd_wl->execute([':nav' => $entry['nav'], ':fn' => $wl_name]);
+                $wl_updated += $upd_wl->rowCount();
+                break;
+            }
+        }
+    }
+    echo "Updated $wl_updated watchlist NAV(s)\n";
+}
+
 echo '[' . date('H:i:s') . "] NAV fetch complete\n";

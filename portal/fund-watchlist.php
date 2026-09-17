@@ -49,7 +49,7 @@ require_once '../includes/portal-header.php';
 <p class="page-eyebrow">Watchlists</p>
 <h1 class="page-title">Fund Watchlist</h1>
 
-<div class="disclaimer disclaimer--mf" style="margin-bottom:1.25rem">MF investments subject to market risks. NAV data shown is manually entered and may not reflect live prices.</div>
+<div class="disclaimer disclaimer--mf" style="margin-bottom:1.25rem">MF investments subject to market risks. NAV data is auto-updated daily from AMFI. Alerts are checked each morning.</div>
 
 <?php if ($error): ?><div class="flash-error"><?= htmlspecialchars($error, ENT_QUOTES,'UTF-8') ?></div><?php endif; ?>
 

@@ -69,6 +69,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action']??'') === 'delete_
     }
 }
 
+// ── Auto-refresh MF NAVs on page load (throttled: once per hour per session) ──
+$nav_refresh_count = 0;
+$latest_nav_date   = null;
+if (empty($_SESSION['pf_nav_refreshed_at']) || (time() - $_SESSION['pf_nav_refreshed_at']) > 3600) {
+    $_SESSION['pf_nav_refreshed_at'] = time();
+    // Only refresh MF-type holdings with units
+    $rf_entries = $db->query(
+        "SELECT id, fund_name, units_held FROM portfolio_entries
+         WHERE user_id = {$uid}
+           AND fund_type IN ('equity','debt','hybrid','elss','index','international','liquid')
+           AND units_held > 0"
+    )->fetchAll();
+
+    if (!empty($rf_entries)) {
+        // NAV pool: admin-curated fund_recommendations first (fast)
+        $nav_pool = [];
+        foreach ($db->query(
+            "SELECT LOWER(fund_name) AS lname, current_nav FROM fund_recommendations
+             WHERE is_active=1 AND current_nav > 0 AND last_data_refresh IS NOT NULL"
+        )->fetchAll() as $r) {
+            $nav_pool[] = ['name' => $r['lname'], 'nav' => (float)$r['current_nav']];
+        }
+        // Extend with nav_history (all ~11k AMFI funds, latest available date)
+        $latest_nav_date = $db->query("SELECT MAX(nav_date) FROM nav_history")->fetchColumn() ?: null;
+        if ($latest_nav_date) {
+            $hs = $db->prepare("SELECT LOWER(fund_name) AS lname, nav FROM nav_history WHERE nav_date = ?");
+            $hs->execute([$latest_nav_date]);
+            foreach ($hs->fetchAll() as $h) {
+                $nav_pool[] = ['name' => $h['lname'], 'nav' => (float)$h['nav']];
+            }
+        }
+
+        if (!empty($nav_pool)) {
+            $upd_nav = $db->prepare(
+                "UPDATE portfolio_entries SET current_nav = :nav, current_value = units_held * :nav2 WHERE id = :id"
+            );
+            foreach ($rf_entries as $rf) {
+                $words = array_filter(
+                    explode(' ', strtolower((string)$rf['fund_name'])),
+                    fn($w) => strlen($w) > 3
+                );
+                if (empty($words)) continue;
+                $wc = count($words);
+                foreach ($nav_pool as $np) {
+                    $hits = count(array_filter($words, fn($w) => str_contains($np['name'], $w)));
+                    if ($hits >= max(2, (int)($wc * 0.6)) && $np['nav'] > 0) {
+                        $upd_nav->execute([':nav' => $np['nav'], ':nav2' => $np['nav'], ':id' => $rf['id']]);
+                        $nav_refresh_count++;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
+
 // ── Fetch holdings ────────────────────────────────────────
 $stmt = $db->prepare("SELECT * FROM portfolio_entries WHERE user_id = :uid ORDER BY fund_type, fund_name");
 $stmt->execute([':uid' => $uid]);
@@ -110,6 +166,12 @@ require_once '../includes/portal-header.php';
 
 <p class="page-eyebrow">My Finances</p>
 <h1 class="page-title">Portfolio</h1>
+<?php if ($latest_nav_date): ?>
+<p style="font-size:0.72rem;color:var(--text-muted);margin:-0.25rem 0 0.75rem;font-family:'DM Mono',monospace;letter-spacing:0.04em">
+  NAV as of <?= htmlspecialchars($latest_nav_date, ENT_QUOTES, 'UTF-8') ?>
+  <?= $nav_refresh_count > 0 ? " · {$nav_refresh_count} holding" . ($nav_refresh_count > 1 ? 's' : '') . " updated" : '' ?>
+</p>
+<?php endif; ?>
 
 <?php if ($error): ?>
   <div class="flash-error"><?= htmlspecialchars($error, ENT_QUOTES,'UTF-8') ?></div>

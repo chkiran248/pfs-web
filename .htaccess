@@ -28,7 +28,7 @@ RewriteRule ^([^\.]+)$ $1.php [NC,L]
   Header set Referrer-Policy "strict-origin-when-cross-origin"
   Header set Permissions-Policy "geolocation=(), microphone=(), camera=()"
   Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
-  Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://api.anthropic.com https://api.mfapi.in https://www.amfiindia.com; frame-ancestors 'none';"
+  Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://sdk.cashfree.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://api.anthropic.com https://api.mfapi.in https://www.amfiindia.com https://sandbox.cashfree.com https://api.cashfree.com; frame-ancestors 'none';"
 </IfModule>
 
 # ── PERFORMANCE / CACHING ─────────────────────────────────
