@@ -21,8 +21,12 @@ require_once '../includes/portal-header.php';
 ?>
 
 <style>
-.rb-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-top:1.5rem; }
-@media(max-width:900px){ .rb-grid{ grid-template-columns:1fr; } }
+.rb-tabs { display:flex; gap:0; border-bottom:2px solid var(--border); margin-bottom:1.5rem; }
+.rb-tab { background:none; border:none; padding:0.75rem 1.5rem; font-family:'DM Sans',sans-serif; font-size:0.9rem; font-weight:500; color:var(--text-secondary); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; transition:color 0.15s, border-color 0.15s; }
+.rb-tab:hover { color:var(--cream); }
+.rb-tab.active { color:var(--lime); border-bottom-color:var(--lime); }
+.rb-panel { display:none; }
+.rb-panel.active { display:block; }
 
 .rb-card { background:var(--surface-1); border:1px solid var(--border); border-radius:14px; overflow:hidden; display:flex; flex-direction:column; }
 
@@ -112,10 +116,13 @@ require_once '../includes/portal-header.php';
 <h1 class="page-title">Portfolio Rebalancer</h1>
 <p class="page-subtitle">AI-powered analysis of your holdings — powered by PrimoAI. Limit: 5 runs per card per day.</p>
 
-<div class="rb-grid">
+<div class="rb-tabs">
+  <button class="rb-tab active" onclick="switchTab('mf', this)">Mutual Fund Rebalancer</button>
+  <button class="rb-tab" onclick="switchTab('equity', this)">Equity Analyser</button>
+</div>
 
-  <!-- ── Card 1: MF Rebalancer ── -->
-  <div class="rb-card">
+<div class="rb-panel active" id="panel-mf">
+  <div class="rb-card" style="border-radius:14px">
     <div class="rb-card-header">
       <div class="rb-card-title-row">
         <div class="rb-card-title">
@@ -149,9 +156,10 @@ require_once '../includes/portal-header.php';
       <?php endif; ?>
     </div>
   </div>
+</div>
 
-  <!-- ── Card 2: Equity Analyser ── -->
-  <div class="rb-card">
+<div class="rb-panel" id="panel-equity">
+  <div class="rb-card" style="border-radius:14px">
     <div class="rb-card-header">
       <div class="rb-card-title-row">
         <div class="rb-card-title">
@@ -189,7 +197,6 @@ require_once '../includes/portal-header.php';
       <?php endif; ?>
     </div>
   </div>
-
 </div>
 
 <script>
@@ -202,6 +209,13 @@ const WA_NUM = '<?= WHATSAPP_NUM ?>';
 const CSRF   = document.querySelector('meta[name="csrf-token"]').content;
 
 function e(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.rb-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.rb-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-' + tab).classList.add('active');
+}
 
 const RB_STEPS = {
   mutual_fund: [
@@ -536,11 +550,71 @@ function renderMF(d, el) {
 
   h += `<p class="rb-disclaimer">${e(d.disclaimer||'')}</p>`;
   h += `<a href="https://wa.me/${WA_NUM}?text=${encodeURIComponent('Hi, I ran the Prime Financials MF Rebalancer and want to discuss the recommendations.')}" class="rb-wa-btn" target="_blank" rel="noopener">💬 Discuss with Advisor</a>`;
+  // VRO Ratings section placeholder (populated async after render)
+  h += `<div class="rb-section" id="vro-ratings-wrap" style="margin-top:1rem">
+  <div class="rb-section-title">FUND RATINGS — VALUE RESEARCH ONLINE</div>
+  <p id="vro-loading" style="font-size:0.8rem;color:var(--text-muted)">Fetching ratings from VRO…</p>
+  <div id="vro-table" style="display:none"></div>
+  <p style="font-size:0.68rem;color:var(--text-muted);margin-top:0.5rem">Source: Value Research Online. Ratings refreshed weekly. Prime Financials is not affiliated with VRO.</p>
+</div>`;
   h += `<div class="rb-report-actions">
     <button class="rb-action-btn rb-action-btn--pdf" onclick="downloadPDF('mutual_fund')"><i class="bi bi-file-earmark-pdf"></i> Download PDF</button>
     <button class="rb-action-btn rb-action-btn--email" id="emailMF" onclick="emailReport('mutual_fund', this)"><i class="bi bi-envelope"></i> Email Report</button>
   </div>`;
   el.innerHTML = h;
+
+  // After DOM is painted, fetch VRO ratings asynchronously
+  const fundsForRatings = (d.holdings || []).map(f => ({
+    name: f.fund_name,
+    scheme_code: f.scheme_code || ''
+  }));
+  fetchVROratings(fundsForRatings, el);
+}
+
+function starsHtml(n) {
+  if (!n) return '<span style="color:var(--text-muted);font-family:\'DM Mono\',monospace">—</span>';
+  const filled = '★'.repeat(n);
+  const empty  = '☆'.repeat(5 - n);
+  return `<span style="color:var(--gold);letter-spacing:0.05em;font-size:1rem">${filled}</span><span style="color:var(--text-muted);font-size:1rem">${empty}</span>`;
+}
+
+async function fetchVROratings(funds, el) {
+  const wrap = el.querySelector('#vro-ratings-wrap');
+  if (!wrap || !funds.length) return;
+  const loading = wrap.querySelector('#vro-loading');
+  const table   = wrap.querySelector('#vro-table');
+
+  try {
+    const res = await fetch(SITE_URL_JS + '/ai/fetch-fund-ratings.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF },
+      body: JSON.stringify({ funds })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const r = await res.json();
+    const ratings = r.ratings || {};
+
+    let rows = '';
+    for (const [name, stars] of Object.entries(ratings)) {
+      rows += `<tr>
+        <td style="padding:0.4rem 0.5rem;font-size:0.82rem;color:var(--cream)">${e(name)}</td>
+        <td style="padding:0.4rem 0.5rem">${starsHtml(stars)}</td>
+      </tr>`;
+    }
+
+    table.innerHTML = `<table style="width:100%;border-collapse:collapse">
+      <thead><tr>
+        <th style="text-align:left;padding:0.35rem 0.5rem;font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.12em;color:var(--lime);text-transform:uppercase">Fund</th>
+        <th style="text-align:left;padding:0.35rem 0.5rem;font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.12em;color:var(--lime);text-transform:uppercase">VRO Rating</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+
+    loading.style.display = 'none';
+    table.style.display   = 'block';
+  } catch (err) {
+    loading.textContent = 'Ratings unavailable — VRO could not be reached.';
+  }
 }
 
 // ── Equity result renderer ──────────────────────────────────
