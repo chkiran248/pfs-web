@@ -141,7 +141,7 @@ $user_prompt = "EQUITY PORTFOLIO ANALYSIS REQUEST\n\nHOLDINGS ({$total_equity} t
     ($research_text ? "\nADVISOR RESEARCH NOTES AVAILABLE:\n{$research_text}\n" : '') .
     "\nProvide educational portfolio analysis. Identify concentration risks, tax opportunities, and sectors. Use soft language appropriate for a research note, not personalised advice.";
 
-$llm    = call_llm($system, [['role' => 'user', 'content' => $user_prompt]], 6000);
+$llm    = call_llm($system, [['role' => 'user', 'content' => $user_prompt]], 6000, 'premium');
 $raw    = $llm['text'];
 error_log("Equity rebalancer response via {$llm['model']} (300): " . substr($raw, 0, 300));
 $result = extract_json_from_claude($raw);

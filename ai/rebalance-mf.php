@@ -213,7 +213,7 @@ function build_holdings_text(array $holdings, float $total_current, array $bench
 
 // ── Helper: one LLM call (Claude → Gemini fallback) ──────────────────
 function call_claude(string $system, string $user_msg): mixed {
-    $llm = call_llm($system, [['role' => 'user', 'content' => $user_msg]], 6000);
+    $llm = call_llm($system, [['role' => 'user', 'content' => $user_msg]], 6000, 'premium');
     $raw = $llm['text'];
     error_log("MF rebalancer response via {$llm['model']} (300): " . substr($raw, 0, 300));
     return extract_json_from_claude($raw);

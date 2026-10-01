@@ -94,7 +94,7 @@ $full_response = '';
 $tokens_used   = 0;
 
 try {
-    $llm = call_llm($system_prompt, $messages, PRIMO_MAX_TOKENS);
+    $llm = call_llm($system_prompt, $messages, PRIMO_MAX_TOKENS, 'economy');
     $full_response = $llm['text'];
     $tokens_used   = $llm['tokens'];
 } catch (RuntimeException $e) {

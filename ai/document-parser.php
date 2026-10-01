@@ -130,7 +130,12 @@ All dates: YYYY-MM-DD format. Percentages: plain numbers (7.5 not 7.5%).";
         $user_content[] = ['type' => 'text', 'text' => $instructions];
     }
 
-    return ['system' => $system, 'user_content' => $user_content];
+    $complex_types = ['CAS_MUTUAL_FUND', 'PORTFOLIO_VALUATION', 'DEMAT_STATEMENT'];
+    return [
+        'system'        => $system,
+        'user_content'  => $user_content,
+        'doc_type_hint' => in_array($doc_type, $complex_types),
+    ];
 }
 
 /**
@@ -180,8 +185,15 @@ function extract_json_array(string $text): ?array {
 }
 
 function call_claude_extraction(array $prompt): array {
+    // Use Sonnet for complex multi-holding statements and image/vision PDFs.
+    // Use Haiku for simple text-based documents (faster, cheaper).
+    $is_vision   = isset($prompt['user_content'][0]['source']); // base64 PDF block
+    $is_complex  = $prompt['doc_type_hint'] ?? false;           // CAS / PORTFOLIO_VALUATION
+    $model = ($is_vision || $is_complex) ? CLAUDE_SONNET_MODEL : CLAUDE_HAIKU_MODEL;
+    error_log("call_claude_extraction: using {$model} (vision=" . ($is_vision?'y':'n') . " complex=" . ($is_complex?'y':'n') . ")");
+
     $payload = [
-        'model'      => PRIMO_MODEL,
+        'model'      => $model,
         'max_tokens' => 8000,           // increased for large statements
         'system'     => $prompt['system'],
         'messages'   => [['role' => 'user', 'content' => $prompt['user_content']]],
