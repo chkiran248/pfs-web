@@ -102,3 +102,23 @@ function mf_format_return(?float $val): string {
     $sign  = $val >= 0 ? '+' : '';
     return "<span style=\"color:{$color};font-family:'IBM Plex Mono',monospace\">{$sign}{$val}%</span>";
 }
+
+/**
+ * Search mfapi.in by scheme name (free secondary source).
+ * Returns array of {schemeCode, schemeName} objects, up to $limit.
+ */
+function mfapi_search(string $query, int $limit = 10): array
+{
+    if (strlen(trim($query)) < 2) return [];
+    $url = 'https://api.mfapi.in/mf/search?q=' . urlencode($query);
+    $ctx = stream_context_create(['http' => [
+        'timeout'       => 10,
+        'user_agent'    => 'Mozilla/5.0 (compatible; PrimeFin-Portal/1.0)',
+        'ignore_errors' => true,
+    ]]);
+    $resp = @file_get_contents($url, false, $ctx);
+    if (!$resp) return [];
+    $data = json_decode($resp, true);
+    if (!is_array($data)) return [];
+    return array_slice($data, 0, $limit);
+}

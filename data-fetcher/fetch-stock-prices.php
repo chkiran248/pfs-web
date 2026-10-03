@@ -1,6 +1,16 @@
 <?php
 declare(strict_types=1);
-if (php_sapi_name() !== 'cli') { http_response_code(403); exit('CLI only.'); }
+$is_web = php_sapi_name() !== 'cli';
+if ($is_web) {
+    $token = $_GET['token'] ?? $_SERVER['HTTP_X_CRON_TOKEN'] ?? '';
+    if (!defined('CRON_SECRET') || $token !== CRON_SECRET || CRON_SECRET === '') {
+        http_response_code(403); exit('Forbidden');
+    }
+    header('Content-Type: text/plain; charset=utf-8');
+    // Prevent buffering so output streams to cron logs
+    if (ob_get_level()) ob_end_clean();
+    @ini_set('implicit_flush', '1');
+}
 
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../includes/db.php';
