@@ -108,7 +108,8 @@ try {
         throw new RuntimeException("cURL error: $curl_err");
     }
     if ($http_code < 200 || $http_code >= 300) {
-        throw new RuntimeException("HTTP $http_code from mfapis");
+        $body = substr((string)$resp, 0, 400);
+        throw new RuntimeException("HTTP $http_code from mfapis — body: $body");
     }
     if (!$resp || strlen($resp) < 10) {
         throw new RuntimeException("Empty response from mfapis");
