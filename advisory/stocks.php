@@ -89,5 +89,75 @@ require_once '../includes/portal-header.php';
 </div>
 <?php endif; ?>
 
+<!-- ── Market Movers ───────────────────────────────────────────────────────── -->
+<div style="margin-top:2.5rem">
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:var(--lime);letter-spacing:0.2em;margin-bottom:0.4rem">LIVE MARKET DATA · mfapis.club</div>
+  <h2 class="section-header" style="padding-bottom:0.5rem;margin-bottom:1rem">Market Movers</h2>
+
+  <div style="display:flex;gap:0.5rem;margin-bottom:1rem">
+    <button onclick="loadMovers('gainers')" id="btn-gainers" class="btn-outline btn-sm" style="font-size:0.72rem">▲ Top Gainers</button>
+    <button onclick="loadMovers('losers')"  id="btn-losers"  class="btn-ghost  btn-sm" style="font-size:0.72rem">▼ Top Losers</button>
+    <button onclick="loadMovers('volume')"  id="btn-volume"  class="btn-ghost  btn-sm" style="font-size:0.72rem">◈ Volume Leaders</button>
+  </div>
+
+  <div id="movers-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:0.75rem;min-height:120px">
+    <div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--text-muted);font-family:'IBM Plex Mono',monospace;font-size:0.72rem">Loading…</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var _active = 'gainers';
+  var _btns   = { gainers: 'btn-gainers', losers: 'btn-losers', volume: 'btn-volume' };
+
+  window.loadMovers = function(type) {
+    _active = type;
+    Object.keys(_btns).forEach(function(k){
+      var b = document.getElementById(_btns[k]);
+      b.className = k === type ? 'btn-outline btn-sm' : 'btn-ghost btn-sm';
+      b.style.fontSize = '0.72rem';
+    });
+    document.getElementById('movers-grid').innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--text-muted);font-family:\'IBM Plex Mono\',monospace;font-size:0.72rem">Loading…</div>';
+
+    fetch('<?= SITE_URL ?>/api/market-movers.php?type=' + type)
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        var items = data.movers || data.data || data || [];
+        if (!Array.isArray(items) || !items.length) {
+          document.getElementById('movers-grid').innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--text-muted);font-family:\'IBM Plex Mono\',monospace;font-size:0.72rem">No data available.</div>';
+          return;
+        }
+        document.getElementById('movers-grid').innerHTML = items.slice(0,12).map(function(s){
+          var name   = s.company_name ?? s.name ?? s.symbol ?? '—';
+          var ticker = s.symbol ?? s.ticker ?? '';
+          var price  = s.close ?? s.ltp ?? s.price ?? null;
+          var chg    = s.change_pct ?? s.pct_change ?? s.change ?? null;
+          var vol    = s.volume ?? null;
+          var chgStr = chg != null ? ((chg >= 0 ? '+' : '') + parseFloat(chg).toFixed(2) + '%') : '—';
+          var chgCol = chg != null ? (chg >= 0 ? 'var(--bright)' : '#ef5350') : 'var(--text-muted)';
+          return '<div class="portal-card" style="padding:0.9rem">' +
+            '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.4rem">' +
+              '<div>' +
+                '<div style="font-weight:600;color:var(--cream);font-size:0.88rem">' + name.substring(0,22) + (name.length>22?'…':'') + '</div>' +
+                (ticker ? '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.62rem;color:var(--text-muted)">' + ticker + '</div>' : '') +
+              '</div>' +
+              '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:0.85rem;font-weight:600;color:' + chgCol + '">' + chgStr + '</span>' +
+            '</div>' +
+            '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.78rem;color:var(--text-secondary)">' +
+              (price != null ? '₹' + parseFloat(price).toLocaleString('en-IN', {minimumFractionDigits:2,maximumFractionDigits:2}) : '—') +
+              (vol != null ? '<span style="color:var(--text-muted);margin-left:0.5rem">Vol ' + (vol >= 10000000 ? (vol/10000000).toFixed(1)+'Cr' : vol >= 100000 ? (vol/100000).toFixed(1)+'L' : vol.toLocaleString('en-IN')) + '</span>' : '') +
+            '</div>' +
+          '</div>';
+        }).join('');
+      })
+      .catch(function(){
+        document.getElementById('movers-grid').innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--text-muted);font-family:\'IBM Plex Mono\',monospace;font-size:0.72rem">Market data unavailable.</div>';
+      });
+  };
+
+  document.addEventListener('DOMContentLoaded', function(){ loadMovers('gainers'); });
+})();
+</script>
+
 <?php require_once '../includes/portal-footer.php'; ?>
 

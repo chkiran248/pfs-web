@@ -149,6 +149,169 @@ $risk_badge   = ['low'=>'badge-green','moderate'=>'badge-gold','high'=>'badge-go
 
 <?php endif; ?>
 
+<!-- ── Fund Explorer ──────────────────────────────────────────────────────── -->
+<div style="margin-top:2.5rem;margin-bottom:2rem">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;margin-bottom:1rem">
+    <div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:var(--lime);letter-spacing:0.2em;margin-bottom:0.25rem">BROWSE ALL FUNDS</div>
+      <h2 class="section-header" style="margin-bottom:0;border:none;padding:0">Fund Explorer</h2>
+    </div>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--text-muted)">9,913 schemes · mfapis.club</span>
+  </div>
+
+  <!-- Filters -->
+  <div style="display:flex;flex-wrap:wrap;gap:0.6rem;margin-bottom:1.25rem;align-items:flex-end">
+    <div style="flex:1;min-width:200px">
+      <label style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:var(--text-muted);letter-spacing:0.1em;display:block;margin-bottom:0.3rem">SEARCH</label>
+      <input id="fe-search" class="form-input" type="text" placeholder="Fund name, AMC…" oninput="feDebounce()" style="margin:0">
+    </div>
+    <div>
+      <label style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:var(--text-muted);letter-spacing:0.1em;display:block;margin-bottom:0.3rem">CATEGORY</label>
+      <select id="fe-category" class="form-select" onchange="feLoad(1)" style="margin:0">
+        <option value="">All Categories</option>
+        <option value="Equity">Equity</option>
+        <option value="Debt">Debt</option>
+        <option value="Hybrid">Hybrid</option>
+        <option value="Index Funds">Index Funds</option>
+        <option value="ELSS">ELSS</option>
+        <option value="Liquid">Liquid</option>
+        <option value="Overnight">Overnight</option>
+      </select>
+    </div>
+    <div>
+      <label style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:var(--text-muted);letter-spacing:0.1em;display:block;margin-bottom:0.3rem">OPTION</label>
+      <select id="fe-option" class="form-select" onchange="feLoad(1)" style="margin:0">
+        <option value="">All</option>
+        <option value="direct">Direct</option>
+        <option value="regular">Regular</option>
+      </select>
+    </div>
+    <div>
+      <label style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:var(--text-muted);letter-spacing:0.1em;display:block;margin-bottom:0.3rem">SORT BY</label>
+      <select id="fe-sort" class="form-select" onchange="feLoad(1)" style="margin:0">
+        <option value="return_1yr">1yr Return</option>
+        <option value="return_3yr">3yr Return</option>
+        <option value="return_5yr">5yr Return</option>
+        <option value="aum">AUM</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Results grid -->
+  <div id="fe-results" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;min-height:200px">
+    <div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted);font-family:'IBM Plex Mono',monospace;font-size:0.75rem">Loading funds…</div>
+  </div>
+
+  <!-- Pagination -->
+  <div id="fe-pager" style="display:flex;justify-content:center;align-items:center;gap:0.75rem;margin-top:1.25rem;font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:var(--text-secondary)"></div>
+</div>
+
+<script>
+(function(){
+  var _page = 1, _timer = null;
+
+  function feRetStr(v, label) {
+    if (v == null) return '<span style="color:var(--text-muted)">—</span>';
+    var c = v >= 0 ? 'var(--bright)' : '#ef5350';
+    return '<span style="color:' + c + '">' + (v >= 0 ? '+' : '') + v.toFixed(1) + '%</span>';
+  }
+
+  window.feLoad = function(pg) {
+    _page = pg || _page;
+    var q   = document.getElementById('fe-search').value.trim();
+    var cat = document.getElementById('fe-category').value;
+    var opt = document.getElementById('fe-option').value;
+    var srt = document.getElementById('fe-sort').value;
+    var params = new URLSearchParams({ page: _page, limit: 18 });
+    if (q)   params.set('q', q);
+    if (cat) params.set('category', cat);
+    if (opt) params.set('option', opt);
+    if (srt) params.set('sort', srt);
+
+    document.getElementById('fe-results').innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted);font-family:\'IBM Plex Mono\',monospace;font-size:0.75rem">Loading…</div>';
+
+    fetch('<?= SITE_URL ?>/api/fund-search.php?' + params.toString())
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        var funds = data.funds || [];
+        var total = data.total || 0;
+        var grid  = document.getElementById('fe-results');
+        var pager = document.getElementById('fe-pager');
+
+        if (!funds.length) {
+          grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted);font-family:\'IBM Plex Mono\',monospace;font-size:0.75rem">No funds found.</div>';
+          pager.innerHTML = '';
+          return;
+        }
+
+        grid.innerHTML = funds.map(function(f){
+          var ret1 = feRetStr(f.return_1yr, '1Y');
+          var ret3 = feRetStr(f.return_3yr, '3Y');
+          var ret5 = feRetStr(f.return_5yr, '5Y');
+          var er   = f.expense_ratio != null ? f.expense_ratio.toFixed(2) + '%' : '—';
+          var aum  = f.aum_cr != null ? '₹' + (f.aum_cr >= 100 ? Math.round(f.aum_cr).toLocaleString('en-IN') : f.aum_cr.toFixed(0)) + ' Cr' : '—';
+          var nav  = f.nav  != null ? '₹' + f.nav.toFixed(2) : '—';
+          var name = f.name || '—';
+          var amc  = f.amc  || '';
+          var cat  = [f.category, f.sub_category].filter(Boolean).join(' · ');
+          var opt  = f.option ? '<span style="font-size:0.6rem;font-family:\'IBM Plex Mono\',monospace;background:rgba(76,175,80,0.08);border:1px solid rgba(76,175,80,0.2);color:var(--lime);padding:0.1rem 0.4rem;border-radius:8px">' + f.option + '</span>' : '';
+
+          return '<div class="portal-card" style="padding:1.1rem">' +
+            '<div style="font-weight:600;color:var(--cream);font-size:0.9rem;margin-bottom:0.15rem;line-height:1.35">' + name.substring(0,60) + (name.length>60?'…':'') + '</div>' +
+            '<div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:0.5rem">' + amc + '</div>' +
+            '<div style="display:flex;gap:0.35rem;flex-wrap:wrap;margin-bottom:0.65rem">' +
+              (cat ? '<span class="badge badge-muted" style="font-size:0.58rem">' + cat.substring(0,30) + '</span>' : '') +
+              opt +
+            '</div>' +
+            '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.3rem;background:var(--surface-2);border-radius:6px;padding:0.5rem;margin-bottom:0.6rem;text-align:center">' +
+              '<div><div style="font-size:0.55rem;color:var(--text-muted);font-family:\'IBM Plex Mono\',monospace">1Y</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.8rem">' + ret1 + '</div></div>' +
+              '<div><div style="font-size:0.55rem;color:var(--text-muted);font-family:\'IBM Plex Mono\',monospace">3Y</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.8rem">' + ret3 + '</div></div>' +
+              '<div><div style="font-size:0.55rem;color:var(--text-muted);font-family:\'IBM Plex Mono\',monospace">5Y</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.8rem">' + ret5 + '</div></div>' +
+            '</div>' +
+            '<div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text-secondary);font-family:\'IBM Plex Mono\',monospace;margin-bottom:0.75rem">' +
+              '<span>NAV ' + nav + '</span><span>ER ' + er + '</span><span>AUM ' + aum + '</span>' +
+            '</div>' +
+            '<div style="display:flex;gap:0.4rem">' +
+              '<button onclick="feAddWatch(\'' + encodeURIComponent(name) + '\',\'' + encodeURIComponent(amc) + '\')" class="btn-outline btn-sm" style="font-size:0.72rem;padding:0.3rem 0.7rem">★ Watch</button>' +
+              '<a href="https://wa.me/<?= WHATSAPP_NUM ?>?text=' + encodeURIComponent('Hi, I want to invest in ' + name + ' via primefin.in') + '" class="btn-ghost btn-sm" style="font-size:0.72rem;padding:0.3rem 0.7rem" target="_blank" rel="noopener">💬 Invest</a>' +
+            '</div>' +
+          '</div>';
+        }).join('');
+
+        // Pagination
+        var totalPages = Math.ceil(total / 18);
+        var pagerHtml  = '<span>' + (((_page-1)*18)+1) + '–' + Math.min(_page*18, total) + ' of ' + total.toLocaleString('en-IN') + '</span>';
+        if (_page > 1)          pagerHtml += '<button onclick="feLoad(' + (_page-1) + ')" class="btn-ghost btn-sm">← Prev</button>';
+        if (_page < totalPages) pagerHtml += '<button onclick="feLoad(' + (_page+1) + ')" class="btn-ghost btn-sm">Next →</button>';
+        pager.innerHTML = pagerHtml;
+      })
+      .catch(function(){
+        document.getElementById('fe-results').innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted);font-family:\'IBM Plex Mono\',monospace;font-size:0.75rem">Could not load fund data. Try again.</div>';
+      });
+  };
+
+  window.feDebounce = function() {
+    clearTimeout(_timer);
+    _timer = setTimeout(function(){ feLoad(1); }, 450);
+  };
+
+  window.feAddWatch = function(name, house) {
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '<?= SITE_URL ?>/advisory/mutual-funds.php';
+    form.innerHTML = '<input name="csrf_token" value="<?= htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8') ?>">' +
+      '<input name="action" value="add_watchlist">' +
+      '<input name="fund_name" value="' + decodeURIComponent(name) + '">' +
+      '<input name="fund_house" value="' + decodeURIComponent(house) + '">';
+    document.body.appendChild(form);
+    form.submit();
+  };
+
+  // Load on page ready
+  document.addEventListener('DOMContentLoaded', function(){ feLoad(1); });
+})();
+</script>
+
 <!-- ELSS Planner -->
 <div class="portal-card" style="margin-top:2rem">
   <div class="card-title">ELSS Tax Saver Planner</div>

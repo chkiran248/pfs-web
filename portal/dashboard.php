@@ -143,6 +143,28 @@ $greeting = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good
 $goal_icons = ['retirement'=>'🏦','education'=>'🎓','home'=>'🏠','marriage'=>'💍','vehicle'=>'🚗','emergency'=>'🆘','custom'=>'🎯'];
 $category_labels = ['market_update'=>'Market Update','tax_tips'=>'Tax Tips','fund_analysis'=>'Fund Analysis','nps'=>'NPS','insurance'=>'Insurance','stocks'=>'Stocks','general'=>'General'];
 
+// ── Market strip — from benchmark_nav cron table ──────────
+$mkt_rows = [];
+$rbi_rate  = '6.50'; // static fallback; replace when macro table exists
+$mkt_labels = [
+    'nifty50'         => 'NIFTY 50',
+    'nifty500'        => 'NIFTY 500',
+    'nifty_midcap150' => 'MIDCAP 150',
+];
+try {
+    $mkt_stmt = $db->query(
+        "SELECT benchmark, nav_value FROM benchmark_nav
+         WHERE benchmark IN ('nifty50','nifty500','nifty_midcap150')
+           AND nav_date = (
+               SELECT MAX(nav_date) FROM benchmark_nav
+               WHERE benchmark IN ('nifty50','nifty500','nifty_midcap150')
+           )"
+    );
+    $mkt_rows = $mkt_stmt ? $mkt_stmt->fetchAll(PDO::FETCH_KEY_PAIR) : [];
+} catch (Throwable $e) {
+    $mkt_rows = [];
+}
+
 $page_title = 'Dashboard — Prime Financials';
 require_once '../includes/portal-header.php';
 ?>
@@ -168,6 +190,30 @@ require_once '../includes/portal-header.php';
      onmouseover="this.style.background='rgba(141,198,63,0.1)'" onmouseout="this.style.background=''">↑ Upgrade plan</a>
   <?php endif; ?>
 </div>
+
+<!-- ── Market data strip ─────────────────────────────────── -->
+<?php try { ?>
+<div style="background:var(--surface-1);border:1px solid var(--border);border-radius:8px;overflow-x:auto;margin-bottom:1.5rem;scrollbar-width:none;-ms-overflow-style:none">
+  <div style="display:flex;min-width:max-content">
+    <?php foreach ($mkt_labels as $mkt_key => $mkt_label):
+      $mkt_val = (isset($mkt_rows[$mkt_key]) && $mkt_rows[$mkt_key] !== null)
+          ? number_format((float)$mkt_rows[$mkt_key], 2)
+          : null;
+    ?>
+    <div style="padding:0.5rem 1.2rem;border-right:1px solid var(--border);flex-shrink:0">
+      <div style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:0.2rem"><?= htmlspecialchars($mkt_label, ENT_QUOTES,'UTF-8') ?></div>
+      <div style="font-family:'DM Mono',monospace;font-size:0.85rem;color:<?= $mkt_val !== null ? 'var(--cream)' : 'var(--text-muted)' ?>">
+        <?= $mkt_val !== null ? '▲ ' . $mkt_val : '—' ?>
+      </div>
+    </div>
+    <?php endforeach; ?>
+    <div style="padding:0.5rem 1.2rem;flex-shrink:0">
+      <div style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:0.2rem">RBI Repo Rate</div>
+      <div style="font-family:'DM Mono',monospace;font-size:0.85rem;color:var(--cream)"><?= htmlspecialchars($rbi_rate, ENT_QUOTES,'UTF-8') ?>%</div>
+    </div>
+  </div>
+</div>
+<?php } catch (Throwable $e) { /* silently degrade — no strip on error */ } ?>
 
 <?php if ($plan === 'free'): ?>
 <!-- Upgrade nudge for free users -->

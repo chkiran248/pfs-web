@@ -37,7 +37,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'remov
     }
 }
 
-$stmt = $db->prepare("SELECT sw.*, sr.report_title FROM stock_watchlist sw LEFT JOIN stock_research sr ON sr.id = sw.research_id WHERE sw.user_id = :uid ORDER BY sw.added_at DESC");
+$stmt = $db->prepare("
+    SELECT sw.*,
+           sr.report_title,
+           sp.close_price  AS live_price,
+           sp.price_date   AS price_date
+    FROM stock_watchlist sw
+    LEFT JOIN stock_research sr ON sr.id = sw.research_id
+    LEFT JOIN stock_prices sp
+           ON sp.ticker     = sw.ticker_symbol
+          AND sp.price_date = (
+              SELECT MAX(price_date) FROM stock_prices
+              WHERE ticker = sw.ticker_symbol
+          )
+    WHERE sw.user_id = :uid
+    ORDER BY sw.added_at DESC
+");
 $stmt->execute([':uid' => $uid]);
 $watchlist = $stmt->fetchAll();
 
@@ -91,20 +106,37 @@ require_once '../includes/portal-header.php';
 <div class="portal-card" style="padding:0">
   <div class="table-wrapper" style="border:none;border-radius:12px">
     <table class="portal-table">
-      <thead><tr><th>Company</th><th>Exchange</th><th>Added @</th><th>Target</th><th>Stop Loss</th><th>Research</th><th>Notes</th><th>Action</th></tr></thead>
+      <thead><tr><th>Company</th><th>Exchange</th><th>Live Price</th><th>Change</th><th>P/E</th><th>P/B</th><th>Promoter%</th><th>Target</th><th>Stop Loss</th><th>Research</th><th>Action</th></tr></thead>
       <tbody>
         <?php foreach ($watchlist as $w): ?>
-        <tr>
+        <tr data-wid="<?= $w['id'] ?>" data-ticker="<?= htmlspecialchars($w['ticker_symbol'], ENT_QUOTES,'UTF-8') ?>">
           <td>
             <div style="font-weight:500;color:var(--cream)"><?= htmlspecialchars($w['company_name'], ENT_QUOTES,'UTF-8') ?></div>
             <div><span class="badge badge-muted"><?= htmlspecialchars($w['ticker_symbol'], ENT_QUOTES,'UTF-8') ?></span></div>
           </td>
-          <td><span class="badge badge-muted"><?= $w['exchange'] ?></span></td>
-          <td style="font-family:'IBM Plex Mono',monospace"><?= $w['added_price']?'₹'.number_format((float)$w['added_price'],2):'—' ?></td>
+          <td><span class="badge badge-muted"><?= htmlspecialchars($w['exchange'], ENT_QUOTES,'UTF-8') ?></span></td>
+          <td style="font-family:'IBM Plex Mono',monospace;color:var(--cream)">
+            <?php if ($w['live_price']): ?>
+              ₹<?= number_format((float)$w['live_price'], 2) ?>
+              <div style="font-size:0.7rem;color:var(--text-muted)"><?= $w['price_date'] ? date('d M', strtotime($w['price_date'])) : '' ?></div>
+            <?php else: ?>—<?php endif; ?>
+          </td>
+          <td style="font-family:'IBM Plex Mono',monospace">
+            <?php
+              if ($w['live_price'] && $w['added_price'] && $w['added_price'] > 0):
+                $chg = (($w['live_price'] - $w['added_price']) / $w['added_price']) * 100;
+            ?>
+              <span style="color:<?= $chg >= 0 ? 'var(--bright)' : 'var(--danger,#ef5350)' ?>">
+                <?= $chg >= 0 ? '+' : '' ?><?= number_format($chg, 1) ?>%
+              </span>
+            <?php else: ?>—<?php endif; ?>
+          </td>
+          <td><span class="sfund-pe-<?= $w['id'] ?>" style="font-family:'IBM Plex Mono',monospace;color:var(--text-secondary)">—</span></td>
+          <td><span class="sfund-pb-<?= $w['id'] ?>" style="font-family:'IBM Plex Mono',monospace;color:var(--text-secondary)">—</span></td>
+          <td><span class="sfund-pr-<?= $w['id'] ?>" style="font-family:'IBM Plex Mono',monospace;color:var(--text-secondary)">—</span></td>
           <td style="color:var(--bright);font-family:'IBM Plex Mono',monospace"><?= $w['target_price']?'₹'.number_format((float)$w['target_price'],2):'—' ?></td>
-          <td style="color:var(--danger);font-family:'IBM Plex Mono',monospace"><?= $w['stop_loss']?'₹'.number_format((float)$w['stop_loss'],2):'—' ?></td>
+          <td style="color:var(--danger,#ef5350);font-family:'IBM Plex Mono',monospace"><?= $w['stop_loss']?'₹'.number_format((float)$w['stop_loss'],2):'—' ?></td>
           <td><?= $w['report_title']?'<a href="'.SITE_URL.'/advisory/stocks-detail.php?id='.htmlspecialchars($w['research_id'],ENT_QUOTES,'UTF-8').'" class="auth-link" style="font-size:0.78rem">View →</a>':'—' ?></td>
-          <td style="font-size:0.8rem;color:var(--text-secondary)"><?= $w['client_notes']?htmlspecialchars($w['client_notes'], ENT_QUOTES,'UTF-8'):'—' ?></td>
           <td>
             <form method="POST" style="display:inline">
               <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrf_token(), ENT_QUOTES,'UTF-8') ?>">
@@ -121,8 +153,33 @@ require_once '../includes/portal-header.php';
 </div>
 <?php endif; ?>
 
+<script>const SITE_URL = '<?= SITE_URL ?>';</script>
 <script>
 function toggleForm(id,icon){var f=document.getElementById(id),i=document.getElementById(icon),o=f.style.display!=='none';f.style.display=o?'none':'block';i.textContent=o?'+':'−';}
+
+document.addEventListener('DOMContentLoaded', function () {
+  const rows = document.querySelectorAll('tr[data-ticker]');
+  const tickers = [...new Set([...rows].map(r => r.dataset.ticker))].join(',');
+  if (!tickers) return;
+
+  fetch(SITE_URL + '/api/stock-fundamentals.php?tickers=' + encodeURIComponent(tickers))
+    .then(r => r.json())
+    .then(data => {
+      rows.forEach(row => {
+        const t = row.dataset.ticker;
+        const id = row.dataset.wid;
+        const f = data[t];
+        if (!f) return;
+        const pe = document.querySelector('.sfund-pe-' + id);
+        const pb = document.querySelector('.sfund-pb-' + id);
+        const pr = document.querySelector('.sfund-pr-' + id);
+        if (pe) pe.textContent = f.pe != null ? f.pe.toFixed(1) : '—';
+        if (pb) pb.textContent = f.pb != null ? f.pb.toFixed(2) : '—';
+        if (pr) pr.textContent = f.promoter != null ? f.promoter.toFixed(1) + '%' : '—';
+      });
+    })
+    .catch(() => {}); // silent fail
+});
 </script>
 
 <?php require_once '../includes/portal-footer.php'; ?>
