@@ -65,6 +65,69 @@ $prices_raw = $price_stmt->fetchAll();
 $prices = [];
 foreach ($prices_raw as $p) { $prices[strtoupper($p['ticker'])] = (float)$p['close_price']; }
 
+// 4. Fetch fundamentals from mfapis for each holding (P/E, P/B, ROE, Debt/Equity)
+// Resolve ticker → ISIN → fundamentals. Cached in session for 6h to avoid per-request latency.
+$fund_cache_key = 'eq_fund_' . md5(implode(',', array_column($holdings, 'fund_name')));
+$fundamentals   = [];
+if (isset($_SESSION[$fund_cache_key], $_SESSION[$fund_cache_key . '_ts'])
+    && (time() - $_SESSION[$fund_cache_key . '_ts']) < 21600) {
+    $fundamentals = $_SESSION[$fund_cache_key];
+} else {
+    foreach ($holdings as $h) {
+        $ticker = strtoupper(preg_replace('/[^A-Z0-9&]/i', '', explode(' ', $h['fund_name'])[0]));
+        if (strlen($ticker) < 2) continue;
+
+        // Resolve ISIN
+        $isin = null;
+        $ch   = curl_init(MFAPIS_BASE_URL . '/stocks/symbol_master/search?' . http_build_query(['q' => $ticker]));
+        curl_setopt_array($ch, [CURLOPT_HTTPHEADER=>['x-api-key: '.MFAPIS_API_KEY,'Accept: application/json'],CURLOPT_RETURNTRANSFER=>true,CURLOPT_SSL_VERIFYPEER=>false,CURLOPT_TIMEOUT=>6]);
+        $sr = json_decode((string)curl_exec($ch), true); curl_close($ch);
+        if (is_array($sr)) {
+            $items = $sr['data'] ?? $sr['results'] ?? (isset($sr[0]) ? $sr : []);
+            foreach ((array)$items as $item) {
+                if (!is_array($item)) continue;
+                if (strtoupper($item['symbol'] ?? $item['ticker'] ?? '') === $ticker) {
+                    $isin = $item['isin'] ?? $item['ISIN'] ?? null; break;
+                }
+            }
+            if (!$isin && isset($items[0])) $isin = $items[0]['isin'] ?? $items[0]['ISIN'] ?? null;
+        }
+
+        if (!$isin) { $fundamentals[$ticker] = []; usleep(100000); continue; }
+
+        // Fetch fundamentals + ratios in parallel via cURL multi
+        $mh = curl_multi_init();
+        $handles = [];
+        foreach ([
+            'fund' => MFAPIS_BASE_URL . '/stocks/fundamentals/latest?' . http_build_query(['isin' => $isin]),
+            'rat'  => MFAPIS_BASE_URL . '/financials/' . rawurlencode($isin) . '/ratios',
+        ] as $k => $u) {
+            $c = curl_init($u);
+            curl_setopt_array($c, [CURLOPT_HTTPHEADER=>['x-api-key: '.MFAPIS_API_KEY,'Accept: application/json'],CURLOPT_RETURNTRANSFER=>true,CURLOPT_SSL_VERIFYPEER=>false,CURLOPT_TIMEOUT=>6]);
+            curl_multi_add_handle($mh, $c);
+            $handles[$k] = $c;
+        }
+        do { curl_multi_exec($mh, $running); curl_multi_select($mh); } while ($running > 0);
+        $fd = json_decode((string)curl_multi_getcontent($handles['fund']), true) ?? [];
+        $rd = json_decode((string)curl_multi_getcontent($handles['rat']),  true) ?? [];
+        foreach ($handles as $c) { curl_multi_remove_handle($mh, $c); curl_close($c); }
+        curl_multi_close($mh);
+
+        if (isset($fd['data'])) $fd = $fd['data'];
+        if (isset($rd['data'])) $rd = $rd['data'];
+
+        $fundamentals[$ticker] = [
+            'pe'  => $fd['pe']  ?? $fd['pe_ratio'] ?? null,
+            'pb'  => $fd['pb']  ?? $fd['pb_ratio'] ?? null,
+            'roe' => $fd['roe'] ?? null,
+            'de'  => $rd['debt_equity'] ?? $rd['debt_to_equity'] ?? null,
+        ];
+        usleep(150000);
+    }
+    $_SESSION[$fund_cache_key]         = $fundamentals;
+    $_SESSION[$fund_cache_key . '_ts'] = time();
+}
+
 // Build holdings text
 $total_equity = array_sum(array_column($holdings, 'current_value'));
 
@@ -74,14 +137,26 @@ foreach ($holdings as $i => $h) {
     $weight      = $total_equity > 0 ? round(($h['current_value'] / $total_equity) * 100, 1) : 0;
     $days_held   = $h['purchase_date'] ? (int)((time() - strtotime($h['purchase_date'])) / 86400) : 0;
     $tax_type    = $days_held > 365 ? 'LTCG' : 'STCG';
+    $ticker      = strtoupper(preg_replace('/[^A-Z0-9&]/i', '', explode(' ', $h['fund_name'])[0]));
+    $f           = $fundamentals[$ticker] ?? [];
+    $fund_str    = '';
+    if (!empty($f)) {
+        $parts = [];
+        if ($f['pe']  !== null) $parts[] = 'PE:' . round((float)$f['pe'], 1);
+        if ($f['pb']  !== null) $parts[] = 'PB:' . round((float)$f['pb'], 2);
+        if ($f['roe'] !== null) $parts[] = 'ROE:' . round((float)$f['roe'], 1) . '%';
+        if ($f['de']  !== null) $parts[] = 'D/E:' . round((float)$f['de'], 2);
+        if ($parts) $fund_str = ' [' . implode(' ', $parts) . ']';
+    }
     $holdings_text .= sprintf(
-        "%d. %-35s Weight:%-5s%% Invested:₹%-7s Value:₹%-7s Gain:%s%s%% Held:%dd [%s]\n",
-        $i+1, mb_substr($h['fund_name'],0,34),
+        "%d. %-30s Weight:%-5s%% Invested:₹%-7s Value:₹%-7s Gain:%s%s%% Held:%dd [%s]%s\n",
+        $i+1, mb_substr($h['fund_name'],0,29),
         $weight,
         number_format((float)$h['invested_amount'],0),
         number_format((float)$h['current_value'],0),
         $gain_pct>=0?'+':'',$gain_pct,
-        $days_held, $tax_type
+        $days_held, $tax_type,
+        $fund_str
     );
 }
 
@@ -93,11 +168,15 @@ foreach ($research as $r) {
 
 $system = "You are a research analyst providing EDUCATIONAL portfolio analysis for Prime Financials clients. This is NOT investment advice. Prime Financials is NOT a SEBI RIA.
 
+Holdings include live fundamental data where available: PE (Price/Earnings), PB (Price/Book), ROE (Return on Equity %), D/E (Debt/Equity ratio). Use these to enrich your analysis — e.g. flag high PE vs sector norms, high D/E as balance sheet risk, low ROE as efficiency concern.
+
 For each stock evaluate:
 1. Position sizing — flag if > 10% of equity portfolio (single stock concentration)
 2. Sector concentration — flag if sector > 30% of portfolio
 3. Gain/loss status — LTCG/STCG implications, tax harvesting opportunities
-4. Holding period context
+4. Valuation — comment on PE/PB vs typical sector ranges where data is available
+5. Financial health — flag D/E > 1.5 as elevated leverage; ROE < 10% as weak returns
+6. Holding period context
 5. Cross-reference with any available advisor research notes
 6. Portfolio diversification (flag if < 5 stocks or > 25 stocks)
 

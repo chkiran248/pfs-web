@@ -207,6 +207,8 @@ function nav_link(string $href, string $icon, string $label, string $current): s
         <?= nav_link('/advisory/stock-screener.php',   'funnel',          'Stock Screener',   $current_page) ?>
         <?= nav_link('/advisory/stock-compare.php',    'bar-chart-line',  'Stock Compare',    $current_page) ?>
         <?= nav_link('/advisory/market-indices.php',   'activity',        'Market Indices',   $current_page) ?>
+        <?= nav_link('/advisory/market-overview.php',  'grid',            'Market Overview',  $current_page) ?>
+        <?= nav_link('/advisory/ipo-tracker.php',      'rocket-takeoff',  'IPO Tracker',      $current_page) ?>
         <?= nav_link('/advisory/sector-tracker.php',   'compass',         'Sector Tracker',   $current_page) ?>
         <?= nav_link('/advisory/model-portfolios.php', 'briefcase',       'Model Portfolios', $current_page) ?>
         <?= nav_link('/advisory/insights.php',         'newspaper',       'Market Insights',  $current_page) ?>
