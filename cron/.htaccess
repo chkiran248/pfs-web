@@ -1,1 +1,2 @@
-Deny from all
+# Web access allowed — PHP auth handles security via CRON_SECRET token
+Options -Indexes
