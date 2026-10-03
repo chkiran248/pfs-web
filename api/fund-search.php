@@ -22,7 +22,7 @@ $primary_ok = false;
 
 if (defined('MFAPIS_API_KEY') && MFAPIS_API_KEY !== '') {
     $params = ['limit' => $limit, 'page' => $page];
-    if ($search)   $params['search']   = $search;
+    if ($search)   $params['name']      = $search;
     if ($category) $params['category'] = $category;
     if ($amc)      $params['amc']      = $amc;
     if ($option)   $params['option']   = $option;
@@ -44,8 +44,9 @@ if (defined('MFAPIS_API_KEY') && MFAPIS_API_KEY !== '') {
     if ($resp && $httpCode < 400) {
         $data  = json_decode((string)$resp, true);
         $funds = [];
-        if (isset($data['data']) && is_array($data['data']))       { $funds = $data['data']; $total = (int)($data['total'] ?? $data['count'] ?? count($funds)); }
-        elseif (isset($data[0]))                                    { $funds = $data;          $total = count($funds); }
+        if (isset($data['list']) && is_array($data['list']))           { $funds = $data['list'];  $total = (int)($data['total'] ?? count($funds)); }
+        elseif (isset($data['data']) && is_array($data['data']))    { $funds = $data['data'];  $total = (int)($data['total'] ?? $data['count'] ?? count($funds)); }
+        elseif (isset($data[0]))                                    { $funds = $data;           $total = count($funds); }
         elseif (isset($data['funds']) && is_array($data['funds'])) { $funds = $data['funds']; $total = (int)($data['total'] ?? count($funds)); }
 
         foreach ($funds as $f) {

@@ -144,8 +144,8 @@ function mfapis_scheme_data(string $scheme_id): ?array
 function mfapis_schemes_search(string $query, int $limit = 20): ?array
 {
     return mfapis_get('/scheme', [
-        'search' => $query,
-        'limit'  => $limit,
+        'name'  => $query,
+        'limit' => $limit,
     ]);
 }
 

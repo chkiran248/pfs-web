@@ -25,7 +25,7 @@ $query = $house ? "$name $house" : $name;
 $result = null;
 
 if (defined('MFAPIS_API_KEY') && MFAPIS_API_KEY !== '') {
-    $url = MFAPIS_BASE_URL . '/scheme?' . http_build_query(['search' => $query, 'limit' => 5]);
+    $url = MFAPIS_BASE_URL . '/scheme?' . http_build_query(['name' => $query, 'limit' => 5]);
     $ch  = curl_init($url);
     curl_setopt_array($ch, [
         CURLOPT_HTTPHEADER     => ['x-api-key: ' . MFAPIS_API_KEY, 'Accept: application/json'],
@@ -40,7 +40,8 @@ if (defined('MFAPIS_API_KEY') && MFAPIS_API_KEY !== '') {
     if ($resp && $httpCode < 400) {
         $data = json_decode((string)$resp, true);
         $scheme = null;
-        if (is_array($data[0] ?? null))             $scheme = $data[0];
+        if (is_array($data['list'][0] ?? null))     $scheme = $data['list'][0];
+        elseif (is_array($data[0] ?? null))         $scheme = $data[0];
         elseif (is_array($data['data'][0] ?? null)) $scheme = $data['data'][0];
 
         if ($scheme) {

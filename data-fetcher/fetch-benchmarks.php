@@ -18,7 +18,7 @@ require_once __DIR__ . '/../includes/mf-api.php';  // mf_api_fetch() for CRISIL 
 
 // These are already defined in includes/config.php (loaded above).
 // Guard only against environments where config.php is absent.
-if (!defined('MFAPIS_BASE_URL')) define('MFAPIS_BASE_URL', 'https://app2.mfapis.club/api/v2');
+if (!defined('MFAPIS_BASE_URL')) define('MFAPIS_BASE_URL', 'https://app2.mfapis.club');
 if (!defined('MFAPIS_API_KEY'))  define('MFAPIS_API_KEY',  '');
 
 $db = get_db();
