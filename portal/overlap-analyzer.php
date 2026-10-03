@@ -12,9 +12,14 @@ $db  = get_db();
 $uid = get_user_id();
 
 // Fetch equity holdings
-$stmt = $db->prepare("SELECT fund_name, fund_house, fund_type FROM portfolio_entries WHERE user_id = :uid AND fund_type IN ('equity','elss','index','hybrid') ORDER BY fund_name");
-$stmt->execute([':uid' => $uid]);
-$holdings = $stmt->fetchAll();
+$holdings = [];
+try {
+    $stmt = $db->prepare("SELECT fund_name, fund_house, fund_type FROM portfolio_entries WHERE user_id = :uid AND fund_type IN ('equity','elss','index','hybrid') ORDER BY fund_name");
+    $stmt->execute([':uid' => $uid]);
+    $holdings = $stmt->fetchAll();
+} catch (\PDOException $e) {
+    error_log('overlap-analyzer DB error: ' . $e->getMessage());
+}
 
 // Sample holdings by category
 $sample = [

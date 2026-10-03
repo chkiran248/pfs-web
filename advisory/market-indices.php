@@ -9,27 +9,32 @@ require_role('client');
 $db = get_db();
 
 // Latest values for all equity benchmarks
-$idx_stmt = $db->query("
-    SELECT benchmark, nav_value, nav_date
-    FROM benchmark_nav
-    WHERE benchmark IN ('nifty50','nifty100','nifty_midcap150','nifty_smallcap250','nifty500')
-    AND nav_date = (SELECT MAX(nav_date) FROM benchmark_nav WHERE benchmark IN ('nifty50','nifty100','nifty_midcap150','nifty_smallcap250','nifty500'))
-");
-$idx_rows = [];
-if ($idx_stmt) {
-    foreach ($idx_stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
-        $idx_rows[$r['benchmark']] = $r;
+$idx_rows     = [];
+$nifty_history = [];
+try {
+    $idx_stmt = $db->query("
+        SELECT benchmark, nav_value, nav_date
+        FROM benchmark_nav
+        WHERE benchmark IN ('nifty50','nifty100','nifty_midcap150','nifty_smallcap250','nifty500')
+        AND nav_date = (SELECT MAX(nav_date) FROM benchmark_nav WHERE benchmark IN ('nifty50','nifty100','nifty_midcap150','nifty_smallcap250','nifty500'))
+    ");
+    if ($idx_stmt) {
+        foreach ($idx_stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
+            $idx_rows[$r['benchmark']] = $r;
+        }
     }
-}
 
-// 1-year history for chart (Nifty 50 only, ~250 trading days)
-$hist_stmt = $db->prepare("
-    SELECT nav_date, nav_value FROM benchmark_nav
-    WHERE benchmark = 'nifty50' AND nav_date >= DATE_SUB(CURDATE(), INTERVAL 365 DAY)
-    ORDER BY nav_date ASC
-");
-$hist_stmt->execute();
-$nifty_history = $hist_stmt->fetchAll(PDO::FETCH_ASSOC);
+    // 1-year history for chart (Nifty 50 only, ~250 trading days)
+    $hist_stmt = $db->prepare("
+        SELECT nav_date, nav_value FROM benchmark_nav
+        WHERE benchmark = 'nifty50' AND nav_date >= DATE_SUB(CURDATE(), INTERVAL 365 DAY)
+        ORDER BY nav_date ASC
+    ");
+    $hist_stmt->execute();
+    $nifty_history = $hist_stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (\PDOException $e) {
+    error_log('market-indices DB error: ' . $e->getMessage());
+}
 
 $index_labels = [
     'nifty50'           => 'NIFTY 50',

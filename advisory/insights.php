@@ -12,9 +12,14 @@ $where  = ['is_published = 1'];
 $params = [];
 if ($cat) { $where[] = 'category = :cat'; $params[':cat'] = $cat; }
 
-$stmt = $db->prepare("SELECT * FROM market_insights WHERE " . implode(' AND ', $where) . " ORDER BY published_at DESC");
-$stmt->execute($params);
-$insights = $stmt->fetchAll();
+$insights = [];
+try {
+    $stmt = $db->prepare("SELECT * FROM market_insights WHERE " . implode(' AND ', $where) . " ORDER BY published_at DESC");
+    $stmt->execute($params);
+    $insights = $stmt->fetchAll();
+} catch (\PDOException $e) {
+    error_log('insights DB error: ' . $e->getMessage());
+}
 
 $cats = ['market_update'=>'Market Update','tax_tips'=>'Tax Tips','fund_analysis'=>'Fund Analysis','nps'=>'NPS','insurance'=>'Insurance','stocks'=>'Stocks','general'=>'General'];
 $cat_badge = ['market_update'=>'badge-green','tax_tips'=>'badge-gold','fund_analysis'=>'badge-green','nps'=>'badge-gold','insurance'=>'badge-muted','stocks'=>'badge-muted','general'=>'badge-muted'];

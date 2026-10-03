@@ -12,9 +12,14 @@ $db  = get_db();
 $uid = get_user_id();
 
 // Fetch FDs from portfolio_entries
-$stmt = $db->prepare("SELECT * FROM portfolio_entries WHERE user_id = :uid AND fund_type = 'fd' ORDER BY maturity_date ASC");
-$stmt->execute([':uid' => $uid]);
-$fds = $stmt->fetchAll();
+$fds = [];
+try {
+    $stmt = $db->prepare("SELECT * FROM portfolio_entries WHERE user_id = :uid AND fund_type = 'fd' ORDER BY maturity_date ASC");
+    $stmt->execute([':uid' => $uid]);
+    $fds = $stmt->fetchAll();
+} catch (\PDOException $e) {
+    error_log('fd-tracker DB error: ' . $e->getMessage());
+}
 
 $total_invested = 0; $total_maturity = 0; $due_soon = 0; $due_soon_amt = 0;
 $chart_data = [];

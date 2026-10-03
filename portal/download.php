@@ -10,10 +10,17 @@ $uid = get_user_id();
 
 if (!$id) { header('Location: ' . SITE_URL . '/portal/documents.php'); exit; }
 
-$db   = get_db();
-$stmt = $db->prepare("SELECT * FROM documents WHERE id = :id AND user_id = :uid AND shared_with_client = 1");
-$stmt->execute([':id' => $id, ':uid' => $uid]);
-$doc  = $stmt->fetch();
+$db  = get_db();
+$doc = null;
+try {
+    $stmt = $db->prepare("SELECT * FROM documents WHERE id = :id AND user_id = :uid AND shared_with_client = 1");
+    $stmt->execute([':id' => $id, ':uid' => $uid]);
+    $doc  = $stmt->fetch();
+} catch (\PDOException $e) {
+    error_log('download.php DB error: ' . $e->getMessage());
+    header('HTTP/1.0 500 Internal Server Error');
+    die('An error occurred. Please try again later.');
+}
 
 if (!$doc) {
     header('HTTP/1.0 403 Forbidden');

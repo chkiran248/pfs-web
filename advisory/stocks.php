@@ -17,13 +17,19 @@ $params = [];
 if ($sector) { $where[] = 'sector = :sector'; $params[':sector'] = $sector; }
 if ($cap)    { $where[] = 'market_cap_type = :cap'; $params[':cap'] = $cap; }
 
-$stmt = $db->prepare("SELECT * FROM stock_research WHERE " . implode(' AND ', $where) . " ORDER BY report_date DESC");
-$stmt->execute($params);
-$stocks = $stmt->fetchAll();
+$stocks  = [];
+$sectors = [];
+try {
+    $stmt = $db->prepare("SELECT * FROM stock_research WHERE " . implode(' AND ', $where) . " ORDER BY report_date DESC");
+    $stmt->execute($params);
+    $stocks = $stmt->fetchAll();
 
-$sectors_stmt = $db->prepare("SELECT DISTINCT sector FROM stock_research WHERE is_published = 1 AND sector IS NOT NULL ORDER BY sector");
-$sectors_stmt->execute();
-$sectors = $sectors_stmt->fetchAll(PDO::FETCH_COLUMN);
+    $sectors_stmt = $db->prepare("SELECT DISTINCT sector FROM stock_research WHERE is_published = 1 AND sector IS NOT NULL ORDER BY sector");
+    $sectors_stmt->execute();
+    $sectors = $sectors_stmt->fetchAll(PDO::FETCH_COLUMN);
+} catch (\PDOException $e) {
+    error_log('stocks DB error: ' . $e->getMessage());
+}
 
 $cap_labels = ['large_cap'=>'Large Cap','mid_cap'=>'Mid Cap','small_cap'=>'Small Cap','micro_cap'=>'Micro Cap'];
 $page_title = 'Stock Research — Prime Financials';

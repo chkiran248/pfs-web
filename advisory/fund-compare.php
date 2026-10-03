@@ -14,16 +14,21 @@ $ids = array_filter([
     (int)($_GET['f3'] ?? 0),
 ]);
 
-$all_funds_stmt = $db->prepare("SELECT id, fund_name, fund_house, category FROM fund_recommendations WHERE is_active = 1 ORDER BY fund_name");
-$all_funds_stmt->execute();
-$all_funds = $all_funds_stmt->fetchAll();
+$all_funds = [];
+$selected  = [];
+try {
+    $all_funds_stmt = $db->prepare("SELECT id, fund_name, fund_house, category FROM fund_recommendations WHERE is_active = 1 ORDER BY fund_name");
+    $all_funds_stmt->execute();
+    $all_funds = $all_funds_stmt->fetchAll();
 
-$selected = [];
-if (!empty($ids)) {
-    $placeholders = implode(',', array_fill(0, count($ids), '?'));
-    $stmt = $db->prepare("SELECT * FROM fund_recommendations WHERE id IN ($placeholders) AND is_active = 1");
-    $stmt->execute(array_values($ids));
-    $selected = $stmt->fetchAll();
+    if (!empty($ids)) {
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = $db->prepare("SELECT * FROM fund_recommendations WHERE id IN ($placeholders) AND is_active = 1");
+        $stmt->execute(array_values($ids));
+        $selected = $stmt->fetchAll();
+    }
+} catch (\PDOException $e) {
+    error_log('fund-compare DB error: ' . $e->getMessage());
 }
 
 $risk_badge = ['low'=>'badge-green','moderate'=>'badge-gold','high'=>'badge-gold','very_high'=>'badge-muted'];

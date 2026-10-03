@@ -8,9 +8,14 @@ require_login();
 $db = get_db();
 
 // Try to get portfolios from DB
-$stmt = $db->prepare("SELECT mp.*, GROUP_CONCAT(mph.instrument_name, '|', mph.allocation_pct, '|', mph.instrument_type, '|', COALESCE(mph.rationale,'') SEPARATOR ';;') as holdings_raw FROM model_portfolios mp LEFT JOIN model_portfolio_holdings mph ON mph.portfolio_id = mp.id WHERE mp.is_active = 1 GROUP BY mp.id ORDER BY FIELD(mp.risk_profile,'conservative','moderate','aggressive')");
-$stmt->execute();
-$portfolios = $stmt->fetchAll();
+$portfolios = [];
+try {
+    $stmt = $db->prepare("SELECT mp.*, GROUP_CONCAT(mph.instrument_name, '|', mph.allocation_pct, '|', mph.instrument_type, '|', COALESCE(mph.rationale,'') SEPARATOR ';;') as holdings_raw FROM model_portfolios mp LEFT JOIN model_portfolio_holdings mph ON mph.portfolio_id = mp.id WHERE mp.is_active = 1 GROUP BY mp.id ORDER BY FIELD(mp.risk_profile,'conservative','moderate','aggressive')");
+    $stmt->execute();
+    $portfolios = $stmt->fetchAll();
+} catch (\PDOException $e) {
+    error_log('model-portfolios DB error: ' . $e->getMessage());
+}
 
 // Static fallback
 $static = [

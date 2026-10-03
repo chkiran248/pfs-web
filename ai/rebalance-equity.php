@@ -16,13 +16,15 @@ if (!verify_csrf($_SERVER['HTTP_X_CSRF_TOKEN'] ?? '')) { http_response_code(403)
 $user_id = get_user_id();
 $db      = get_db();
 
+try {
+
 // Rate limit: 5 equity runs per day
-$today_runs = (int)$db->query("SELECT COUNT(*) FROM rebalancer_results WHERE user_id={$user_id} AND rebalance_type='equity' AND DATE(generated_at)=CURDATE()")->fetchColumn();
+$rl_stmt = $db->prepare("SELECT COUNT(*) FROM rebalancer_results WHERE user_id = :uid AND rebalance_type = 'equity' AND DATE(generated_at) = CURDATE()");
+$rl_stmt->execute([':uid' => $user_id]);
+$today_runs = (int)$rl_stmt->fetchColumn();
 if ($today_runs >= 5) {
     exit(json_encode(['success'=>false,'error'=>'Daily limit reached (5 runs/day). Try again tomorrow.']));
 }
-
-try {
 
 // 1. All 'equity' type holdings
 $hold_stmt = $db->prepare("SELECT fund_name, fund_house, fund_type, invested_amount, current_value, units_held, avg_nav, current_nav, purchase_date FROM portfolio_entries WHERE user_id=:uid AND fund_type='equity' ORDER BY current_value DESC LIMIT 50");

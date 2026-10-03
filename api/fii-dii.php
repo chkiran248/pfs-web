@@ -3,13 +3,13 @@ declare(strict_types=1);
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../includes/auth.php';
 
+header('Content-Type: application/json');
+
 if (!is_logged_in()) {
     http_response_code(401);
     echo json_encode(['error' => 'Unauthorised']);
     exit;
 }
-
-header('Content-Type: application/json');
 
 $url = MFAPIS_BASE_URL . '/market/fii_dii/latest';
 
