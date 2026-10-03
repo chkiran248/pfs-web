@@ -151,18 +151,34 @@ $mkt_labels = [
     'nifty500'        => 'NIFTY 500',
     'nifty_midcap150' => 'MIDCAP 150',
 ];
+// Load today + yesterday for each benchmark so we can show 1-day % change
+$mkt_today = [];
+$mkt_prev  = [];
 try {
+    // Latest date per benchmark
     $mkt_stmt = $db->query(
-        "SELECT benchmark, nav_value FROM benchmark_nav
-         WHERE benchmark IN ('nifty50','nifty500','nifty_midcap150')
-           AND nav_date = (
+        "SELECT b1.benchmark, b1.nav_value AS today_val, b1.source,
+                b2.nav_value AS prev_val
+         FROM benchmark_nav b1
+         LEFT JOIN benchmark_nav b2
+           ON b2.benchmark = b1.benchmark
+          AND b2.nav_date = (
+              SELECT MAX(nav_date) FROM benchmark_nav
+              WHERE benchmark = b1.benchmark
+                AND nav_date < b1.nav_date
+          )
+         WHERE b1.benchmark IN ('nifty50','nifty500','nifty_midcap150')
+           AND b1.nav_date = (
                SELECT MAX(nav_date) FROM benchmark_nav
-               WHERE benchmark IN ('nifty50','nifty500','nifty_midcap150')
+               WHERE benchmark = b1.benchmark
            )"
     );
-    $mkt_rows = $mkt_stmt ? $mkt_stmt->fetchAll(PDO::FETCH_KEY_PAIR) : [];
+    $mkt_rows = $mkt_stmt ? $mkt_stmt->fetchAll(PDO::FETCH_ASSOC) : [];
+    // Index by benchmark key
+    $mkt_data = [];
+    foreach ($mkt_rows as $r) { $mkt_data[$r['benchmark']] = $r; }
 } catch (Throwable $e) {
-    $mkt_rows = [];
+    $mkt_data = [];
 }
 
 $page_title = 'Dashboard — Prime Financials';
@@ -196,14 +212,36 @@ require_once '../includes/portal-header.php';
 <div style="background:var(--surface-1);border:1px solid var(--border);border-radius:8px;overflow-x:auto;margin-bottom:1.5rem;scrollbar-width:none;-ms-overflow-style:none">
   <div style="display:flex;min-width:max-content">
     <?php foreach ($mkt_labels as $mkt_key => $mkt_label):
-      $mkt_val = (isset($mkt_rows[$mkt_key]) && $mkt_rows[$mkt_key] !== null)
-          ? number_format((float)$mkt_rows[$mkt_key], 2)
-          : null;
+      $mkt_row   = $mkt_data[$mkt_key] ?? null;
+      $today_val = $mkt_row ? (float)$mkt_row['today_val'] : null;
+      $prev_val  = ($mkt_row && $mkt_row['prev_val'] !== null) ? (float)$mkt_row['prev_val'] : null;
+      $source    = $mkt_row['source'] ?? 'mfapi';
+
+      // For mfapis source: show actual index level. For mfapi.in: show % change only.
+      if ($source === 'mfapis' && $today_val !== null) {
+          $display = number_format($today_val, 2);
+          $arrow   = '▲';
+          if ($prev_val !== null && $prev_val > 0) {
+              $chg_pct = (($today_val - $prev_val) / $prev_val) * 100;
+              $arrow   = $chg_pct >= 0 ? '▲' : '▼';
+              $display = number_format($today_val, 2) . ' <span style="font-size:0.68rem;color:' . ($chg_pct >= 0 ? 'var(--bright)' : '#ef5350') . '">' . ($chg_pct >= 0 ? '+' : '') . number_format($chg_pct, 2) . '%</span>';
+          }
+          $mkt_color = 'var(--cream)';
+      } elseif ($today_val !== null && $prev_val !== null && $prev_val > 0) {
+          $chg_pct   = (($today_val - $prev_val) / $prev_val) * 100;
+          $arrow     = $chg_pct >= 0 ? '▲' : '▼';
+          $mkt_color = $chg_pct >= 0 ? 'var(--bright)' : '#ef5350';
+          $display   = ($chg_pct >= 0 ? '+' : '') . number_format($chg_pct, 2) . '%';
+      } elseif ($today_val !== null) {
+          $arrow = '—'; $mkt_color = 'var(--text-muted)'; $display = 'Updating…';
+      } else {
+          $arrow = '—'; $mkt_color = 'var(--text-muted)'; $display = null;
+      }
     ?>
     <div style="padding:0.5rem 1.2rem;border-right:1px solid var(--border);flex-shrink:0">
       <div style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:0.2rem"><?= htmlspecialchars($mkt_label, ENT_QUOTES,'UTF-8') ?></div>
-      <div style="font-family:'DM Mono',monospace;font-size:0.85rem;color:<?= $mkt_val !== null ? 'var(--cream)' : 'var(--text-muted)' ?>">
-        <?= $mkt_val !== null ? '▲ ' . $mkt_val : '—' ?>
+      <div style="font-family:'DM Mono',monospace;font-size:0.85rem;color:<?= $display !== null ? $mkt_color : 'var(--text-muted)' ?>">
+        <?= $display !== null ? $arrow . ' ' . $display : '—' ?>
       </div>
     </div>
     <?php endforeach; ?>

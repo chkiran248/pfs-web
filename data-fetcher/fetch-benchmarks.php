@@ -83,60 +83,62 @@ $insert = $db->prepare(
 $stats = ['mfapis' => 0, 'mfapi' => 0, 'nse' => 0, 'failed' => 0];
 
 // ── Step 1: Fetch all NSE indices from mfapis.club in ONE call ───────────────
-$mfapis_index_map = [];   // normalised-name → ['value' => float, 'date' => 'YYYY-MM-DD']
+// Try multiple endpoint formats — the correct one depends on subscription plan.
+$mfapis_index_map = [];
 $mfapis_ok        = false;
 
-try {
-    $url = MFAPIS_BASE_URL . '/indices/nse/latest';
-    $ch  = curl_init($url);
-    $headers = ['Accept: application/json'];
-    if (MFAPIS_API_KEY !== '') {
-        $headers[] = 'x-api-key: ' . MFAPIS_API_KEY;
+$mfapis_endpoints = [
+    '/indices/nse/latest',
+    '/market/indices/nse',
+    '/market/indices',
+    '/indices',
+];
+
+foreach ($mfapis_endpoints as $endpoint_path) {
+    if ($mfapis_ok) break;
+    try {
+        $url     = MFAPIS_BASE_URL . $endpoint_path;
+        $headers = ['Accept: application/json'];
+        if (MFAPIS_API_KEY !== '') {
+            $headers[] = 'x-api-key: ' . MFAPIS_API_KEY;
+        }
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_HTTPHEADER     => $headers,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_TIMEOUT        => 15,
+        ]);
+        $resp      = curl_exec($ch);
+        $http_code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curl_err  = curl_error($ch);
+        curl_close($ch);
+
+        echo "  [mfapis] Trying $endpoint_path → HTTP $http_code\n";
+
+        if ($curl_err) throw new RuntimeException("cURL: $curl_err");
+        if ($http_code < 200 || $http_code >= 300) {
+            throw new RuntimeException("HTTP $http_code — body: " . substr((string)$resp, 0, 200));
+        }
+        if (!$resp || strlen($resp) < 10) throw new RuntimeException("Empty response");
+
+        $decoded = json_decode($resp, true);
+        if (!is_array($decoded)) throw new RuntimeException("Non-JSON: " . substr($resp, 0, 100));
+
+        $mfapis_index_map = normalise_mfapis_response($decoded);
+        if (empty($mfapis_index_map)) throw new RuntimeException("Parsed 0 indices from response");
+
+        echo "  [mfapis] OK — loaded " . count($mfapis_index_map) . " indices via $endpoint_path\n";
+        $mfapis_ok = true;
+
+    } catch (Throwable $e) {
+        echo "  [mfapis] $endpoint_path failed — " . $e->getMessage() . "\n";
+        error_log("fetch-benchmarks[$endpoint_path]: " . $e->getMessage());
     }
-    curl_setopt_array($ch, [
-        CURLOPT_HTTPHEADER     => $headers,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_SSL_VERIFYPEER => false,
-        CURLOPT_TIMEOUT        => 20,
-    ]);
-    $resp      = curl_exec($ch);
-    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $curl_err  = curl_error($ch);
-    curl_close($ch);
+}
 
-    if ($curl_err) {
-        throw new RuntimeException("cURL error: $curl_err");
-    }
-    if ($http_code < 200 || $http_code >= 300) {
-        $body = substr((string)$resp, 0, 400);
-        throw new RuntimeException("HTTP $http_code from mfapis — body: $body");
-    }
-    if (!$resp || strlen($resp) < 10) {
-        throw new RuntimeException("Empty response from mfapis");
-    }
-
-    $decoded = json_decode($resp, true);
-    if (!is_array($decoded)) {
-        throw new RuntimeException("Non-JSON response from mfapis: " . substr($resp, 0, 200));
-    }
-
-    // Log raw structure on first run to aid debugging
-    echo "  [mfapis] HTTP $http_code — raw structure: " . describe_structure($decoded) . "\n";
-
-    // Normalise the response into $mfapis_index_map regardless of shape
-    $mfapis_index_map = normalise_mfapis_response($decoded);
-
-    if (empty($mfapis_index_map)) {
-        throw new RuntimeException("Could not parse any index entries from mfapis response");
-    }
-
-    echo "  [mfapis] Loaded " . count($mfapis_index_map) . " indices\n";
-    $mfapis_ok = true;
-
-} catch (Throwable $e) {
-    echo "  [mfapis] UNAVAILABLE — " . $e->getMessage() . "\n";
-    error_log("fetch-benchmarks mfapis error: " . $e->getMessage());
-    echo "  [mfapis] Falling back to NSE CSV for equity benchmarks\n";
+if (!$mfapis_ok) {
+    echo "  [mfapis] All endpoints failed — falling back to NSE CSV / mfapi.in\n";
 }
 
 // ── Step 2: Upsert each benchmark ────────────────────────────────────────────
