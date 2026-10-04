@@ -144,39 +144,36 @@ $goal_icons = ['retirement'=>'🏦','education'=>'🎓','home'=>'🏠','marriage
 $category_labels = ['market_update'=>'Market Update','tax_tips'=>'Tax Tips','fund_analysis'=>'Fund Analysis','nps'=>'NPS','insurance'=>'Insurance','stocks'=>'Stocks','general'=>'General'];
 
 // ── Market strip — from benchmark_nav cron table ──────────
-$mkt_rows = [];
-$rbi_rate  = '6.50'; // static fallback; replace when macro table exists
+$rbi_rate = '6.50';
+// nifty50 and nifty_midcap150 use Nippon BeES ETFs → has_level=true (show actual level)
+// nifty500 uses regular fund proxy → has_level=false (show % change only)
 $mkt_labels = [
-    'nifty50'         => 'NIFTY 50',
-    'nifty500'        => 'NIFTY 500',
-    'nifty_midcap150' => 'MIDCAP 150',
+    'nifty50'         => ['label' => 'NIFTY 50',   'has_level' => true],
+    'sensex'          => ['label' => 'SENSEX',      'has_level' => true],
+    'nifty_midcap150' => ['label' => 'MIDCAP 150',  'has_level' => true],
+    'nifty500'        => ['label' => 'NIFTY 500',   'has_level' => false],
 ];
-// Load today + yesterday for each benchmark so we can show 1-day % change
-$mkt_today = [];
-$mkt_prev  = [];
+$mkt_data = [];
 try {
-    // Latest date per benchmark
     $mkt_stmt = $db->query(
-        "SELECT b1.benchmark, b1.nav_value AS today_val, b1.source,
+        "SELECT b1.benchmark, b1.nav_value AS today_val,
                 b2.nav_value AS prev_val
          FROM benchmark_nav b1
          LEFT JOIN benchmark_nav b2
            ON b2.benchmark = b1.benchmark
           AND b2.nav_date = (
               SELECT MAX(nav_date) FROM benchmark_nav
-              WHERE benchmark = b1.benchmark
-                AND nav_date < b1.nav_date
+              WHERE benchmark = b1.benchmark AND nav_date < b1.nav_date
           )
-         WHERE b1.benchmark IN ('nifty50','nifty500','nifty_midcap150')
+         WHERE b1.benchmark IN ('nifty50','sensex','nifty_midcap150','nifty500')
            AND b1.nav_date = (
                SELECT MAX(nav_date) FROM benchmark_nav
                WHERE benchmark = b1.benchmark
            )"
     );
-    $mkt_rows = $mkt_stmt ? $mkt_stmt->fetchAll(PDO::FETCH_ASSOC) : [];
-    // Index by benchmark key
-    $mkt_data = [];
-    foreach ($mkt_rows as $r) { $mkt_data[$r['benchmark']] = $r; }
+    foreach (($mkt_stmt ? $mkt_stmt->fetchAll(PDO::FETCH_ASSOC) : []) as $r) {
+        $mkt_data[$r['benchmark']] = $r;
+    }
 } catch (Throwable $e) {
     $mkt_data = [];
 }
@@ -211,17 +208,27 @@ require_once '../includes/portal-header.php';
 <?php try { ?>
 <div style="background:var(--surface-1);border:1px solid var(--border);border-radius:8px;overflow-x:auto;margin-bottom:1.5rem;scrollbar-width:none;-ms-overflow-style:none">
   <div style="display:flex;min-width:max-content">
-    <?php foreach ($mkt_labels as $mkt_key => $mkt_label):
+    <?php foreach ($mkt_labels as $mkt_key => $mkt_cfg):
+      $mkt_label = $mkt_cfg['label'];
+      $has_level = $mkt_cfg['has_level'];
       $mkt_row   = $mkt_data[$mkt_key] ?? null;
       $today_val = $mkt_row ? (float)$mkt_row['today_val'] : null;
       $prev_val  = ($mkt_row && $mkt_row['prev_val'] !== null) ? (float)$mkt_row['prev_val'] : null;
-      $source    = $mkt_row['source'] ?? 'mfapi';
 
       if ($today_val !== null && $prev_val !== null && $prev_val > 0) {
           $chg_pct   = (($today_val - $prev_val) / $prev_val) * 100;
-          $arrow     = $chg_pct >= 0 ? '▲' : '▼';
-          $mkt_color = $chg_pct >= 0 ? 'var(--bright)' : '#ef5350';
-          $display   = ($chg_pct >= 0 ? '+' : '') . number_format($chg_pct, 2) . '%';
+          $up        = $chg_pct >= 0;
+          $arrow     = $up ? '▲' : '▼';
+          $chg_col   = $up ? 'var(--bright)' : '#ef5350';
+          $chg_str   = ($up ? '+' : '') . number_format($chg_pct, 2) . '%';
+          if ($has_level) {
+              $mkt_color = 'var(--cream)';
+              $display   = number_format($today_val, 2)
+                         . ' <span style="font-size:0.7rem;color:' . $chg_col . '">' . $chg_str . '</span>';
+          } else {
+              $mkt_color = $chg_col;
+              $display   = $chg_str;
+          }
       } elseif ($today_val !== null) {
           $arrow = '—'; $mkt_color = 'var(--text-muted)'; $display = 'Updating…';
       } else {

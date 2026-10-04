@@ -18,17 +18,21 @@ require_once __DIR__ . '/../includes/mf-api.php';
 $db = get_db();
 echo '[' . date('H:i:s') . "] Benchmark fetch starting\n";
 
-// mfapi.in scheme codes — used for % change tracking on dashboard strip.
-// Absolute NAV values (~157 for nifty50) are fund proxies, not actual index levels.
-// Actual index levels are fetched client-side on the Market Indices page.
+// Nippon India BeES ETFs are structured so 1 unit = 1/100 of the index by design.
+// Storing nav × 100 gives actual approximate index level (within 0.5% of NSE value).
+// Funds without a BeES ETF use a regular index fund as proxy — accurate for % change only.
 const BENCHMARKS = [
-    'nifty50'           => '120716',
-    'nifty100'          => '147666',
-    'nifty_midcap150'   => '148726',
-    'nifty_smallcap250' => '148519',
-    'nifty500'          => '147666',
-    'crisil_short_dur'  => '118796',
-    'crisil_gilt'       => '119707',
+    // BeES ETF series — nav × 100 = actual index level
+    'nifty50'           => ['code' => '140084', 'mult' => 100, 'has_level' => true],
+    'nifty100'          => ['code' => '121146', 'mult' => 100, 'has_level' => true],
+    'sensex'            => ['code' => '131331', 'mult' => 100, 'has_level' => true],
+    'banknifty'         => ['code' => '140087', 'mult' => 100, 'has_level' => true],
+    'nifty_midcap150'   => ['code' => '146271', 'mult' => 100, 'has_level' => true],
+    // Regular index fund proxies — nav tracks % change correctly, absolute value is meaningless
+    'nifty500'          => ['code' => '147666', 'mult' => 1, 'has_level' => false],
+    'nifty_smallcap250' => ['code' => '148519', 'mult' => 1, 'has_level' => false],
+    'crisil_short_dur'  => ['code' => '118796', 'mult' => 1, 'has_level' => false],
+    'crisil_gilt'       => ['code' => '119707', 'mult' => 1, 'has_level' => false],
 ];
 
 $insert = $db->prepare(
@@ -39,25 +43,25 @@ $insert = $db->prepare(
 
 $stats = ['ok' => 0, 'failed' => 0];
 
-foreach (BENCHMARKS as $key => $scheme_code) {
+foreach (BENCHMARKS as $key => $cfg) {
     try {
-        $data = mf_api_fetch($scheme_code);
+        $data = mf_api_fetch($cfg['code']);
         if (!$data || empty($data['data'])) {
             throw new RuntimeException("No data returned");
         }
 
-        $today = $data['data'][0];
-        $value = (float) $today['nav'];
-        $date  = mf_date_to_ymd($today['date']);
-        echo "  [OK] $key = $value (date: $date)\n";
+        $today     = $data['data'][0];
+        $today_val = round((float)$today['nav'] * $cfg['mult'], 2);
+        $today_dt  = mf_date_to_ymd($today['date']);
 
-        $insert->execute([':bm' => $key, ':dt' => $date, ':val' => $value, ':src' => 'mfapi']);
+        echo "  [OK] $key = " . number_format($today_val, 2) . " (date: $today_dt)\n";
+        $insert->execute([':bm' => $key, ':dt' => $today_dt, ':val' => $today_val, ':src' => 'mfapi']);
 
-        // Also store previous trading day so dashboard can show 1-day % change immediately
+        // Store previous trading day so % change works from day 1
         if (isset($data['data'][1])) {
-            $prev_val  = (float) $data['data'][1]['nav'];
-            $prev_date = mf_date_to_ymd($data['data'][1]['date']);
-            $insert->execute([':bm' => $key, ':dt' => $prev_date, ':val' => $prev_val, ':src' => 'mfapi']);
+            $prev_val = round((float)$data['data'][1]['nav'] * $cfg['mult'], 2);
+            $prev_dt  = mf_date_to_ymd($data['data'][1]['date']);
+            $insert->execute([':bm' => $key, ':dt' => $prev_dt, ':val' => $prev_val, ':src' => 'mfapi']);
         }
 
         $stats['ok']++;
