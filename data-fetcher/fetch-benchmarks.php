@@ -129,10 +129,12 @@ foreach (BENCHMARKS as $key => $cfg) {
     }
 
     // ── 2c. mfapi.in (debt indices primary; equity last-resort) ────────────
+    $mfapi_history = null;
     if ($value === null) {
         try {
             $data = mf_api_fetch($cfg['mfapi']);
             if ($data && !empty($data['data'])) {
+                $mfapi_history = $data['data'];  // keep full history for backfill
                 $value  = (float) $data['data'][0]['nav'];
                 $source = 'mfapi';
                 $date   = mf_date_to_ymd($data['data'][0]['date']);
@@ -156,6 +158,18 @@ foreach (BENCHMARKS as $key => $cfg) {
     } catch (PDOException $e) {
         error_log("fetch-benchmarks DB insert error ($key): " . $e->getMessage());
         $stats['failed']++;
+    }
+
+    // Also backfill the previous trading day from mfapi history so the dashboard
+    // can show 1-day % change from the very first cron run.
+    if ($mfapi_history !== null && isset($mfapi_history[1])) {
+        try {
+            $prev_val  = (float) $mfapi_history[1]['nav'];
+            $prev_date = mf_date_to_ymd($mfapi_history[1]['date']);
+            $insert->execute([':bm' => $key, ':dt' => $prev_date, ':val' => $prev_val, ':src' => 'mfapi']);
+        } catch (PDOException $e) {
+            error_log("fetch-benchmarks MFAPI backfill error ($key): " . $e->getMessage());
+        }
     }
 }
 
