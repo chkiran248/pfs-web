@@ -217,21 +217,21 @@ require_once '../includes/portal-header.php';
       $prev_val  = ($mkt_row && $mkt_row['prev_val'] !== null) ? (float)$mkt_row['prev_val'] : null;
       $source    = $mkt_row['source'] ?? 'mfapi';
 
-      // For mfapis source: show actual index level. For mfapi.in: show % change only.
-      if ($source === 'mfapis' && $today_val !== null) {
-          $display = number_format($today_val, 2);
-          $arrow   = '▲';
-          if ($prev_val !== null && $prev_val > 0) {
-              $chg_pct = (($today_val - $prev_val) / $prev_val) * 100;
-              $arrow   = $chg_pct >= 0 ? '▲' : '▼';
-              $display = number_format($today_val, 2) . ' <span style="font-size:0.68rem;color:' . ($chg_pct >= 0 ? 'var(--bright)' : '#ef5350') . '">' . ($chg_pct >= 0 ? '+' : '') . number_format($chg_pct, 2) . '%</span>';
-          }
-          $mkt_color = 'var(--cream)';
-      } elseif ($today_val !== null && $prev_val !== null && $prev_val > 0) {
+      // yahoo/mfapis: actual index level + % change. mfapi: % change only (fund NAV ≠ index level).
+      $is_real_index = in_array($source, ['yahoo', 'mfapis'], true);
+      if ($today_val !== null && $prev_val !== null && $prev_val > 0) {
           $chg_pct   = (($today_val - $prev_val) / $prev_val) * 100;
           $arrow     = $chg_pct >= 0 ? '▲' : '▼';
-          $mkt_color = $chg_pct >= 0 ? 'var(--bright)' : '#ef5350';
-          $display   = ($chg_pct >= 0 ? '+' : '') . number_format($chg_pct, 2) . '%';
+          $chg_str   = ($chg_pct >= 0 ? '+' : '') . number_format($chg_pct, 2) . '%';
+          $chg_col   = $chg_pct >= 0 ? 'var(--bright)' : '#ef5350';
+          if ($is_real_index) {
+              $mkt_color = 'var(--cream)';
+              $display   = number_format($today_val, 2)
+                         . ' <span style="font-size:0.68rem;color:' . $chg_col . '">' . $chg_str . '</span>';
+          } else {
+              $mkt_color = $chg_col;
+              $display   = $chg_str;
+          }
       } elseif ($today_val !== null) {
           $arrow = '—'; $mkt_color = 'var(--text-muted)'; $display = 'Updating…';
       } else {
