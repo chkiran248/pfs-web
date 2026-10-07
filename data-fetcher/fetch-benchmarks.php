@@ -138,15 +138,16 @@ foreach (MFAPI_PCT as $key => $cfg) {
         $today_val = round((float)$today['nav'] * $cfg['mult'], 2);
         $today_dt  = mf_date_to_ymd($today['date']);
 
-        echo "  [PCT] $key — nav_date=$today_dt\n";
         $insert->execute([':bm' => $key, ':dt' => $today_dt, ':val' => $today_val, ':src' => 'mfapi']);
 
         // Store previous trading day for % change calculation
+        $prev_dt = null;
         if (isset($data['data'][1])) {
             $prev_val = round((float)$data['data'][1]['nav'] * $cfg['mult'], 2);
             $prev_dt  = mf_date_to_ymd($data['data'][1]['date']);
             $insert->execute([':bm' => $key, ':dt' => $prev_dt, ':val' => $prev_val, ':src' => 'mfapi']);
         }
+        echo "  [PCT] $key — today=$today_dt prev=" . ($prev_dt ?? 'MISSING') . "\n";
 
         $stats['ok']++;
     } catch (Throwable $e) {

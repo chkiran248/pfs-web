@@ -158,7 +158,7 @@ $mkt_level = []; // actual levels from mfapis.club
 try {
     // % change rows (source=mfapi, fresh daily)
     $mkt_stmt = $db->query(
-        "SELECT b1.benchmark, b1.nav_value AS today_val, b2.nav_value AS prev_val
+        "SELECT b1.benchmark, b1.nav_value AS today_val, b1.nav_date AS today_date, b2.nav_value AS prev_val
          FROM benchmark_nav b1
          LEFT JOIN benchmark_nav b2
            ON b2.benchmark = b1.benchmark
