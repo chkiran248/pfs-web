@@ -21,10 +21,11 @@ const INDEX_LABELS = [
     'nifty_smallcap250' => 'NIFTY SMALLCAP 250',
 ];
 
-// ── Query 1: % change from mfapi.in rows (source='mfapi', always today's date) ──
+$keys_in = implode(',', array_map(fn($k) => "'$k'", ALL_KEYS));
+
+// ── Query A: mfapi.in rows — fallback % change source (daily, always fresh) ──
 $pct_data = [];
 try {
-    $keys_in = implode(',', array_map(fn($k) => "'$k'", ALL_KEYS));
     $stmt = $db->query(
         "SELECT b1.benchmark,
                 b1.nav_value AS today_val,
@@ -52,12 +53,22 @@ try {
     error_log('market-indices pct_data DB error: ' . $e->getMessage());
 }
 
-// ── Query 2: actual levels from mfapis.club rows (source='mfapis', may be stale) ──
+// ── Query B: mfapis.club rows — primary source (actual levels + prev for % change) ──
 $level_data = [];
 try {
     $stmt2 = $db->query(
-        "SELECT b1.benchmark, b1.nav_value AS level_val, b1.nav_date AS level_date
+        "SELECT b1.benchmark,
+                b1.nav_value AS level_val,
+                b1.nav_date  AS level_date,
+                b2.nav_value AS level_prev_val
          FROM benchmark_nav b1
+         LEFT JOIN benchmark_nav b2
+           ON b2.benchmark = b1.benchmark
+          AND b2.source = 'mfapis'
+          AND b2.nav_date = (
+              SELECT MAX(nav_date) FROM benchmark_nav
+              WHERE benchmark = b1.benchmark AND source = 'mfapis' AND nav_date < b1.nav_date
+          )
          WHERE b1.benchmark IN ($keys_in)
            AND b1.source = 'mfapis'
            AND b1.nav_date = (
@@ -96,36 +107,49 @@ require_once '../includes/portal-header.php';
 
 <p class="page-eyebrow">Advisory</p>
 <h1 class="page-title">Market Indices</h1>
-<p class="page-subtitle">Indian equity benchmarks — NSE indices via mfapis.club · SENSEX % change via mfapi.in</p>
+<p class="page-subtitle">Indian equity benchmarks — primary: mfapis.club · fallback: mfapi.in</p>
 
 <!-- ── INDEX CARDS ────────────────────────────────────────────────────────── -->
 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:1rem;margin-bottom:2rem">
   <?php foreach (ALL_KEYS as $key):
-    $label     = INDEX_LABELS[$key];
-    $pct_row   = $pct_data[$key] ?? null;
-    $lvl_row   = $level_data[$key] ?? null;
+    $label   = INDEX_LABELS[$key];
+    $pct_row = $pct_data[$key]   ?? null;
+    $lvl_row = $level_data[$key] ?? null;
 
-    // % change — from mfapi.in (daily, accurate)
-    $today_pct = $pct_row ? (float)$pct_row['today_val'] : null;
-    $prev_pct  = ($pct_row && $pct_row['prev_val'] !== null) ? (float)$pct_row['prev_val'] : null;
+    // ── Freshness check ──────────────────────────────────────
+    // mfapis.club is "fresh" if its date is within 2 calendar days of mfapi.in date.
+    // When fresh: use mfapis.club for BOTH level AND % change (Price Return, exact).
+    // When stale: use mfapi.in for % change (TRI, accurate day-to-day), mfapis for level with label.
+    $level_val      = $lvl_row ? (float)$lvl_row['level_val']      : null;
+    $level_prev_val = ($lvl_row && $lvl_row['level_prev_val'] !== null) ? (float)$lvl_row['level_prev_val'] : null;
+    $level_date     = $lvl_row['level_date'] ?? null;
+    $mfapi_date     = $pct_row['today_date'] ?? null;
 
-    if ($today_pct !== null && $prev_pct !== null && $prev_pct > 0) {
-        $chg_pct = (($today_pct - $prev_pct) / $prev_pct) * 100;
-        $up      = $chg_pct >= 0;
+    $mfapis_fresh = $level_date && $mfapi_date
+        && (strtotime($mfapi_date) - strtotime($level_date)) <= (2 * 86400);
+
+    // ── % change calculation ─────────────────────────────────
+    $chg_str = null; $arrow = '—'; $chg_col = 'var(--text-muted)'; $is_stale = false;
+
+    if ($mfapis_fresh && $level_val !== null && $level_prev_val !== null && $level_prev_val > 0) {
+        // PRIMARY: mfapis.club — actual Price Return % change
+        $chg_raw = (($level_val - $level_prev_val) / $level_prev_val) * 100;
+        $up      = $chg_raw >= 0;
         $chg_col = $up ? 'var(--bright)' : '#ef5350';
         $arrow   = $up ? '▲' : '▼';
-        $sign    = $up ? '+' : '';
-        $chg_str = $sign . number_format($chg_pct, 2) . '%';
-    } else {
-        $chg_col = 'var(--text-muted)'; $arrow = '—'; $chg_str = null;
+        $chg_str = ($up ? '+' : '') . number_format($chg_raw, 2) . '%';
+        $is_stale = false;
+    } elseif ($pct_row && $pct_row['prev_val'] !== null && (float)$pct_row['prev_val'] > 0) {
+        // SECONDARY: mfapi.in — TRI-based, accurate day-to-day movement
+        $today_v = (float)$pct_row['today_val'];
+        $prev_v  = (float)$pct_row['prev_val'];
+        $chg_raw = (($today_v - $prev_v) / $prev_v) * 100;
+        $up      = $chg_raw >= 0;
+        $chg_col = $up ? 'var(--bright)' : '#ef5350';
+        $arrow   = $up ? '▲' : '▼';
+        $chg_str = ($up ? '+' : '') . number_format($chg_raw, 2) . '%';
+        $is_stale = !$mfapis_fresh && $level_date !== null;
     }
-
-    // Absolute level — from mfapis.club (may be a few days stale)
-    $level_val  = $lvl_row ? (float)$lvl_row['level_val'] : null;
-    $level_date = $lvl_row ? $lvl_row['level_date'] : null;
-
-    // Is today's data considered fresh? (within 3 calendar days)
-    $is_stale = $level_date && (strtotime('today') - strtotime($level_date)) > (3 * 86400);
   ?>
   <div class="portal-card" style="text-align:center;padding:1.5rem 1rem">
     <div style="font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--lime);margin-bottom:0.75rem">
@@ -133,14 +157,12 @@ require_once '../includes/portal-header.php';
     </div>
 
     <?php if ($level_val !== null): ?>
-      <!-- Actual level from mfapis.club -->
       <div style="font-family:'DM Mono',monospace;font-size:1.5rem;font-weight:500;color:var(--cream);line-height:1.1;margin-bottom:0.25rem">
         <?= number_format($level_val, 2) ?>
       </div>
-      <?php if ($level_date): ?>
-      <div style="font-size:0.6rem;color:<?= $is_stale ? '#ef9a33' : 'var(--text-muted)' ?>;margin-bottom:0.3rem">
-        as of <?= date('d M', strtotime($level_date)) ?>
-        <?= $is_stale ? ' · stale' : '' ?>
+      <?php if ($is_stale && $level_date): ?>
+      <div style="font-size:0.6rem;color:#ef9a33;margin-bottom:0.3rem">
+        as of <?= date('d M', strtotime($level_date)) ?> · stale
       </div>
       <?php endif; ?>
     <?php else: ?>
@@ -152,7 +174,7 @@ require_once '../includes/portal-header.php';
       <?= $arrow ?> <?= htmlspecialchars($chg_str, ENT_QUOTES, 'UTF-8') ?>
     </div>
     <div style="font-size:0.6rem;color:var(--text-muted);margin-top:0.2rem">1-day change</div>
-    <?php elseif ($pct_row): ?>
+    <?php elseif ($level_val !== null || $pct_row): ?>
     <div style="font-size:0.65rem;color:var(--text-muted)">Updating…</div>
     <?php else: ?>
     <div style="font-size:0.65rem;color:var(--text-muted)">Pending first fetch</div>

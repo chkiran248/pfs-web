@@ -177,10 +177,20 @@ try {
     foreach (($mkt_stmt ? $mkt_stmt->fetchAll(PDO::FETCH_ASSOC) : []) as $r) {
         $mkt_pct[$r['benchmark']] = $r;
     }
-    // Actual level rows (source=mfapis, may be stale)
+    // Actual level rows (source=mfapis) — include prev row for % change when fresh
     $lvl_stmt = $db->query(
-        "SELECT b1.benchmark, b1.nav_value AS level_val, b1.nav_date AS level_date
+        "SELECT b1.benchmark,
+                b1.nav_value AS level_val,
+                b1.nav_date  AS level_date,
+                b2.nav_value AS level_prev_val
          FROM benchmark_nav b1
+         LEFT JOIN benchmark_nav b2
+           ON b2.benchmark = b1.benchmark
+          AND b2.source = 'mfapis'
+          AND b2.nav_date = (
+              SELECT MAX(nav_date) FROM benchmark_nav
+              WHERE benchmark = b1.benchmark AND source = 'mfapis' AND nav_date < b1.nav_date
+          )
          WHERE b1.benchmark IN ('nifty50','sensex','nifty_midcap150','nifty500')
            AND b1.source = 'mfapis'
            AND b1.nav_date = (
@@ -226,36 +236,45 @@ require_once '../includes/portal-header.php';
 <div style="background:var(--surface-1);border:1px solid var(--border);border-radius:8px;overflow-x:auto;margin-bottom:1.5rem;scrollbar-width:none;-ms-overflow-style:none">
   <div style="display:flex;min-width:max-content">
     <?php foreach ($mkt_labels as $mkt_key => $mkt_label):
-      // % change from mfapi.in (accurate, daily)
-      $pct_row  = $mkt_pct[$mkt_key] ?? null;
-      $today_v  = $pct_row ? (float)$pct_row['today_val'] : null;
-      $prev_v   = ($pct_row && $pct_row['prev_val'] !== null) ? (float)$pct_row['prev_val'] : null;
-      // Actual level from mfapis.club (may be a few days stale)
-      $lvl_row  = $mkt_level[$mkt_key] ?? null;
-      $lvl_val  = $lvl_row ? (float)$lvl_row['level_val'] : null;
-      $lvl_date = $lvl_row['level_date'] ?? null;
-      $lvl_stale = $lvl_date && (strtotime('today') - strtotime($lvl_date)) > (3 * 86400);
+      $pct_row = $mkt_pct[$mkt_key]   ?? null;
+      $lvl_row = $mkt_level[$mkt_key] ?? null;
 
-      if ($today_v !== null && $prev_v !== null && $prev_v > 0) {
-          $chg_pct = (($today_v - $prev_v) / $prev_v) * 100;
-          $up      = $chg_pct >= 0;
+      $lvl_val      = $lvl_row ? (float)$lvl_row['level_val']      : null;
+      $lvl_prev_val = ($lvl_row && $lvl_row['level_prev_val'] !== null) ? (float)$lvl_row['level_prev_val'] : null;
+      $lvl_date     = $lvl_row['level_date'] ?? null;
+      $mfapi_date   = $pct_row['today_date'] ?? null;
+
+      // mfapis.club is fresh if within 2 calendar days of mfapi.in date
+      $mfapis_fresh = $lvl_date && $mfapi_date
+          && (strtotime($mfapi_date) - strtotime($lvl_date)) <= (2 * 86400);
+
+      $arrow = '—'; $chg_col = 'var(--text-muted)'; $chg_str = null;
+
+      if ($mfapis_fresh && $lvl_val !== null && $lvl_prev_val !== null && $lvl_prev_val > 0) {
+          // PRIMARY: mfapis.club — actual level + Price Return % change
+          $chg_raw = (($lvl_val - $lvl_prev_val) / $lvl_prev_val) * 100;
+          $up      = $chg_raw >= 0;
           $arrow   = $up ? '▲' : '▼';
           $chg_col = $up ? 'var(--bright)' : '#ef5350';
-          $chg_str = ($up ? '+' : '') . number_format($chg_pct, 2) . '%';
-          if ($lvl_val !== null && !$lvl_stale) {
-              // Fresh mfapis.club level available — show level + % change
-              $mkt_color = 'var(--cream)';
-              $display   = number_format($lvl_val, 2)
-                         . ' <span style="font-size:0.7rem;color:' . $chg_col . '">' . $chg_str . '</span>';
-          } else {
-              // No fresh level — show % change only
-              $mkt_color = $chg_col;
-              $display   = $chg_str;
-          }
-      } elseif ($today_v !== null) {
-          $arrow = '—'; $mkt_color = 'var(--text-muted)'; $display = 'Updating…';
+          $chg_str = ($up ? '+' : '') . number_format($chg_raw, 2) . '%';
+          $mkt_color = 'var(--cream)';
+          $display   = number_format($lvl_val, 2)
+                     . ' <span style="font-size:0.7rem;color:' . $chg_col . '">' . $chg_str . '</span>';
+      } elseif ($pct_row && $pct_row['prev_val'] !== null && (float)$pct_row['prev_val'] > 0) {
+          // SECONDARY: mfapi.in % change (mfapis.club stale — show % only, no level)
+          $today_v = (float)$pct_row['today_val'];
+          $prev_v  = (float)$pct_row['prev_val'];
+          $chg_raw = (($today_v - $prev_v) / $prev_v) * 100;
+          $up      = $chg_raw >= 0;
+          $arrow   = $up ? '▲' : '▼';
+          $chg_col = $up ? 'var(--bright)' : '#ef5350';
+          $chg_str = ($up ? '+' : '') . number_format($chg_raw, 2) . '%';
+          $mkt_color = $chg_col;
+          $display   = $chg_str;
+      } elseif ($pct_row || $lvl_row) {
+          $mkt_color = 'var(--text-muted)'; $display = 'Updating…';
       } else {
-          $arrow = '—'; $mkt_color = 'var(--text-muted)'; $display = null;
+          $mkt_color = 'var(--text-muted)'; $display = null;
       }
     ?>
     <div style="padding:0.5rem 1.2rem;border-right:1px solid var(--border);flex-shrink:0">
