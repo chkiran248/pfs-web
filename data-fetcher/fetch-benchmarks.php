@@ -19,26 +19,46 @@ require_once __DIR__ . '/../includes/mfapis.php';
 $db = get_db();
 echo '[' . date('H:i:s') . "] Benchmark fetch starting\n";
 
-// ── NSE index name → our benchmark key mapping ──────────────
-// mfapis.club /market/indices/nse/latest returns all NSE indices.
-// SENSEX is a BSE index — not in NSE endpoint, fetched separately via mfapi.in.
+// ── STRATEGY ────────────────────────────────────────────────
+//
+// mfapis.club: provides ACTUAL NSE index levels (exact values like 22,603.05)
+//   but their data freshness is unreliable — can lag 1–5 days.
+//   Stored with source='mfapis'. Used for absolute level display.
+//
+// mfapi.in (BeES ETF NAV): updated daily, gives accurate 1-day % CHANGE
+//   (TRI vs Price Return differ in absolute value but move identically day-to-day).
+//   Stored with source='mfapi'. Used only for % change calculation.
+//
+// Two separate rows per benchmark. Display pages query each source independently:
+//   - Absolute level: latest source='mfapis' row (may be a few days old, shows date)
+//   - % change: latest source='mfapi' rows today vs yesterday (accurate, daily)
+
+// ── NSE index name → our benchmark key ──────────────────────
 const NSE_INDEX_MAP = [
-    // mfapis.club index name  => our benchmark key
-    'NIFTY 50'          => 'nifty50',
-    'NIFTY 100'         => 'nifty100',
-    'NIFTY BANK'        => 'banknifty',
-    'NIFTY MIDCAP 150'  => 'nifty_midcap150',
-    'NIFTY 500'         => 'nifty500',
-    'NIFTY SMALLCAP 250'=> 'nifty_smallcap250',
+    'NIFTY 50'           => 'nifty50',
+    'NIFTY 100'          => 'nifty100',
+    'NIFTY BANK'         => 'banknifty',
+    'NIFTY MIDCAP 150'   => 'nifty_midcap150',
+    'NIFTY 500'          => 'nifty500',
+    'NIFTY SMALLCAP 250' => 'nifty_smallcap250',
 ];
 
-// ── mfapi.in proxies (% change only — no actual level available from mfapis.club) ──
-// SENSEX = BSE index, no NSE endpoint; Nippon BeES ETF gives accurate % change
-// Debt indices = not tracked by mfapis.club
-const MFAPI_PROXIES = [
-    'sensex'           => ['code' => '131331', 'mult' => 100, 'has_level' => false],
-    'crisil_short_dur' => ['code' => '118796', 'mult' => 1,   'has_level' => false],
-    'crisil_gilt'      => ['code' => '119707', 'mult' => 1,   'has_level' => false],
+// ── mfapi.in funds for daily % change ───────────────────────
+// Nippon India BeES ETFs track TRI — wrong absolute level, but
+// day-to-day % change matches NSE Price Return index precisely.
+const MFAPI_PCT = [
+    // NSE indices (BeES ETFs × 100)
+    'nifty50'           => ['code' => '140084', 'mult' => 100],
+    'nifty100'          => ['code' => '121146', 'mult' => 100],
+    'banknifty'         => ['code' => '140087', 'mult' => 100],
+    'nifty_midcap150'   => ['code' => '146271', 'mult' => 100],
+    'nifty500'          => ['code' => '147666', 'mult' => 1],
+    'nifty_smallcap250' => ['code' => '148519', 'mult' => 1],
+    // SENSEX (BSE — not in mfapis.club NSE endpoint)
+    'sensex'            => ['code' => '131331', 'mult' => 100],
+    // Debt proxies
+    'crisil_short_dur'  => ['code' => '118796', 'mult' => 1],
+    'crisil_gilt'       => ['code' => '119707', 'mult' => 1],
 ];
 
 $insert = $db->prepare(
@@ -50,92 +70,64 @@ $insert = $db->prepare(
 $stats = ['ok' => 0, 'failed' => 0];
 
 // ── PART 1: mfapis.club — actual NSE index levels ────────────
-echo "[" . date('H:i:s') . "] Fetching NSE indices from mfapis.club…\n";
+// Stored with source='mfapis'. May lag a few days — always shows with date in UI.
+echo "[" . date('H:i:s') . "] Fetching NSE index levels from mfapis.club…\n";
 
 if (MFAPIS_API_KEY === '') {
-    echo "  [SKIP] MFAPIS_API_KEY not set — skipping mfapis.club fetch\n";
+    echo "  [SKIP] MFAPIS_API_KEY not set\n";
 } else {
     $resp = mfapis_index_latest();
+    $rows = null;
+    if (isset($resp['data']['items']) && is_array($resp['data']['items'])) {
+        $rows = $resp['data']['items'];
+    } elseif (isset($resp['data']) && is_array($resp['data']) && isset($resp['data'][0])) {
+        $rows = $resp['data'];
+    }
 
-    if ($resp === null) {
-        echo "  [FAIL] mfapis.club returned null — check API key and endpoint\n";
-        error_log('fetch-benchmarks: mfapis_index_latest() returned null');
+    if ($rows === null) {
+        $raw = json_encode($resp ?? []);
+        echo "  [FAIL] Cannot parse mfapis.club response\n";
+        echo "  [DEBUG] " . substr($raw, 0, 500) . "\n";
+        error_log('fetch-benchmarks: unrecognised mfapis response: ' . substr($raw, 0, 500));
     } else {
-        // Detect data array — mfapis.club returns {"success":true,"data":{"items":[...]}}
-        $rows = null;
-        if (isset($resp['data']['items']) && is_array($resp['data']['items'])) {
-            $rows = $resp['data']['items'];
-        } elseif (isset($resp['data']) && is_array($resp['data'])) {
-            if (isset($resp['data'][0]) && is_array($resp['data'][0])) {
-                $rows = $resp['data'];
-            } elseif (isset($resp['data']['data']) && is_array($resp['data']['data'])) {
-                $rows = $resp['data']['data'];
-            } elseif (isset($resp['data']['indexDetailList'])) {
-                $rows = $resp['data']['indexDetailList'];
-            }
-        } elseif (isset($resp[0]) && is_array($resp[0])) {
-            $rows = $resp;
-        }
+        foreach ($rows as $row) {
+            $name = trim(strtoupper((string)($row['indexSymbol'] ?? $row['name'] ?? '')));
+            if (!isset(NSE_INDEX_MAP[$name])) continue;
 
-        if ($rows === null) {
-            // Log raw response for debugging — first 2000 chars only
-            $raw = json_encode($resp);
-            echo "  [FAIL] Cannot parse mfapis.club response structure\n";
-            echo "  [DEBUG] Raw response (first 2000 chars): " . substr($raw, 0, 2000) . "\n";
-            error_log('fetch-benchmarks: unrecognised mfapis response: ' . substr($raw, 0, 500));
-        } else {
-            foreach ($rows as $row) {
-                // Try multiple field name conventions
-                $name = $row['indexSymbol'] ?? $row['name'] ?? $row['index_name'] ?? $row['index'] ?? '';
-                $name = trim(strtoupper((string) $name));
+            $bm_key  = NSE_INDEX_MAP[$name];
+            $current = $row['indexValue'] ?? $row['current'] ?? $row['last'] ?? null;
+            if ($current === null) continue;
 
-                if (!isset(NSE_INDEX_MAP[$name])) {
-                    continue; // Not one of our tracked indices
+            // Date from tickTime ISO string e.g. "2026-10-02T13:22:54.509Z"
+            $tick_time  = $row['tickTime'] ?? null;
+            $level_date = $tick_time ? substr($tick_time, 0, 10) : date('Y-m-d');
+            $level_val  = round((float) $current, 2);
+
+            echo "  [LEVEL] $bm_key = " . number_format($level_val, 2) . " (as of $level_date)\n";
+            try {
+                $insert->execute([':bm' => $bm_key, ':dt' => $level_date, ':val' => $level_val, ':src' => 'mfapis']);
+                // Also store prevClose from the same API response
+                $prev_close = $row['prevClose'] ?? $row['previousClose'] ?? null;
+                if ($prev_close !== null) {
+                    $prev_date = date('Y-m-d', strtotime($level_date . ' -1 day'));
+                    $insert->execute([':bm' => $bm_key, ':dt' => $prev_date, ':val' => round((float)$prev_close, 2), ':src' => 'mfapis']);
                 }
-
-                $bm_key = NSE_INDEX_MAP[$name];
-
-                // Current value — mfapis.club uses 'indexValue'; fallbacks for future-proofing
-                $current = $row['indexValue'] ?? $row['current'] ?? $row['last'] ?? $row['lastPrice'] ?? $row['close'] ?? $row['value'] ?? null;
-                // Previous close — mfapis.club uses 'prevClose'
-                $prev_close = $row['prevClose'] ?? $row['previousClose'] ?? $row['prev_close'] ?? $row['previous_close'] ?? null;
-                // Date from tickTime ISO string e.g. "2026-10-02T13:22:54.509Z"
-                $tick_time = $row['tickTime'] ?? null;
-                $today_date = $tick_time ? substr($tick_time, 0, 10) : date('Y-m-d');
-                $prev_date  = date('Y-m-d', strtotime($today_date . ' -1 day'));
-
-                if ($current === null) {
-                    echo "  [FAIL] $bm_key — cannot find current value in response row\n";
-                    $stats['failed']++;
-                    continue;
-                }
-
-                $today_val = round((float) $current, 2);
-                echo "  [OK] $bm_key = " . number_format($today_val, 2) . "\n";
-
-                try {
-                    $insert->execute([':bm' => $bm_key, ':dt' => $today_date, ':val' => $today_val, ':src' => 'mfapis']);
-                    $stats['ok']++;
-
-                    // Store previous close so % change works from first cron run
-                    if ($prev_close !== null) {
-                        $prev_val = round((float) $prev_close, 2);
-                        $insert->execute([':bm' => $bm_key, ':dt' => $prev_date, ':val' => $prev_val, ':src' => 'mfapis']);
-                    }
-                } catch (Throwable $e) {
-                    echo "  [FAIL] $bm_key DB insert — " . $e->getMessage() . "\n";
-                    error_log("fetch-benchmarks DB ($bm_key): " . $e->getMessage());
-                    $stats['failed']++;
-                }
+                $stats['ok']++;
+            } catch (Throwable $e) {
+                echo "  [FAIL] $bm_key DB — " . $e->getMessage() . "\n";
+                error_log("fetch-benchmarks mfapis ($bm_key): " . $e->getMessage());
+                $stats['failed']++;
             }
         }
     }
 }
 
-// ── PART 2: mfapi.in — SENSEX (BSE) + debt proxies ──────────
-echo "[" . date('H:i:s') . "] Fetching SENSEX + debt proxies from mfapi.in…\n";
+// ── PART 2: mfapi.in — daily % change data ──────────────────
+// Stored with source='mfapi'. Always today's date — used for % change display.
+// Do NOT use these nav_values as absolute levels (TRI, not Price Return).
+echo "[" . date('H:i:s') . "] Fetching daily % change data from mfapi.in…\n";
 
-foreach (MFAPI_PROXIES as $key => $cfg) {
+foreach (MFAPI_PCT as $key => $cfg) {
     try {
         $data = mf_api_fetch($cfg['code']);
         if (!$data || empty($data['data'])) {
@@ -146,10 +138,10 @@ foreach (MFAPI_PROXIES as $key => $cfg) {
         $today_val = round((float)$today['nav'] * $cfg['mult'], 2);
         $today_dt  = mf_date_to_ymd($today['date']);
 
-        echo "  [OK] $key = " . number_format($today_val, 2) . " (date: $today_dt)\n";
+        echo "  [PCT] $key — nav_date=$today_dt\n";
         $insert->execute([':bm' => $key, ':dt' => $today_dt, ':val' => $today_val, ':src' => 'mfapi']);
 
-        // Store previous trading day so % change works from day 1
+        // Store previous trading day for % change calculation
         if (isset($data['data'][1])) {
             $prev_val = round((float)$data['data'][1]['nav'] * $cfg['mult'], 2);
             $prev_dt  = mf_date_to_ymd($data['data'][1]['date']);
@@ -159,7 +151,7 @@ foreach (MFAPI_PROXIES as $key => $cfg) {
         $stats['ok']++;
     } catch (Throwable $e) {
         echo "  [FAIL] $key — " . $e->getMessage() . "\n";
-        error_log("fetch-benchmarks ($key): " . $e->getMessage());
+        error_log("fetch-benchmarks mfapi ($key): " . $e->getMessage());
         $stats['failed']++;
     }
 }

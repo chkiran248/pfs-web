@@ -8,11 +8,8 @@ require_role('client');
 
 $db = get_db();
 
-// NSE indices: actual levels from mfapis.club (source = 'mfapis')
-// SENSEX: BSE index — % change only from mfapi.in BeES ETF proxy (source = 'mfapi')
-const LEVEL_KEYS  = ['nifty50', 'nifty100', 'banknifty', 'nifty_midcap150', 'nifty500', 'nifty_smallcap250'];
-const PROXY_KEYS  = ['sensex'];
-const ALL_KEYS    = ['nifty50', 'nifty100', 'sensex', 'banknifty', 'nifty_midcap150', 'nifty500', 'nifty_smallcap250'];
+// All keys shown on this page
+const ALL_KEYS = ['nifty50', 'nifty100', 'sensex', 'banknifty', 'nifty_midcap150', 'nifty500', 'nifty_smallcap250'];
 
 const INDEX_LABELS = [
     'nifty50'           => 'NIFTY 50',
@@ -24,8 +21,8 @@ const INDEX_LABELS = [
     'nifty_smallcap250' => 'NIFTY SMALLCAP 250',
 ];
 
-// Fetch latest + previous value per benchmark in one query
-$idx_data = [];
+// ── Query 1: % change from mfapi.in rows (source='mfapi', always today's date) ──
+$pct_data = [];
 try {
     $keys_in = implode(',', array_map(fn($k) => "'$k'", ALL_KEYS));
     $stmt = $db->query(
@@ -36,21 +33,43 @@ try {
          FROM benchmark_nav b1
          LEFT JOIN benchmark_nav b2
            ON b2.benchmark = b1.benchmark
+          AND b2.source = 'mfapi'
           AND b2.nav_date = (
               SELECT MAX(nav_date) FROM benchmark_nav
-              WHERE benchmark = b1.benchmark AND nav_date < b1.nav_date
+              WHERE benchmark = b1.benchmark AND source = 'mfapi' AND nav_date < b1.nav_date
           )
          WHERE b1.benchmark IN ($keys_in)
+           AND b1.source = 'mfapi'
            AND b1.nav_date = (
                SELECT MAX(nav_date) FROM benchmark_nav
-               WHERE benchmark = b1.benchmark
+               WHERE benchmark = b1.benchmark AND source = 'mfapi'
            )"
     );
     foreach (($stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : []) as $r) {
-        $idx_data[$r['benchmark']] = $r;
+        $pct_data[$r['benchmark']] = $r;
     }
 } catch (Throwable $e) {
-    error_log('market-indices DB error: ' . $e->getMessage());
+    error_log('market-indices pct_data DB error: ' . $e->getMessage());
+}
+
+// ── Query 2: actual levels from mfapis.club rows (source='mfapis', may be stale) ──
+$level_data = [];
+try {
+    $stmt2 = $db->query(
+        "SELECT b1.benchmark, b1.nav_value AS level_val, b1.nav_date AS level_date
+         FROM benchmark_nav b1
+         WHERE b1.benchmark IN ($keys_in)
+           AND b1.source = 'mfapis'
+           AND b1.nav_date = (
+               SELECT MAX(nav_date) FROM benchmark_nav
+               WHERE benchmark = b1.benchmark AND source = 'mfapis'
+           )"
+    );
+    foreach (($stmt2 ? $stmt2->fetchAll(PDO::FETCH_ASSOC) : []) as $r) {
+        $level_data[$r['benchmark']] = $r;
+    }
+} catch (Throwable $e) {
+    error_log('market-indices level_data DB error: ' . $e->getMessage());
 }
 
 // 1-year Nifty 50 history for chart (actual levels since we switched to BeES ETF)
@@ -60,6 +79,7 @@ try {
     $h = $db->prepare(
         "SELECT nav_date, nav_value FROM benchmark_nav
          WHERE benchmark = 'nifty50'
+           AND source = 'mfapis'
            AND nav_date >= DATE_SUB(CURDATE(), INTERVAL 365 DAY)
          ORDER BY nav_date ASC"
     );
@@ -81,55 +101,61 @@ require_once '../includes/portal-header.php';
 <!-- ── INDEX CARDS ────────────────────────────────────────────────────────── -->
 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:1rem;margin-bottom:2rem">
   <?php foreach (ALL_KEYS as $key):
-    $row      = $idx_data[$key] ?? null;
-    $today    = $row ? (float)$row['today_val'] : null;
-    $prev     = ($row && $row['prev_val'] !== null) ? (float)$row['prev_val'] : null;
-    $label    = INDEX_LABELS[$key];
-    $has_lvl  = in_array($key, LEVEL_KEYS, true);
+    $label     = INDEX_LABELS[$key];
+    $pct_row   = $pct_data[$key] ?? null;
+    $lvl_row   = $level_data[$key] ?? null;
 
-    if ($today !== null && $prev !== null && $prev > 0) {
-        $chg_pct = (($today - $prev) / $prev) * 100;
+    // % change — from mfapi.in (daily, accurate)
+    $today_pct = $pct_row ? (float)$pct_row['today_val'] : null;
+    $prev_pct  = ($pct_row && $pct_row['prev_val'] !== null) ? (float)$pct_row['prev_val'] : null;
+
+    if ($today_pct !== null && $prev_pct !== null && $prev_pct > 0) {
+        $chg_pct = (($today_pct - $prev_pct) / $prev_pct) * 100;
         $up      = $chg_pct >= 0;
         $chg_col = $up ? 'var(--bright)' : '#ef5350';
         $arrow   = $up ? '▲' : '▼';
         $sign    = $up ? '+' : '';
         $chg_str = $sign . number_format($chg_pct, 2) . '%';
-    } elseif ($today !== null) {
-        $chg_col = 'var(--text-muted)'; $arrow = '—'; $chg_str = 'Updating…';
     } else {
         $chg_col = 'var(--text-muted)'; $arrow = '—'; $chg_str = null;
     }
+
+    // Absolute level — from mfapis.club (may be a few days stale)
+    $level_val  = $lvl_row ? (float)$lvl_row['level_val'] : null;
+    $level_date = $lvl_row ? $lvl_row['level_date'] : null;
+
+    // Is today's data considered fresh? (within 3 calendar days)
+    $is_stale = $level_date && (strtotime('today') - strtotime($level_date)) > (3 * 86400);
   ?>
   <div class="portal-card" style="text-align:center;padding:1.5rem 1rem">
     <div style="font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--lime);margin-bottom:0.75rem">
       <?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?>
     </div>
 
-    <?php if ($today !== null && $has_lvl): ?>
-      <!-- Actual index level from mfapis.club -->
-      <div style="font-family:'DM Mono',monospace;font-size:1.5rem;font-weight:500;color:var(--cream);line-height:1.1;margin-bottom:0.4rem">
-        <?= number_format($today, 2) ?>
+    <?php if ($level_val !== null): ?>
+      <!-- Actual level from mfapis.club -->
+      <div style="font-family:'DM Mono',monospace;font-size:1.5rem;font-weight:500;color:var(--cream);line-height:1.1;margin-bottom:0.25rem">
+        <?= number_format($level_val, 2) ?>
       </div>
-      <?php if ($chg_str && $chg_str !== 'Updating…'): ?>
-      <div style="font-family:'DM Mono',monospace;font-size:0.72rem;color:<?= $chg_col ?>">
-        <?= $arrow ?> <?= htmlspecialchars($chg_str, ENT_QUOTES, 'UTF-8') ?>
+      <?php if ($level_date): ?>
+      <div style="font-size:0.6rem;color:<?= $is_stale ? '#ef9a33' : 'var(--text-muted)' ?>;margin-bottom:0.3rem">
+        as of <?= date('d M', strtotime($level_date)) ?>
+        <?= $is_stale ? ' · stale' : '' ?>
       </div>
       <?php endif; ?>
-    <?php elseif ($today !== null): ?>
-      <!-- SENSEX: BSE index — show % change only (accurate from mfapi.in ETF proxy) -->
-      <div style="font-family:'DM Mono',monospace;font-size:1.5rem;font-weight:500;color:<?= $chg_col ?>;line-height:1.1;margin-bottom:0.4rem">
-        <?= $chg_str !== null ? $arrow . ' ' . htmlspecialchars($chg_str, ENT_QUOTES, 'UTF-8') : '—' ?>
-      </div>
-      <div style="font-size:0.68rem;color:var(--text-muted)">1-day change</div>
     <?php else: ?>
-      <div style="font-family:'DM Mono',monospace;font-size:1.5rem;color:var(--text-muted)">—</div>
-      <div style="font-size:0.68rem;color:var(--text-muted)">Pending first fetch</div>
+      <div style="font-family:'DM Mono',monospace;font-size:1.5rem;color:var(--text-muted);margin-bottom:0.5rem">—</div>
     <?php endif; ?>
 
-    <?php if ($row && $row['today_date']): ?>
-    <div style="font-size:0.65rem;color:var(--text-muted);margin-top:0.35rem">
-      <?= date('d M Y', strtotime($row['today_date'])) ?>
+    <?php if ($chg_str !== null): ?>
+    <div style="font-family:'DM Mono',monospace;font-size:0.75rem;font-weight:500;color:<?= $chg_col ?>">
+      <?= $arrow ?> <?= htmlspecialchars($chg_str, ENT_QUOTES, 'UTF-8') ?>
     </div>
+    <div style="font-size:0.6rem;color:var(--text-muted);margin-top:0.2rem">1-day change</div>
+    <?php elseif ($pct_row): ?>
+    <div style="font-size:0.65rem;color:var(--text-muted)">Updating…</div>
+    <?php else: ?>
+    <div style="font-size:0.65rem;color:var(--text-muted)">Pending first fetch</div>
     <?php endif; ?>
   </div>
   <?php endforeach; ?>
