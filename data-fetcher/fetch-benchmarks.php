@@ -61,14 +61,14 @@ if (MFAPIS_API_KEY === '') {
         echo "  [FAIL] mfapis.club returned null — check API key and endpoint\n";
         error_log('fetch-benchmarks: mfapis_index_latest() returned null');
     } else {
-        // Detect data array — handle both flat array and nested structures
+        // Detect data array — mfapis.club returns {"success":true,"data":{"items":[...]}}
         $rows = null;
-        if (isset($resp['data']) && is_array($resp['data'])) {
+        if (isset($resp['data']['items']) && is_array($resp['data']['items'])) {
+            $rows = $resp['data']['items'];
+        } elseif (isset($resp['data']) && is_array($resp['data'])) {
             if (isset($resp['data'][0]) && is_array($resp['data'][0])) {
-                // Flat: {"data": [{...}, {...}]}
                 $rows = $resp['data'];
             } elseif (isset($resp['data']['data']) && is_array($resp['data']['data'])) {
-                // Nested: {"data": {"data": [{...}]}}
                 $rows = $resp['data']['data'];
             } elseif (isset($resp['data']['indexDetailList'])) {
                 $rows = $resp['data']['indexDetailList'];
@@ -84,9 +84,6 @@ if (MFAPIS_API_KEY === '') {
             echo "  [DEBUG] Raw response (first 2000 chars): " . substr($raw, 0, 2000) . "\n";
             error_log('fetch-benchmarks: unrecognised mfapis response: ' . substr($raw, 0, 500));
         } else {
-            $today_date = date('Y-m-d');
-            $prev_date  = date('Y-m-d', strtotime('-1 day'));
-
             foreach ($rows as $row) {
                 // Try multiple field name conventions
                 $name = $row['indexSymbol'] ?? $row['name'] ?? $row['index_name'] ?? $row['index'] ?? '';
@@ -98,10 +95,14 @@ if (MFAPIS_API_KEY === '') {
 
                 $bm_key = NSE_INDEX_MAP[$name];
 
-                // Current value — try multiple field names
-                $current = $row['current'] ?? $row['last'] ?? $row['lastPrice'] ?? $row['close'] ?? $row['value'] ?? null;
-                // Previous close — try multiple field names
-                $prev_close = $row['previousClose'] ?? $row['prevClose'] ?? $row['prev_close'] ?? $row['previous_close'] ?? null;
+                // Current value — mfapis.club uses 'indexValue'; fallbacks for future-proofing
+                $current = $row['indexValue'] ?? $row['current'] ?? $row['last'] ?? $row['lastPrice'] ?? $row['close'] ?? $row['value'] ?? null;
+                // Previous close — mfapis.club uses 'prevClose'
+                $prev_close = $row['prevClose'] ?? $row['previousClose'] ?? $row['prev_close'] ?? $row['previous_close'] ?? null;
+                // Date from tickTime ISO string e.g. "2026-10-02T13:22:54.509Z"
+                $tick_time = $row['tickTime'] ?? null;
+                $today_date = $tick_time ? substr($tick_time, 0, 10) : date('Y-m-d');
+                $prev_date  = date('Y-m-d', strtotime($today_date . ' -1 day'));
 
                 if ($current === null) {
                     echo "  [FAIL] $bm_key — cannot find current value in response row\n";
