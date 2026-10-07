@@ -294,8 +294,8 @@ function mfapis_symbol_search(string $query): ?array
  * Pass empty string to get all indices (Nifty 50, Nifty 500, Midcap 150,
  * Smallcap 250, etc.). Pass index name to filter to one.
  *
- * GET /indices/nse/latest                  — all indices
- * GET /indices/nse/latest?index={name}     — specific index
+ * GET /market/indices/nse/latest                  — all indices
+ * GET /market/indices/nse/latest?index={name}     — specific index
  */
 function mfapis_index_latest(string $index_name = ''): ?array
 {
@@ -303,18 +303,18 @@ function mfapis_index_latest(string $index_name = ''): ?array
     if ($index_name !== '') {
         $params['index'] = $index_name;
     }
-    return mfapis_get('/indices/nse/latest', $params);
+    return mfapis_get('/market/indices/nse/latest', $params);
 }
 
 /**
  * Fetch historical data for a named index.
  * Dates format: YYYY-MM-DD.
  *
- * GET /indices/nse/history?index={index_name}&from={from}&to={to}
+ * GET /market/indices/nse/history?index={index_name}&from={from}&to={to}
  */
 function mfapis_index_history(string $index_name, string $from, string $to): ?array
 {
-    return mfapis_get('/indices/nse/history', [
+    return mfapis_get('/market/indices/nse/history', [
         'index' => $index_name,
         'from'  => $from,
         'to'    => $to,

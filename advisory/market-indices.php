@@ -8,16 +8,16 @@ require_role('client');
 
 $db = get_db();
 
-// Indices that have actual level data (Nippon BeES ETF × 100)
-// vs proxies where only % change is meaningful
-const LEVEL_KEYS  = ['nifty50', 'nifty100', 'sensex', 'banknifty', 'nifty_midcap150'];
-const PROXY_KEYS  = ['nifty500', 'nifty_smallcap250'];
+// NSE indices: actual levels from mfapis.club (source = 'mfapis')
+// SENSEX: BSE index — % change only from mfapi.in BeES ETF proxy (source = 'mfapi')
+const LEVEL_KEYS  = ['nifty50', 'nifty100', 'banknifty', 'nifty_midcap150', 'nifty500', 'nifty_smallcap250'];
+const PROXY_KEYS  = ['sensex'];
 const ALL_KEYS    = ['nifty50', 'nifty100', 'sensex', 'banknifty', 'nifty_midcap150', 'nifty500', 'nifty_smallcap250'];
 
 const INDEX_LABELS = [
     'nifty50'           => 'NIFTY 50',
     'nifty100'          => 'NIFTY 100',
-    'sensex'            => 'SENSEX',
+    'sensex'            => 'SENSEX (BSE)',
     'banknifty'         => 'BANK NIFTY',
     'nifty_midcap150'   => 'NIFTY MIDCAP 150',
     'nifty500'          => 'NIFTY 500',
@@ -76,7 +76,7 @@ require_once '../includes/portal-header.php';
 
 <p class="page-eyebrow">Advisory</p>
 <h1 class="page-title">Market Indices</h1>
-<p class="page-subtitle">Indian equity benchmarks — updated daily via mfapi.in</p>
+<p class="page-subtitle">Indian equity benchmarks — NSE indices via mfapis.club · SENSEX % change via mfapi.in</p>
 
 <!-- ── INDEX CARDS ────────────────────────────────────────────────────────── -->
 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:1rem;margin-bottom:2rem">
@@ -106,7 +106,7 @@ require_once '../includes/portal-header.php';
     </div>
 
     <?php if ($today !== null && $has_lvl): ?>
-      <!-- Actual index level (BeES ETF × 100) -->
+      <!-- Actual index level from mfapis.club -->
       <div style="font-family:'DM Mono',monospace;font-size:1.5rem;font-weight:500;color:var(--cream);line-height:1.1;margin-bottom:0.4rem">
         <?= number_format($today, 2) ?>
       </div>
@@ -116,7 +116,7 @@ require_once '../includes/portal-header.php';
       </div>
       <?php endif; ?>
     <?php elseif ($today !== null): ?>
-      <!-- Proxy — show % change only, not absolute level -->
+      <!-- SENSEX: BSE index — show % change only (accurate from mfapi.in ETF proxy) -->
       <div style="font-family:'DM Mono',monospace;font-size:1.5rem;font-weight:500;color:<?= $chg_col ?>;line-height:1.1;margin-bottom:0.4rem">
         <?= $chg_str !== null ? $arrow . ' ' . htmlspecialchars($chg_str, ENT_QUOTES, 'UTF-8') : '—' ?>
       </div>

@@ -14,25 +14,31 @@ if ($is_web) {
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/mf-api.php';
+require_once __DIR__ . '/../includes/mfapis.php';
 
 $db = get_db();
 echo '[' . date('H:i:s') . "] Benchmark fetch starting\n";
 
-// Nippon India BeES ETFs are structured so 1 unit = 1/100 of the index by design.
-// Storing nav × 100 gives actual approximate index level (within 0.5% of NSE value).
-// Funds without a BeES ETF use a regular index fund as proxy — accurate for % change only.
-const BENCHMARKS = [
-    // BeES ETF series — nav × 100 = actual index level
-    'nifty50'           => ['code' => '140084', 'mult' => 100, 'has_level' => true],
-    'nifty100'          => ['code' => '121146', 'mult' => 100, 'has_level' => true],
-    'sensex'            => ['code' => '131331', 'mult' => 100, 'has_level' => true],
-    'banknifty'         => ['code' => '140087', 'mult' => 100, 'has_level' => true],
-    'nifty_midcap150'   => ['code' => '146271', 'mult' => 100, 'has_level' => true],
-    // Regular index fund proxies — nav tracks % change correctly, absolute value is meaningless
-    'nifty500'          => ['code' => '147666', 'mult' => 1, 'has_level' => false],
-    'nifty_smallcap250' => ['code' => '148519', 'mult' => 1, 'has_level' => false],
-    'crisil_short_dur'  => ['code' => '118796', 'mult' => 1, 'has_level' => false],
-    'crisil_gilt'       => ['code' => '119707', 'mult' => 1, 'has_level' => false],
+// ── NSE index name → our benchmark key mapping ──────────────
+// mfapis.club /market/indices/nse/latest returns all NSE indices.
+// SENSEX is a BSE index — not in NSE endpoint, fetched separately via mfapi.in.
+const NSE_INDEX_MAP = [
+    // mfapis.club index name  => our benchmark key
+    'NIFTY 50'          => 'nifty50',
+    'NIFTY 100'         => 'nifty100',
+    'NIFTY BANK'        => 'banknifty',
+    'NIFTY MIDCAP 150'  => 'nifty_midcap150',
+    'NIFTY 500'         => 'nifty500',
+    'NIFTY SMALLCAP 250'=> 'nifty_smallcap250',
+];
+
+// ── mfapi.in proxies (% change only — no actual level available from mfapis.club) ──
+// SENSEX = BSE index, no NSE endpoint; Nippon BeES ETF gives accurate % change
+// Debt indices = not tracked by mfapis.club
+const MFAPI_PROXIES = [
+    'sensex'           => ['code' => '131331', 'mult' => 100, 'has_level' => false],
+    'crisil_short_dur' => ['code' => '118796', 'mult' => 1,   'has_level' => false],
+    'crisil_gilt'      => ['code' => '119707', 'mult' => 1,   'has_level' => false],
 ];
 
 $insert = $db->prepare(
@@ -43,7 +49,92 @@ $insert = $db->prepare(
 
 $stats = ['ok' => 0, 'failed' => 0];
 
-foreach (BENCHMARKS as $key => $cfg) {
+// ── PART 1: mfapis.club — actual NSE index levels ────────────
+echo "[" . date('H:i:s') . "] Fetching NSE indices from mfapis.club…\n";
+
+if (MFAPIS_API_KEY === '') {
+    echo "  [SKIP] MFAPIS_API_KEY not set — skipping mfapis.club fetch\n";
+} else {
+    $resp = mfapis_index_latest();
+
+    if ($resp === null) {
+        echo "  [FAIL] mfapis.club returned null — check API key and endpoint\n";
+        error_log('fetch-benchmarks: mfapis_index_latest() returned null');
+    } else {
+        // Detect data array — handle both flat array and nested structures
+        $rows = null;
+        if (isset($resp['data']) && is_array($resp['data'])) {
+            if (isset($resp['data'][0]) && is_array($resp['data'][0])) {
+                // Flat: {"data": [{...}, {...}]}
+                $rows = $resp['data'];
+            } elseif (isset($resp['data']['data']) && is_array($resp['data']['data'])) {
+                // Nested: {"data": {"data": [{...}]}}
+                $rows = $resp['data']['data'];
+            } elseif (isset($resp['data']['indexDetailList'])) {
+                $rows = $resp['data']['indexDetailList'];
+            }
+        } elseif (isset($resp[0]) && is_array($resp[0])) {
+            $rows = $resp;
+        }
+
+        if ($rows === null) {
+            // Log raw response for debugging — first 2000 chars only
+            $raw = json_encode($resp);
+            echo "  [FAIL] Cannot parse mfapis.club response structure\n";
+            echo "  [DEBUG] Raw response (first 2000 chars): " . substr($raw, 0, 2000) . "\n";
+            error_log('fetch-benchmarks: unrecognised mfapis response: ' . substr($raw, 0, 500));
+        } else {
+            $today_date = date('Y-m-d');
+            $prev_date  = date('Y-m-d', strtotime('-1 day'));
+
+            foreach ($rows as $row) {
+                // Try multiple field name conventions
+                $name = $row['indexSymbol'] ?? $row['name'] ?? $row['index_name'] ?? $row['index'] ?? '';
+                $name = trim(strtoupper((string) $name));
+
+                if (!isset(NSE_INDEX_MAP[$name])) {
+                    continue; // Not one of our tracked indices
+                }
+
+                $bm_key = NSE_INDEX_MAP[$name];
+
+                // Current value — try multiple field names
+                $current = $row['current'] ?? $row['last'] ?? $row['lastPrice'] ?? $row['close'] ?? $row['value'] ?? null;
+                // Previous close — try multiple field names
+                $prev_close = $row['previousClose'] ?? $row['prevClose'] ?? $row['prev_close'] ?? $row['previous_close'] ?? null;
+
+                if ($current === null) {
+                    echo "  [FAIL] $bm_key — cannot find current value in response row\n";
+                    $stats['failed']++;
+                    continue;
+                }
+
+                $today_val = round((float) $current, 2);
+                echo "  [OK] $bm_key = " . number_format($today_val, 2) . "\n";
+
+                try {
+                    $insert->execute([':bm' => $bm_key, ':dt' => $today_date, ':val' => $today_val, ':src' => 'mfapis']);
+                    $stats['ok']++;
+
+                    // Store previous close so % change works from first cron run
+                    if ($prev_close !== null) {
+                        $prev_val = round((float) $prev_close, 2);
+                        $insert->execute([':bm' => $bm_key, ':dt' => $prev_date, ':val' => $prev_val, ':src' => 'mfapis']);
+                    }
+                } catch (Throwable $e) {
+                    echo "  [FAIL] $bm_key DB insert — " . $e->getMessage() . "\n";
+                    error_log("fetch-benchmarks DB ($bm_key): " . $e->getMessage());
+                    $stats['failed']++;
+                }
+            }
+        }
+    }
+}
+
+// ── PART 2: mfapi.in — SENSEX (BSE) + debt proxies ──────────
+echo "[" . date('H:i:s') . "] Fetching SENSEX + debt proxies from mfapi.in…\n";
+
+foreach (MFAPI_PROXIES as $key => $cfg) {
     try {
         $data = mf_api_fetch($cfg['code']);
         if (!$data || empty($data['data'])) {

@@ -145,13 +145,13 @@ $category_labels = ['market_update'=>'Market Update','tax_tips'=>'Tax Tips','fun
 
 // ── Market strip — from benchmark_nav cron table ──────────
 $rbi_rate = '6.50';
-// nifty50 and nifty_midcap150 use Nippon BeES ETFs → has_level=true (show actual level)
-// nifty500 uses regular fund proxy → has_level=false (show % change only)
+// NSE indices (nifty50, nifty_midcap150, nifty500) → actual levels from mfapis.club
+// SENSEX (BSE) → % change only from mfapi.in ETF proxy (no BSE endpoint in mfapis.club)
 $mkt_labels = [
     'nifty50'         => ['label' => 'NIFTY 50',   'has_level' => true],
-    'sensex'          => ['label' => 'SENSEX',      'has_level' => true],
+    'sensex'          => ['label' => 'SENSEX',      'has_level' => false],
     'nifty_midcap150' => ['label' => 'MIDCAP 150',  'has_level' => true],
-    'nifty500'        => ['label' => 'NIFTY 500',   'has_level' => false],
+    'nifty500'        => ['label' => 'NIFTY 500',   'has_level' => true],
 ];
 $mkt_data = [];
 try {
