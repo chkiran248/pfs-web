@@ -64,7 +64,7 @@ const MFAPI_PCT = [
 $insert = $db->prepare(
     "INSERT INTO benchmark_nav (benchmark, nav_date, nav_value, source)
      VALUES (:bm, :dt, :val, :src)
-     ON DUPLICATE KEY UPDATE nav_value=VALUES(nav_value), source=VALUES(source)"
+     ON DUPLICATE KEY UPDATE nav_value=VALUES(nav_value)"
 );
 
 $stats = ['ok' => 0, 'failed' => 0];
