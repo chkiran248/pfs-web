@@ -11,8 +11,7 @@ echo "Key prefix: " . substr(CLAUDE_API_KEY, 0, 24) . "...\n\n";
 
 $models = [
     'claude-haiku-4-5-20251001',
-    'claude-3-5-haiku-20241022',
-    'claude-3-haiku-20240307',
+    'claude-sonnet-4-6',
 ];
 
 foreach ($models as $model) {
