@@ -19,7 +19,8 @@ foreach ($models as $model) {
     echo "Testing: $model\n";
     $payload = ['model' => $model, 'max_tokens' => 10, 'messages' => [['role' => 'user', 'content' => 'Say OK']]];
     $ch = curl_init('https://api.anthropic.com/v1/messages');
-    curl_setopt_array($ch, [CURLOPT_POST=>true, CURLOPT_POSTFIELDS=>json_encode($payload), CURLOPT_HTTPHEADER=>['Content-Type: application/json','x-api-key: '.CLAUDE_API_KEY,'anthropic-version: 2023-06-01'], CURLOPT_RETURNTRANSFER=>true, CURLOPT_SSL_VERIFYPEER=>false, CURLOPT_CONNECTTIMEOUT=>15, CURLOPT_TIMEOUT=>30]);
+    $headers = array_filter(['Content-Type: application/json','x-api-key: '.CLAUDE_API_KEY,'anthropic-version: 2023-06-01', defined('ANTHROPIC_WORKSPACE_ID') && ANTHROPIC_WORKSPACE_ID !== '' ? 'anthropic-workspace-id: '.ANTHROPIC_WORKSPACE_ID : null]);
+    curl_setopt_array($ch, [CURLOPT_POST=>true, CURLOPT_POSTFIELDS=>json_encode($payload), CURLOPT_HTTPHEADER=>$headers, CURLOPT_RETURNTRANSFER=>true, CURLOPT_SSL_VERIFYPEER=>false, CURLOPT_CONNECTTIMEOUT=>15, CURLOPT_TIMEOUT=>30]);
     $resp = curl_exec($ch); $http = curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
     $data = json_decode($resp, true);
     $status = isset($data['content'][0]['text'])

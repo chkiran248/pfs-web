@@ -57,11 +57,14 @@ function call_anthropic(string $system, array $messages, int $max_tokens, string
     curl_setopt_array($ch, [
         CURLOPT_POST           => true,
         CURLOPT_POSTFIELDS     => json_encode($payload),
-        CURLOPT_HTTPHEADER     => [
+        CURLOPT_HTTPHEADER     => array_filter([
             'Content-Type: application/json',
             'x-api-key: ' . CLAUDE_API_KEY,
             'anthropic-version: 2023-06-01',
-        ],
+            defined('ANTHROPIC_WORKSPACE_ID') && ANTHROPIC_WORKSPACE_ID !== ''
+                ? 'anthropic-workspace-id: ' . ANTHROPIC_WORKSPACE_ID
+                : null,
+        ]),
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_SSL_VERIFYPEER => false,
         CURLOPT_CONNECTTIMEOUT => 15,
