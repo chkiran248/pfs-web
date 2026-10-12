@@ -1,10 +1,12 @@
 <?php
 declare(strict_types=1);
+ob_start();
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/auth.php';
-require_once __DIR__ . '/ai-helpers.php';     // call_llm(), extract_json_from_claude()
+require_once __DIR__ . '/ai-helpers.php';
 require_once __DIR__ . '/fund-classifier.php';
+ob_end_clean();
 set_time_limit(300);
 
 header('Content-Type: application/json');

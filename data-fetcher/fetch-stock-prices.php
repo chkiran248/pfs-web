@@ -19,6 +19,7 @@ require_once __DIR__ . '/../includes/db.php';
  * Perform a GET request to mfapis.club and return the decoded JSON array.
  * Returns null on any cURL or JSON error.
  */
+if (!function_exists('mfapis_get'))
 function mfapis_get(string $url): ?array
 {
     $ch = curl_init($url);

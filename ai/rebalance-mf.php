@@ -1,5 +1,7 @@
 <?php
 declare(strict_types=1);
+// Buffer all output so no stray PHP notices/errors contaminate the JSON response
+ob_start();
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/auth.php';
@@ -7,8 +9,10 @@ require_once __DIR__ . '/ai-helpers.php';
 require_once __DIR__ . '/fund-classifier.php';
 require_once __DIR__ . '/../includes/mf-api.php';
 
+// Discard anything the includes may have output, then set our content type
+ob_end_clean();
 header('Content-Type: application/json');
-set_time_limit(300); // allow up to 5 min for large portfolios
+set_time_limit(300);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); exit(json_encode(['success'=>false,'error'=>'Method not allowed'])); }
 if (!is_logged_in()) { http_response_code(401); exit(json_encode(['success'=>false,'error'=>'Unauthorised'])); }
@@ -97,7 +101,6 @@ foreach (array_slice(array_values($stale), 0, 8) as &$h_stale) {
         $r3 = mf_cagr($mf_data['data'], 3);
         $upd_perf->execute([$r1, $r3, $user_id, $h_stale['fund_name']]);
         $fetched++;
-        if ($fetched < 8) sleep(1);
     }
 }
 unset($h_stale);
