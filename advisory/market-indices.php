@@ -156,24 +156,37 @@ require_once '../includes/portal-header.php';
       <?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?>
     </div>
 
+    <?php
+      // Determine the display date: prefer level_date (mfapis), fall back to mfapi_date
+      $display_date = $level_date ?? $mfapi_date ?? null;
+      // Reason level is blank (BSE not in NSE endpoint; smallcap not returned by mfapis.club)
+      $no_level_reason = match($key) {
+          'sensex'            => 'BSE index · level via NSE API N/A',
+          'nifty_smallcap250' => 'Not in mfapis.club feed',
+          default             => null,
+      };
+    ?>
     <?php if ($level_val !== null): ?>
       <div style="font-family:'DM Mono',monospace;font-size:1.5rem;font-weight:500;color:var(--cream);line-height:1.1;margin-bottom:0.25rem">
         <?= number_format($level_val, 2) ?>
       </div>
-      <?php if ($is_stale && $level_date): ?>
-      <div style="font-size:0.6rem;color:#ef9a33;margin-bottom:0.3rem">
-        as of <?= date('d M', strtotime($level_date)) ?> · stale
+      <div style="font-size:0.6rem;margin-bottom:0.3rem;color:<?= $is_stale ? '#ef9a33' : 'var(--text-muted)' ?>">
+        as of <?= $display_date ? date('d M', strtotime($display_date)) : '—' ?><?= $is_stale ? ' · stale' : '' ?>
       </div>
-      <?php endif; ?>
     <?php else: ?>
-      <div style="font-family:'DM Mono',monospace;font-size:1.5rem;color:var(--text-muted);margin-bottom:0.5rem">—</div>
+      <div style="font-family:'DM Mono',monospace;font-size:1.5rem;color:var(--text-muted);margin-bottom:0.1rem">—</div>
+      <?php if ($no_level_reason): ?>
+      <div style="font-size:0.55rem;color:var(--text-muted);margin-bottom:0.25rem;line-height:1.3"><?= htmlspecialchars($no_level_reason, ENT_QUOTES, 'UTF-8') ?></div>
+      <?php endif; ?>
     <?php endif; ?>
 
     <?php if ($chg_str !== null): ?>
     <div style="font-family:'DM Mono',monospace;font-size:0.75rem;font-weight:500;color:<?= $chg_col ?>">
       <?= $arrow ?> <?= htmlspecialchars($chg_str, ENT_QUOTES, 'UTF-8') ?>
     </div>
-    <div style="font-size:0.6rem;color:var(--text-muted);margin-top:0.2rem">1-day change</div>
+    <div style="font-size:0.6rem;color:var(--text-muted);margin-top:0.2rem">
+      1-day change<?= ($display_date && $level_val === null) ? ' · as of ' . date('d M', strtotime($display_date)) : '' ?>
+    </div>
     <?php elseif ($level_val !== null || $pct_row): ?>
     <div style="font-size:0.65rem;color:var(--text-muted)">Updating…</div>
     <?php else: ?>
