@@ -1,9 +1,23 @@
 <?php
 declare(strict_types=1);
+// Catch any PHP errors and return as JSON so we can diagnose HTML responses
+set_error_handler(function(int $errno, string $errstr, string $errfile, int $errline): bool {
+    if (!(error_reporting() & $errno)) return false;
+    header('Content-Type: application/json');
+    echo json_encode(['success'=>false,'error'=>"PHP Error [{$errno}]: {$errstr} in {$errfile}:{$errline}"]);
+    exit;
+});
+register_shutdown_function(function(): void {
+    $e = error_get_last();
+    if ($e && in_array($e['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+        if (!headers_sent()) header('Content-Type: application/json');
+        echo json_encode(['success'=>false,'error'=>"Fatal: {$e['message']} in {$e['file']}:{$e['line']}"]);
+    }
+});
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/auth.php';
-require_once __DIR__ . '/ai-helpers.php';     // call_llm(), extract_json_from_claude()
+require_once __DIR__ . '/ai-helpers.php';
 require_once __DIR__ . '/fund-classifier.php';
 require_once __DIR__ . '/../includes/mf-api.php';
 
