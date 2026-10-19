@@ -74,12 +74,13 @@ $nav_refresh_count = 0;
 $latest_nav_date   = null;
 if (empty($_SESSION['pf_nav_refreshed_at']) || (time() - $_SESSION['pf_nav_refreshed_at']) > 3600) {
     $_SESSION['pf_nav_refreshed_at'] = time();
-    // Only refresh MF-type holdings with units
+    // Refresh MF-type holdings that either have units (value needs recompute)
+    // or a resolved scheme_code (NAV-only refresh — units were never captured at import)
     $rf_entries = $db->query(
-        "SELECT id, fund_name, units_held FROM portfolio_entries
+        "SELECT id, fund_name, units_held, scheme_code FROM portfolio_entries
          WHERE user_id = {$uid}
            AND fund_type IN ('equity','debt','hybrid','elss','index','international','liquid')
-           AND units_held > 0"
+           AND (units_held > 0 OR (scheme_code IS NOT NULL AND scheme_code <> ''))"
     )->fetchAll();
 
     if (!empty($rf_entries)) {
@@ -93,19 +94,32 @@ if (empty($_SESSION['pf_nav_refreshed_at']) || (time() - $_SESSION['pf_nav_refre
         }
         // Extend with nav_history (all ~11k AMFI funds, latest available date)
         $latest_nav_date = $db->query("SELECT MAX(nav_date) FROM nav_history")->fetchColumn() ?: null;
+        $nav_by_code = [];
         if ($latest_nav_date) {
-            $hs = $db->prepare("SELECT LOWER(fund_name) AS lname, nav FROM nav_history WHERE nav_date = ?");
+            $hs = $db->prepare("SELECT fund_code, LOWER(fund_name) AS lname, nav FROM nav_history WHERE nav_date = ?");
             $hs->execute([$latest_nav_date]);
             foreach ($hs->fetchAll() as $h) {
                 $nav_pool[] = ['name' => $h['lname'], 'nav' => (float)$h['nav']];
+                $nav_by_code[$h['fund_code']] = (float)$h['nav'];
             }
         }
 
-        if (!empty($nav_pool)) {
+        if (!empty($nav_pool) || !empty($nav_by_code)) {
+            // units_held>0 holdings get both current_nav and current_value recomputed;
+            // zero-unit holdings (units never captured at import) only get current_nav —
+            // current_value stays as originally imported so it isn't zeroed out.
             $upd_nav = $db->prepare(
-                "UPDATE portfolio_entries SET current_nav = :nav, current_value = units_held * :nav2 WHERE id = :id"
+                "UPDATE portfolio_entries SET current_nav = :nav, current_value = IF(units_held > 0, units_held * :nav2, current_value) WHERE id = :id"
             );
             foreach ($rf_entries as $rf) {
+                // Exact scheme_code match is far more reliable than fuzzy name matching
+                if (!empty($rf['scheme_code']) && isset($nav_by_code[$rf['scheme_code']])) {
+                    $nav = $nav_by_code[$rf['scheme_code']];
+                    $upd_nav->execute([':nav' => $nav, ':nav2' => $nav, ':id' => $rf['id']]);
+                    $nav_refresh_count++;
+                    continue;
+                }
+
                 $words = array_filter(
                     explode(' ', strtolower((string)$rf['fund_name'])),
                     fn($w) => strlen($w) > 3
