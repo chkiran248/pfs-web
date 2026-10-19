@@ -342,7 +342,6 @@ ul { list-style: none; }
 }
 .intel-card { background: var(--surface-1); padding: 2.5rem; transition: background 0.3s ease; }
 .intel-card:hover { background: var(--surface-2); }
-.intel-card--large { grid-column: 1/2; grid-row: 1/4; border-right: 1.5px solid var(--border); }
 .intel-card__icon { font-size: 1.55rem; color: var(--mid); margin-bottom: 1.25rem; display: block; }
 .intel-card h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.32rem; font-weight: 600; color: var(--cream); margin-bottom: 0.75rem; line-height: 1.3; }
 .intel-card p { font-size: 0.95rem; color: var(--text-secondary); line-height: 1.75; }
@@ -538,7 +537,6 @@ cite { font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; color: var(--
 @media (max-width: 768px) {
   .nav__links a { font-size: 1.1rem; }
   .intel-grid { grid-template-columns: 1fr; }
-  .intel-card--large { grid-column: 1; grid-row: auto; border-right: none; border-bottom: 1.5px solid var(--border); }
   .product-row { grid-template-columns: 1fr; gap: 2.5rem; }
   .product-row--reverse .product-row__content { order: 1; }
   .product-row--reverse .product-row__visual  { order: 2; }
