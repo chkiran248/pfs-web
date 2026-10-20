@@ -56,19 +56,30 @@ function format_doc_type(string $t): string {
 }
 
 /**
- * Try pdftotext first (Linux/Hostinger), fall back to empty string
- * so Claude reads the PDF directly via base64.
+ * Try Ghostscript's text device (pdftotext is not installed on this host),
+ * fall back to empty string so Claude reads the PDF directly via base64.
+ * Text extraction is far faster than vision processing — using it whenever
+ * possible avoids the slow vision path timing out on longer documents.
  * Limits to first 10 pages to keep payload manageable.
  */
 function extract_pdf_text_smart(string $file_path): string {
-    if (function_exists('shell_exec') && !str_contains(PHP_OS, 'WIN')) {
-        $which = trim((string)(shell_exec('which pdftotext 2>/dev/null') ?? ''));
-        if ($which) {
-            $text = (string)(shell_exec('pdftotext -l 10 ' . escapeshellarg($file_path) . ' - 2>/dev/null') ?? '');
-            if (strlen(trim($text)) > 50) return $text;
-        }
+    if (!function_exists('shell_exec') || !function_exists('exec') || str_contains(PHP_OS, 'WIN')) {
+        return '';
     }
-    return ''; // triggers Claude vision fallback
+
+    $gs = trim((string)(shell_exec('which gs 2>/dev/null') ?? ''));
+    if (!$gs) return '';
+
+    $tmp = sys_get_temp_dir() . '/' . bin2hex(random_bytes(8)) . '_pdftext.txt';
+    $cmd = escapeshellarg($gs) . ' -dBATCH -dNOPAUSE -q -dFirstPage=1 -dLastPage=10'
+         . ' -sDEVICE=txtwrite -sOutputFile=' . escapeshellarg($tmp)
+         . ' ' . escapeshellarg($file_path) . ' 2>/dev/null';
+    exec($cmd);
+
+    $text = file_exists($tmp) ? (string)file_get_contents($tmp) : '';
+    @unlink($tmp);
+
+    return strlen(trim($text)) > 50 ? $text : ''; // empty triggers Claude vision fallback
 }
 
 function detect_document_type(string $text, string $filename): string {
