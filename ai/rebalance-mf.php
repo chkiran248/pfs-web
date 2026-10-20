@@ -23,11 +23,11 @@ $db      = get_db();
 
 try {
 
-// Rate limit: 3 runs per user per day
+// Rate limit: 3 runs per user per calendar month
 try {
-    $today_runs = (int)$db->query("SELECT COUNT(DISTINCT DATE_FORMAT(generated_at,'%Y-%m-%d %H:%i')) FROM rebalancer_results WHERE user_id={$user_id} AND rebalance_type='mutual_fund' AND DATE(generated_at)=CURDATE()")->fetchColumn();
-    if ($today_runs >= 3) {
-        exit(json_encode(['success'=>false,'error'=>'Daily limit reached (3 runs/day). Try again tomorrow.']));
+    $month_runs = (int)$db->query("SELECT COUNT(DISTINCT DATE_FORMAT(generated_at,'%Y-%m-%d %H:%i')) FROM rebalancer_results WHERE user_id={$user_id} AND rebalance_type='mutual_fund' AND YEAR(generated_at)=YEAR(CURDATE()) AND MONTH(generated_at)=MONTH(CURDATE())")->fetchColumn();
+    if ($month_runs >= 3) {
+        exit(json_encode(['success'=>false,'error'=>'Monthly limit reached (3 runs/month). Try again next month.']));
     }
 } catch (PDOException $e) {
     // Table may not exist yet — skip rate limit check, log it
@@ -263,19 +263,35 @@ if ($num_batches === 1) {
     $all_verdicts = $result['holdings'] ?? [];
 
 } else {
-    // Batched: get verdicts per batch, then synthesise
+    // Batched: get verdicts per batch (run CONCURRENTLY — sequential calls would
+    // sum past the hosting's hard ~60s process timeout once there are more than
+    // a couple of batches, even though each individual call is fast on its own),
+    // then synthesise.
     $batch_system = "You are a mutual fund portfolio analyst. For each fund in the list, return ONLY a JSON array of verdict objects. No overall summary — just the holdings array. Start with [ end with ].";
 
+    $batch_requests = [];
     foreach ($batches as $b_idx => $batch) {
         $bt = build_holdings_text($batch, $total_current, $bench_cagr, $bench_map);
         $b_msg = "CLIENT: Risk={$risk_profile} | Total portfolio={$total_val_fmt}\nTarget allocation: {$target_alloc}\n\nBATCH " . ($b_idx+1) . "/{$num_batches} — analyse these " . count($batch) . " funds:\n{$bt}\nReturn JSON array:\n[{\"fund_name\":\"\",\"verdict\":\"hold|buy_more|switch|sell\",\"verdict_label\":\"\",\"confidence\":\"high|medium|low\",\"priority\":\"urgent|moderate|low\",\"return_assessment\":\"above_average|average|below_average\",\"weight_in_portfolio_pct\":0,\"reason\":\"\",\"action_detail\":\"\",\"sip_recommendation\":\"continue|increase|decrease|stop\"}]";
+        $batch_requests[] = ['system' => $batch_system, 'messages' => [['role' => 'user', 'content' => $b_msg]], 'max_tokens' => 6000];
+    }
 
-        $batch_result = call_claude($batch_system, $b_msg);
+    $batch_llm_results = call_llm_parallel($batch_requests);
+    foreach ($batch_llm_results as $b_idx => $llm) {
+        if ($llm === null) {
+            error_log("MF Rebalancer: batch " . ($b_idx + 1) . "/{$num_batches} failed to return a usable response");
+            continue;
+        }
+        $batch_result = extract_json_from_claude($llm['text']);
         if (is_array($batch_result)) {
             // Might be {holdings:[...]} or just [...]
             $verdicts = isset($batch_result[0]) ? $batch_result : ($batch_result['holdings'] ?? []);
             $all_verdicts = array_merge($all_verdicts, $verdicts);
         }
+    }
+
+    if (empty($all_verdicts)) {
+        exit(json_encode(['success' => false, 'error' => 'AI analysis failed for all batches. Please try again.']));
     }
 
     // Synthesis call: overall assessment from all verdicts

@@ -41,11 +41,8 @@ function call_llm(string $system, array $messages, int $max_tokens = 2048, strin
     return $result;
 }
 
-/**
- * Single Anthropic API call. Returns null on overload/rate-limit (allows tier escalation).
- * Throws RuntimeException on billing errors or empty responses.
- */
-function call_anthropic(string $system, array $messages, int $max_tokens, string $model): ?array {
+/** Builds the curl handle for one Anthropic Messages API call (used by both the single and parallel paths). */
+function build_anthropic_handle(string $system, array $messages, int $max_tokens, string $model): \CurlHandle {
     $payload = [
         'model'      => $model,
         'max_tokens' => $max_tokens,
@@ -70,12 +67,15 @@ function call_anthropic(string $system, array $messages, int $max_tokens, string
         CURLOPT_CONNECTTIMEOUT => 15,
         CURLOPT_TIMEOUT        => 120,
     ]);
+    return $ch;
+}
 
-    $resp     = curl_exec($ch);
-    $curl_err = curl_error($ch);
-    $http     = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
+/**
+ * Parses one Anthropic API response. Returns null on overload/rate-limit/empty
+ * (allows tier escalation or batch-partial-failure), throws RuntimeException
+ * on billing errors, or returns ['text'=>,'model'=>,'tokens'=>] on success.
+ */
+function parse_anthropic_response(string $resp, string $curl_err, int $http, string $model): ?array {
     if ($curl_err) {
         error_log("call_anthropic [{$model}] cURL error: {$curl_err}");
         return null;
@@ -113,6 +113,64 @@ function call_anthropic(string $system, array $messages, int $max_tokens, string
     error_log("call_llm: {$model} used {$tokens} output tokens");
 
     return ['text' => $text, 'model' => $model, 'tokens' => $tokens];
+}
+
+/** Single Anthropic API call — unchanged behaviour, now built on the shared helpers above. */
+function call_anthropic(string $system, array $messages, int $max_tokens, string $model): ?array {
+    $ch = build_anthropic_handle($system, $messages, $max_tokens, $model);
+    $resp     = curl_exec($ch);
+    $curl_err = curl_error($ch);
+    $http     = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    return parse_anthropic_response((string)$resp, $curl_err, $http, $model);
+}
+
+/**
+ * Runs N independent 'premium' (Sonnet) tier calls CONCURRENTLY via curl_multi.
+ * For splitting one large task (e.g. a multi-batch rebalancer run) into pieces
+ * that each complete well within the hosting's hard ~60s process timeout —
+ * running them sequentially would still sum past that ceiling once there are
+ * more than a couple of batches, even though each individual call is fast.
+ *
+ * @param array $requests [['system'=>string, 'messages'=>array, 'max_tokens'=>int], ...]
+ * @return array one ?array result per request, in the same order, each either
+ *               ['text'=>,'model'=>,'tokens'=>] on success or null on failure
+ *               (never throws for a single batch's failure — only a billing
+ *               error on ANY call still throws, since that applies account-wide).
+ */
+function call_llm_parallel(array $requests): array {
+    $mh      = curl_multi_init();
+    $handles = [];
+    $model   = CLAUDE_SONNET_MODEL;
+
+    foreach ($requests as $i => $req) {
+        $ch = build_anthropic_handle($req['system'], $req['messages'], $req['max_tokens'] ?? 4000, $model);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 50); // headroom under the ~60s FPM ceiling
+        curl_multi_add_handle($mh, $ch);
+        $handles[$i] = $ch;
+    }
+
+    $running = null;
+    do {
+        $status = curl_multi_exec($mh, $running);
+        if ($running > 0) curl_multi_select($mh, 1.0);
+    } while ($running > 0 && $status === CURLM_OK);
+
+    $results = [];
+    foreach ($handles as $i => $ch) {
+        $resp     = curl_multi_getcontent($ch);
+        $curl_err = curl_error($ch);
+        $http     = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_multi_remove_handle($mh, $ch);
+        curl_close($ch);
+
+        $results[$i] = parse_anthropic_response((string)$resp, $curl_err, $http, $model);
+    }
+    curl_multi_close($mh);
+
+    ksort($results);
+    return $results;
 }
 
 /**

@@ -114,7 +114,7 @@ require_once '../includes/portal-header.php';
 
 <p class="page-eyebrow">My Finances</p>
 <h1 class="page-title">Portfolio Rebalancer</h1>
-<p class="page-subtitle">AI-powered analysis of your holdings — powered by PrimoAI. Limit: 5 runs per card per day.</p>
+<p class="page-subtitle">AI-powered analysis of your holdings — powered by PrimoAI. Limits: Mutual Fund 3 runs/month · Equity 5 runs/day.</p>
 
 <div class="rb-tabs">
   <button class="rb-tab active" onclick="switchTab('mf', this)">Mutual Fund Rebalancer</button>
