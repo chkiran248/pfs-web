@@ -82,39 +82,14 @@ if (!empty($needs_sc)) {
     }
 }
 
-// ── Fetch 1yr/3yr CAGR from MFAPI (max 8 funds, 24h cache) ──────────
-$stale = array_filter($all_holdings, fn($h) =>
-    !empty($h['scheme_code']) &&
-    (empty($h['perf_refreshed_at']) || strtotime($h['perf_refreshed_at']) < time() - 86400)
-);
-$upd_perf = $db->prepare("UPDATE portfolio_entries SET return_1yr=?, return_3yr=?, perf_refreshed_at=NOW() WHERE user_id=? AND fund_name=?");
-$fetched = 0;
-foreach (array_slice(array_values($stale), 0, 8) as &$h_stale) {
-    $mf_data = mf_api_fetch((string)$h_stale['scheme_code'], 20);
-    if ($mf_data) {
-        $r1 = mf_cagr($mf_data['data'], 1);
-        $r3 = mf_cagr($mf_data['data'], 3);
-        $upd_perf->execute([$r1, $r3, $user_id, $h_stale['fund_name']]);
-        $fetched++;
-    }
-}
-unset($h_stale);
-
-// Re-read updated performance data into $all_holdings
-if ($fetched > 0) {
-    $re_stmt = $db->prepare("SELECT fund_name, return_1yr, return_3yr, scheme_code, perf_refreshed_at FROM portfolio_entries WHERE user_id = ? AND fund_type IN ('equity','debt','hybrid','elss','index','international','liquid','gold')");
-    $re_stmt->execute([$user_id]);
-    $fresh = array_column($re_stmt->fetchAll(), null, 'fund_name');
-    foreach ($all_holdings as &$h) {
-        if (isset($fresh[$h['fund_name']])) {
-            $h['return_1yr']        = $fresh[$h['fund_name']]['return_1yr'];
-            $h['return_3yr']        = $fresh[$h['fund_name']]['return_3yr'];
-            $h['scheme_code']       = $fresh[$h['fund_name']]['scheme_code'];
-            $h['perf_refreshed_at'] = $fresh[$h['fund_name']]['perf_refreshed_at'];
-        }
-    }
-    unset($h);
-}
+// 1yr/3yr CAGR refresh (MFAPI) is intentionally NOT done here -- it was up
+// to 8 sequential external network calls with no fixed time budget, eating
+// into the same ~60s hard ceiling as the AI analysis itself for no benefit
+// the client would notice. return_1yr/return_3yr simply use whatever is
+// already cached; the AI prompt already handles missing data by saying so
+// explicitly ("Where return data shows N/A, state clearly that performance
+// could not be verified"). Keeping this fresh is a job for a separate cron,
+// not the interactive rebalancer request.
 
 // ── Benchmark CAGR from benchmark_nav ────────────────────────────────
 function get_benchmark_cagr(PDO $db, string $benchmark, int $years): ?float {
@@ -237,11 +212,17 @@ SIP options: continue / increase / decrease / stop
 
 Your reply MUST start with { and end with }. No markdown fences, no explanation. JSON only.";
 
-// ── PROCESS: single call if ≤20, batched if >20 ───────────────────────
+// ── PROCESS: single call if <=100, batched (sequential) beyond that ───
+// A single call is the only pattern proven reliable on this host -- both
+// a 5-way curl_multi parallel batch and a plain sequential 6-call chain
+// have failed in production (the parallel approach with mysterious empty
+// responses likely tied to a shared-hosting concurrent-connection limit,
+// the sequential chain by simply taking too long in total). Routing
+// realistic portfolio sizes through one call avoids both failure modes.
 $all_verdicts  = [];
 $overall_data  = null;
 
-$batch_size = 20;
+$batch_size = 100;
 $batches    = array_chunk($all_holdings, $batch_size);
 $num_batches = count($batches);
 
@@ -258,26 +239,15 @@ if ($num_batches === 1) {
     $all_verdicts = $result['holdings'] ?? [];
 
 } else {
-    // Batched: get verdicts per batch (run CONCURRENTLY — sequential calls would
-    // sum past the hosting's hard ~60s process timeout once there are more than
-    // a couple of batches, even though each individual call is fast on its own),
-    // then synthesise.
+    // Batched fallback for portfolios over 100 holdings (rare). Plain
+    // sequential calls -- the one pattern actually proven reliable here.
     $batch_system = "You are a mutual fund portfolio analyst. For each fund in the list, return ONLY a JSON array of verdict objects. No overall summary — just the holdings array. Start with [ end with ].";
 
-    $batch_requests = [];
     foreach ($batches as $b_idx => $batch) {
         $bt = build_holdings_text($batch, $total_current, $bench_cagr, $bench_map);
         $b_msg = "CLIENT: Risk={$risk_profile} | Total portfolio={$total_val_fmt}\nTarget allocation: {$target_alloc}\n\nBATCH " . ($b_idx+1) . "/{$num_batches} — analyse these " . count($batch) . " funds:\n{$bt}\nReturn JSON array:\n[{\"fund_name\":\"\",\"verdict\":\"hold|buy_more|switch|sell\",\"verdict_label\":\"\",\"confidence\":\"high|medium|low\",\"priority\":\"urgent|moderate|low\",\"return_assessment\":\"above_average|average|below_average\",\"weight_in_portfolio_pct\":0,\"reason\":\"\",\"action_detail\":\"\",\"sip_recommendation\":\"continue|increase|decrease|stop\"}]";
-        $batch_requests[] = ['system' => $batch_system, 'messages' => [['role' => 'user', 'content' => $b_msg]], 'max_tokens' => 6000];
-    }
 
-    $batch_llm_results = call_llm_parallel($batch_requests);
-    foreach ($batch_llm_results as $b_idx => $llm) {
-        if ($llm === null) {
-            error_log("MF Rebalancer: batch " . ($b_idx + 1) . "/{$num_batches} failed to return a usable response");
-            continue;
-        }
-        $batch_result = extract_json_from_claude($llm['text']);
+        $batch_result = call_claude($batch_system, $b_msg);
         if (is_array($batch_result)) {
             // Might be {holdings:[...]} or just [...]
             $verdicts = isset($batch_result[0]) ? $batch_result : ($batch_result['holdings'] ?? []);
