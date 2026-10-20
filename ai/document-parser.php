@@ -263,6 +263,28 @@ function chunk_text_on_lines(string $text, int $max_len): array {
  * a failed chunk never aborts the others.
  */
 function call_claude_extraction_parallel(array $prompts): array {
+    $results = run_claude_extraction_batch($prompts);
+
+    // Retry any chunk whose result carried an error once, sequentially --
+    // concurrent large POST bodies to the same host have been observed to
+    // occasionally return empty/garbled responses (a known class of
+    // curl_multi + keep-alive connection reuse issue), while the identical
+    // request succeeds reliably on its own.
+    $failed = array_keys(array_filter($results, fn($r) => $r['error'] !== null));
+    if (!empty($failed)) {
+        error_log('call_claude_extraction_parallel: retrying ' . count($failed) . ' failed chunk(s) sequentially: ' . implode(',', $failed));
+        foreach ($failed as $i) {
+            $retry = run_claude_extraction_batch([$prompts[$i]]);
+            $results[$i] = $retry[0];
+        }
+    }
+
+    ksort($results);
+    return $results;
+}
+
+/** Runs one round of concurrent extraction calls via curl_multi. Each handle gets its own fresh connection (not reused/shared) to avoid cross-request interference under concurrent large POST bodies. */
+function run_claude_extraction_batch(array $prompts): array {
     $mh      = curl_multi_init();
     $handles = [];
 
@@ -288,6 +310,8 @@ function call_claude_extraction_parallel(array $prompts): array {
             CURLOPT_SSL_VERIFYPEER => false,
             CURLOPT_CONNECTTIMEOUT => 15,
             CURLOPT_TIMEOUT        => 50, // must leave headroom under the ~60s FPM ceiling
+            CURLOPT_FORBID_REUSE   => true,
+            CURLOPT_FRESH_CONNECT  => true,
         ]);
         curl_multi_add_handle($mh, $ch);
         $handles[$i] = $ch;
@@ -310,7 +334,6 @@ function call_claude_extraction_parallel(array $prompts): array {
     }
     curl_multi_close($mh);
 
-    ksort($results);
     return $results;
 }
 

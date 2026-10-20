@@ -305,7 +305,13 @@ async function runRebalancer(type) {
     if (isMF) { window._rbMFData = r.data; renderMF(r.data, body); }
     else       { window._rbEQData = r.data; renderEQ(r.data, body); }
   } catch(err) {
-    body.innerHTML = `<div class="rb-error">⚠ ${e(err.message)}<br><small style="color:var(--text-muted)">Please try again in a moment.</small></div>`;
+    // A SyntaxError here means resp.json() choked on a non-JSON response
+    // (e.g. a server error page) -- show a friendly message instead of the
+    // raw parser error, which means nothing to a client.
+    const friendly = err instanceof SyntaxError
+      ? "We couldn't complete your analysis right now."
+      : e(err.message);
+    body.innerHTML = `<div class="rb-error">⚠ ${friendly}<br><small style="color:var(--text-muted)">Please try again in a few minutes, or contact your advisor on WhatsApp if this keeps happening.</small></div>`;
   } finally {
     clearInterval(ticker);
     btn.disabled = false;

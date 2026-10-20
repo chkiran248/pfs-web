@@ -105,7 +105,8 @@ function parse_anthropic_response(string $resp, string $curl_err, int $http, str
 
     $text = trim($data['content'][0]['text'] ?? '');
     if ($text === '') {
-        error_log("call_anthropic [{$model}] returned empty text");
+        $stop = $data['stop_reason'] ?? '?';
+        error_log("call_anthropic [{$model}] returned empty text (HTTP {$http}, stop_reason={$stop}): " . substr($resp, 0, 300));
         return null;
     }
 
@@ -140,13 +141,38 @@ function call_anthropic(string $system, array $messages, int $max_tokens, string
  *               error on ANY call still throws, since that applies account-wide).
  */
 function call_llm_parallel(array $requests): array {
+    $results = run_anthropic_batch($requests);
+
+    // Retry any failed request once, sequentially -- concurrent large POST
+    // bodies to the same host have been observed to occasionally return
+    // empty responses (a known class of curl_multi + keep-alive connection
+    // reuse issue), while the identical request succeeds reliably on its own.
+    $failed = array_keys(array_filter($results, fn($r) => $r === null));
+    if (!empty($failed)) {
+        error_log('call_llm_parallel: retrying ' . count($failed) . ' failed request(s) sequentially: ' . implode(',', $failed));
+        foreach ($failed as $i) {
+            $retry = run_anthropic_batch([$requests[$i]]);
+            $results[$i] = $retry[0];
+        }
+    }
+
+    ksort($results);
+    return $results;
+}
+
+/** Runs one round of concurrent Anthropic calls via curl_multi. Each handle gets its own fresh connection (not reused/shared) to avoid cross-request interference under concurrent large POST bodies. */
+function run_anthropic_batch(array $requests): array {
     $mh      = curl_multi_init();
     $handles = [];
     $model   = CLAUDE_SONNET_MODEL;
 
     foreach ($requests as $i => $req) {
         $ch = build_anthropic_handle($req['system'], $req['messages'], $req['max_tokens'] ?? 4000, $model);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 50); // headroom under the ~60s FPM ceiling
+        curl_setopt_array($ch, [
+            CURLOPT_TIMEOUT       => 50, // headroom under the ~60s FPM ceiling
+            CURLOPT_FORBID_REUSE  => true,
+            CURLOPT_FRESH_CONNECT => true,
+        ]);
         curl_multi_add_handle($mh, $ch);
         $handles[$i] = $ch;
     }
@@ -169,7 +195,6 @@ function call_llm_parallel(array $requests): array {
     }
     curl_multi_close($mh);
 
-    ksort($results);
     return $results;
 }
 
