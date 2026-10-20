@@ -20,9 +20,7 @@ function parse_financial_document(
     try {
         $raw_text = extract_pdf_text_smart($file_path);
         $doc_type = detect_document_type($raw_text, $file_name);
-        $prompt   = build_extraction_prompt($raw_text, $doc_type, $file_path);
-        $raw      = call_claude_extraction($prompt);
-        $holdings = validate_extracted_holdings($raw, $doc_type);
+        $holdings = extract_holdings_batched($raw_text, $doc_type, $file_path);
 
         $db->prepare("UPDATE document_queue SET extracted_data=:data, status='pending_confirm' WHERE document_id=:did")
            ->execute([':data' => json_encode($holdings), ':did' => $document_id]);
@@ -195,59 +193,153 @@ function extract_json_array(string $text): ?array {
     return null; // genuine parse failure
 }
 
-function call_claude_extraction(array $prompt): array {
-    // Use Sonnet for complex multi-holding statements and image/vision PDFs.
-    // Use Haiku for simple text-based documents (faster, cheaper).
-    $is_vision   = isset($prompt['user_content'][0]['source']); // base64 PDF block
-    $is_complex  = $prompt['doc_type_hint'] ?? false;           // CAS / PORTFOLIO_VALUATION
-    $model = ($is_vision || $is_complex) ? CLAUDE_SONNET_MODEL : CLAUDE_HAIKU_MODEL;
-    error_log("call_claude_extraction: using {$model} (vision=" . ($is_vision?'y':'n') . " complex=" . ($is_complex?'y':'n') . ")");
+/**
+ * Splits large text-based statements into chunks so no single Claude call's
+ * output takes long enough to risk the hosting's hard ~60s process timeout
+ * (enforced by PHP-FPM itself — not overridable via set_time_limit()), then
+ * runs every chunk CONCURRENTLY via curl_multi. Running them in parallel
+ * matters because even fast individual calls would otherwise add up past
+ * the 60s ceiling if run sequentially once there are more than a few chunks.
+ * Short documents and the vision (no-text) path are unaffected — they just
+ * become a single-item "batch".
+ */
+function extract_holdings_batched(string $text, string $doc_type, string $file_path): array {
+    $complex_types = ['CAS_MUTUAL_FUND', 'PORTFOLIO_VALUATION', 'DEMAT_STATEMENT'];
+    $has_text      = strlen(trim($text)) > 100;
+    $chunk_size    = 8000;
 
-    $payload = [
-        'model'      => $model,
-        'max_tokens' => 8000,           // increased for large statements
-        'system'     => $prompt['system'],
-        'messages'   => [['role' => 'user', 'content' => $prompt['user_content']]],
-    ];
+    $chunks = ($has_text && in_array($doc_type, $complex_types) && strlen($text) > $chunk_size)
+        ? chunk_text_on_lines($text, $chunk_size)
+        : [$text];
 
-    $ch = curl_init('https://api.anthropic.com/v1/messages');
-    curl_setopt_array($ch, [
-        CURLOPT_POST           => true,
-        CURLOPT_POSTFIELDS     => json_encode($payload),
-        CURLOPT_HTTPHEADER     => ['Content-Type: application/json', 'x-api-key: ' . CLAUDE_API_KEY, 'anthropic-version: 2023-06-01'],
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_SSL_VERIFYPEER => false,
-        CURLOPT_CONNECTTIMEOUT => 15,   // fail fast on connection issues
-        CURLOPT_TIMEOUT        => 120,
-    ]);
-    $response = curl_exec($ch);
-    $err      = curl_error($ch);
-    curl_close($ch);
+    if (count($chunks) > 1) {
+        error_log("extract_holdings_batched: split into " . count($chunks) . " chunk(s) of ~{$chunk_size} chars");
+    }
 
-    if ($err) throw new Exception("Connection error: $err");
+    $prompts = array_map(fn($chunk) => build_extraction_prompt($chunk, $doc_type, $file_path), $chunks);
+    $results = call_claude_extraction_parallel($prompts);
 
-    $data = json_decode($response, true);
+    $all_holdings = [];
+    $any_succeeded = false;
+    foreach ($results as $i => $r) {
+        if ($r['error'] !== null) {
+            error_log("extract_holdings_batched: chunk " . ($i + 1) . "/" . count($chunks) . " failed — " . $r['error']);
+            continue;
+        }
+        $any_succeeded = true;
+        $all_holdings = array_merge($all_holdings, $r['holdings']);
+    }
+
+    if (!$any_succeeded) {
+        // Surface the specific reason (e.g. password-protected) rather than
+        // a generic message, so scan-document.php's password detection and
+        // the user-facing error both stay accurate.
+        throw new Exception($results[0]['error'] ?? 'Could not extract holdings from this document.');
+    }
+
+    return validate_extracted_holdings($all_holdings, $doc_type);
+}
+
+/** Split text into ~$max_len chunks, snapping to line boundaries so a row is never cut mid-line. */
+function chunk_text_on_lines(string $text, int $max_len): array {
+    $lines  = explode("\n", $text);
+    $chunks = [];
+    $buf    = '';
+    foreach ($lines as $line) {
+        if ($buf !== '' && strlen($buf) + strlen($line) + 1 > $max_len) {
+            $chunks[] = $buf;
+            $buf = '';
+        }
+        $buf .= ($buf === '' ? '' : "\n") . $line;
+    }
+    if ($buf !== '') $chunks[] = $buf;
+    return $chunks;
+}
+
+/**
+ * Runs N extraction prompts concurrently against the Anthropic API via
+ * curl_multi. Returns one result per prompt, each either
+ * ['holdings' => array, 'error' => null] or ['holdings' => [], 'error' => string] —
+ * a failed chunk never aborts the others.
+ */
+function call_claude_extraction_parallel(array $prompts): array {
+    $mh      = curl_multi_init();
+    $handles = [];
+
+    foreach ($prompts as $i => $prompt) {
+        $is_vision  = isset($prompt['user_content'][0]['source']);
+        $is_complex = $prompt['doc_type_hint'] ?? false;
+        $model = ($is_vision || $is_complex) ? CLAUDE_SONNET_MODEL : CLAUDE_HAIKU_MODEL;
+        error_log("call_claude_extraction_parallel: chunk " . ($i + 1) . "/" . count($prompts) . " using {$model} (vision=" . ($is_vision ? 'y' : 'n') . " complex=" . ($is_complex ? 'y' : 'n') . ")");
+
+        $payload = [
+            'model'      => $model,
+            'max_tokens' => 8000,
+            'system'     => $prompt['system'],
+            'messages'   => [['role' => 'user', 'content' => $prompt['user_content']]],
+        ];
+
+        $ch = curl_init('https://api.anthropic.com/v1/messages');
+        curl_setopt_array($ch, [
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => json_encode($payload),
+            CURLOPT_HTTPHEADER     => ['Content-Type: application/json', 'x-api-key: ' . CLAUDE_API_KEY, 'anthropic-version: 2023-06-01'],
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_CONNECTTIMEOUT => 15,
+            CURLOPT_TIMEOUT        => 50, // must leave headroom under the ~60s FPM ceiling
+        ]);
+        curl_multi_add_handle($mh, $ch);
+        $handles[$i] = $ch;
+    }
+
+    $running = null;
+    do {
+        $status = curl_multi_exec($mh, $running);
+        if ($running > 0) curl_multi_select($mh, 1.0);
+    } while ($running > 0 && $status === CURLM_OK);
+
+    $results = [];
+    foreach ($handles as $i => $ch) {
+        $response = curl_multi_getcontent($ch);
+        $err      = curl_error($ch);
+        curl_multi_remove_handle($mh, $ch);
+        curl_close($ch);
+
+        $results[$i] = extract_one_claude_result($response, $err);
+    }
+    curl_multi_close($mh);
+
+    ksort($results);
+    return $results;
+}
+
+/** Parses a single Claude API response (from either the single or parallel path) into holdings or an error. */
+function extract_one_claude_result(?string $response, string $curl_err): array {
+    if ($curl_err) {
+        return ['holdings' => [], 'error' => "Connection error: {$curl_err}"];
+    }
+
+    $data = json_decode((string)$response, true);
     if (isset($data['error'])) {
         $msg = $data['error']['message'] ?? 'Unknown Claude error';
-        if (stripos($msg, 'password') !== false) throw new Exception("PDF is password protected. " . $msg);
-        throw new Exception("AI error: " . $msg);
+        return ['holdings' => [], 'error' => (stripos($msg, 'password') !== false ? 'PDF is password protected. ' : 'AI error: ') . $msg];
     }
 
     $raw = trim($data['content'][0]['text'] ?? '');
     error_log("Claude extraction response (first 300 chars): " . substr($raw, 0, 300));
 
     if (stripos($raw, 'password protected') !== false || stripos($raw, 'password-protected') !== false) {
-        throw new Exception("PDF is password protected. Please enter the correct password.");
+        return ['holdings' => [], 'error' => 'PDF is password protected. Please enter the correct password.'];
     }
 
     $parsed = extract_json_array($raw);
-
     if ($parsed === null) {
         error_log("Claude extraction failed. Full response: " . substr($raw, 0, 1000));
-        throw new Exception("Could not extract holdings from this document. The statement format may not be supported, or the PDF may be image-based (scanned). Try a text-based PDF.");
+        return ['holdings' => [], 'error' => 'Could not parse a valid holdings list from the AI response.'];
     }
 
-    return $parsed;
+    return ['holdings' => $parsed, 'error' => null];
 }
 
 function validate_extracted_holdings(array $raw, string $doc_type): array {
