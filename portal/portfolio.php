@@ -4,6 +4,7 @@ require_once '../includes/config.php';
 require_once '../includes/db.php';
 require_once '../includes/auth.php';
 require_once '../ai/fund-classifier.php';
+require_once '../includes/fund-matcher.php';
 require_login();
 require_role('client');
 
@@ -120,19 +121,10 @@ if (empty($_SESSION['pf_nav_refreshed_at']) || (time() - $_SESSION['pf_nav_refre
                     continue;
                 }
 
-                $words = array_filter(
-                    explode(' ', strtolower((string)$rf['fund_name'])),
-                    fn($w) => strlen($w) > 3
-                );
-                if (empty($words)) continue;
-                $wc = count($words);
-                foreach ($nav_pool as $np) {
-                    $hits = count(array_filter($words, fn($w) => str_contains($np['name'], $w)));
-                    if ($hits >= max(2, (int)($wc * 0.6)) && $np['nav'] > 0) {
-                        $upd_nav->execute([':nav' => $np['nav'], ':nav2' => $np['nav'], ':id' => $rf['id']]);
-                        $nav_refresh_count++;
-                        break;
-                    }
+                $match = fuzzy_match_fund((string)$rf['fund_name'], $nav_pool, 'name');
+                if ($match && $match['nav'] > 0) {
+                    $upd_nav->execute([':nav' => $match['nav'], ':nav2' => $match['nav'], ':id' => $rf['id']]);
+                    $nav_refresh_count++;
                 }
             }
         }

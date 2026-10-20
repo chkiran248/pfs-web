@@ -4,6 +4,7 @@ if (php_sapi_name() !== 'cli') { http_response_code(403); exit('CLI only.'); }
 
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/fund-matcher.php';
 
 $db    = get_db();
 $today = date('Y-m-d');
@@ -37,16 +38,12 @@ $stmt_upd = $db->prepare("UPDATE fund_recommendations SET current_nav=:nav, last
 
 $updated = 0;
 foreach ($funds as $fund) {
-    $words = array_filter(explode(' ', strtolower($fund['fund_name'])), fn($w) => strlen($w) > 3);
-    foreach ($nav_map as $code => $entry) {
-        $nav_lower   = strtolower($entry['name']);
-        $match_count = count(array_filter($words, fn($w) => str_contains($nav_lower, $w)));
-        if ($match_count >= max(2, (int)(count($words) * 0.6))) {
-            $stmt_nav->execute([':code' => $code, ':name' => $entry['name'], ':nav' => $entry['nav'], ':date' => $entry['date']]);
-            $stmt_upd->execute([':nav' => $entry['nav'], ':id' => $fund['id']]);
-            $updated++;
-            break;
-        }
+    $match = fuzzy_match_fund((string)$fund['fund_name'], $nav_map, 'name');
+    if ($match) {
+        $code = array_search($match, $nav_map, true);
+        $stmt_nav->execute([':code' => $code, ':name' => $match['name'], ':nav' => $match['nav'], ':date' => $match['date']]);
+        $stmt_upd->execute([':nav' => $match['nav'], ':id' => $fund['id']]);
+        $updated++;
     }
 }
 
@@ -61,16 +58,10 @@ if (!empty($wl_names)) {
     $upd_wl    = $db->prepare("UPDATE fund_watchlist SET current_nav = :nav WHERE LOWER(fund_name) = LOWER(:fn)");
     $wl_updated = 0;
     foreach ($wl_names as $wl_name) {
-        $words = array_filter(explode(' ', strtolower((string)$wl_name)), fn($w) => strlen($w) > 3);
-        if (empty($words)) continue;
-        $wc = count($words);
-        foreach ($nav_map as $entry) {
-            $hits = count(array_filter($words, fn($w) => str_contains(strtolower($entry['name']), $w)));
-            if ($hits >= max(2, (int)($wc * 0.6))) {
-                $upd_wl->execute([':nav' => $entry['nav'], ':fn' => $wl_name]);
-                $wl_updated += $upd_wl->rowCount();
-                break;
-            }
+        $match = fuzzy_match_fund((string)$wl_name, $nav_map, 'name');
+        if ($match) {
+            $upd_wl->execute([':nav' => $match['nav'], ':fn' => $wl_name]);
+            $wl_updated += $upd_wl->rowCount();
         }
     }
     echo "Updated $wl_updated watchlist NAV(s)\n";

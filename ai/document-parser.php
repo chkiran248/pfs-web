@@ -362,6 +362,15 @@ function validate_extracted_holdings(array $raw, string $doc_type): array {
         $h['fund_name']       = substr(htmlspecialchars((string)$h['fund_name'], ENT_QUOTES, 'UTF-8'), 0, 200);
         $h['fund_house']      = substr(htmlspecialchars((string)($h['fund_house'] ?? ''), ENT_QUOTES, 'UTF-8'), 0, 100);
 
+        // Column-confusion guard: if units_held exactly equals invested_amount,
+        // the AI has almost certainly mis-read an "Amount" column into the
+        // "Units" field -- a genuine unit count coinciding exactly with a
+        // rupee amount is implausible. Treat units_held as unreliable rather
+        // than let it multiply into a wildly wrong current_value below.
+        if ($h['units_held'] > 0 && $h['units_held'] == $h['invested_amount']) {
+            $h['units_held'] = 0.0;
+        }
+
         // Auto-fill missing values
         if ($h['invested_amount'] === 0.0 && $h['units_held'] > 0 && $h['avg_nav'] > 0)
             $h['invested_amount'] = round($h['units_held'] * $h['avg_nav'], 2);
@@ -369,6 +378,15 @@ function validate_extracted_holdings(array $raw, string $doc_type): array {
             $h['current_value'] = round($h['units_held'] * $h['current_nav'], 2);
         if ($h['current_value'] === 0.0)
             $h['current_value'] = $h['invested_amount'];
+
+        // Sanity cap: a units x NAV-derived current_value more than 20x the
+        // invested amount is far beyond any plausible real mutual fund return
+        // and signals bad source data rather than a genuine gain. Fall back
+        // to invested_amount (no fabricated gain/loss) rather than import it.
+        if ($h['invested_amount'] > 0 && $h['current_value'] > $h['invested_amount'] * 20) {
+            error_log("validate_extracted_holdings: implausible current_value ({$h['current_value']} vs invested {$h['invested_amount']}) for '{$h['fund_name']}' -- resetting to invested_amount");
+            $h['current_value'] = $h['invested_amount'];
+        }
 
         $valid[] = $h;
     }

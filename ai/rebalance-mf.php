@@ -8,6 +8,7 @@ require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/ai-helpers.php';
 require_once __DIR__ . '/fund-classifier.php';
 require_once __DIR__ . '/../includes/mf-api.php';
+require_once __DIR__ . '/../includes/fund-matcher.php';
 
 // Discard anything the includes may have output, then set our content type
 ob_end_clean();
@@ -71,16 +72,10 @@ if (!empty($needs_sc)) {
         $upd_sc = $db->prepare("UPDATE portfolio_entries SET scheme_code = ? WHERE user_id = ? AND fund_name = ? AND (scheme_code IS NULL OR scheme_code = '')");
         foreach ($all_holdings as &$h) {
             if (!empty($h['scheme_code'])) continue;
-            $words = array_filter(explode(' ', strtolower((string)$h['fund_name'])), fn($w) => strlen($w) > 3);
-            if (empty($words)) continue;
-            $wc = count($words);
-            foreach ($amfi_pool as $entry) {
-                $hits = count(array_filter($words, fn($w) => str_contains($entry['lname'], $w)));
-                if ($hits >= max(2, (int)($wc * 0.6))) {
-                    $h['scheme_code'] = $entry['fund_code'];
-                    $upd_sc->execute([$entry['fund_code'], $user_id, $h['fund_name']]);
-                    break;
-                }
+            $match = fuzzy_match_fund((string)$h['fund_name'], $amfi_pool, 'lname');
+            if ($match) {
+                $h['scheme_code'] = $match['fund_code'];
+                $upd_sc->execute([$match['fund_code'], $user_id, $h['fund_name']]);
             }
         }
         unset($h);

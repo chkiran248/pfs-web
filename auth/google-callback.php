@@ -92,7 +92,7 @@ try {
 
         if ($user) {
             // Link Google ID to existing account
-            $db->prepare("UPDATE users SET google_id = :gid, email_verified = 1, updated_at = NOW() WHERE id = :id")
+            $db->prepare("UPDATE users SET google_id = :gid, email_verified = 1 WHERE id = :id")
                ->execute([':gid' => $google_id, ':id' => $user['id']]);
         } else {
             // 3. New user — create account (no password required)
