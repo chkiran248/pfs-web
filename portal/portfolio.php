@@ -78,7 +78,7 @@ if (empty($_SESSION['pf_nav_refreshed_at']) || (time() - $_SESSION['pf_nav_refre
     // Refresh MF-type holdings that either have units (value needs recompute)
     // or a resolved scheme_code (NAV-only refresh — units were never captured at import)
     $rf_entries = $db->query(
-        "SELECT id, fund_name, units_held, scheme_code FROM portfolio_entries
+        "SELECT id, fund_name, units_held, scheme_code, invested_amount, current_value FROM portfolio_entries
          WHERE user_id = {$uid}
            AND fund_type IN ('equity','debt','hybrid','elss','index','international','liquid')
            AND (units_held > 0 OR (scheme_code IS NOT NULL AND scheme_code <> ''))"
@@ -110,22 +110,33 @@ if (empty($_SESSION['pf_nav_refreshed_at']) || (time() - $_SESSION['pf_nav_refre
             // zero-unit holdings (units never captured at import) only get current_nav —
             // current_value stays as originally imported so it isn't zeroed out.
             $upd_nav = $db->prepare(
-                "UPDATE portfolio_entries SET current_nav = :nav, current_value = IF(units_held > 0, units_held * :nav2, current_value) WHERE id = :id"
+                "UPDATE portfolio_entries SET current_nav = :nav, current_value = :cur_val WHERE id = :id"
             );
             foreach ($rf_entries as $rf) {
                 // Exact scheme_code match is far more reliable than fuzzy name matching
                 if (!empty($rf['scheme_code']) && isset($nav_by_code[$rf['scheme_code']])) {
                     $nav = $nav_by_code[$rf['scheme_code']];
-                    $upd_nav->execute([':nav' => $nav, ':nav2' => $nav, ':id' => $rf['id']]);
-                    $nav_refresh_count++;
-                    continue;
+                } else {
+                    $match = fuzzy_match_fund((string)$rf['fund_name'], $nav_pool, 'name');
+                    $nav = ($match && $match['nav'] > 0) ? $match['nav'] : null;
+                }
+                if ($nav === null) continue;
+
+                $units     = (float)$rf['units_held'];
+                $invested  = (float)$rf['invested_amount'];
+                // units_held=0 holdings: leave current_value exactly as it was imported.
+                $cur_val   = $units > 0 ? $units * $nav : (float)$rf['current_value'];
+
+                // Sanity cap: a units x NAV-derived value more than 20x invested is
+                // beyond any plausible real return and signals a bad match, not a
+                // genuine gain -- fall back to invested_amount instead of importing it.
+                if ($units > 0 && $invested > 0 && $cur_val > $invested * 20) {
+                    error_log("portfolio NAV refresh: implausible current_value ({$cur_val} vs invested {$invested}) for holding id={$rf['id']} -- resetting to invested_amount");
+                    $cur_val = $invested;
                 }
 
-                $match = fuzzy_match_fund((string)$rf['fund_name'], $nav_pool, 'name');
-                if ($match && $match['nav'] > 0) {
-                    $upd_nav->execute([':nav' => $match['nav'], ':nav2' => $match['nav'], ':id' => $rf['id']]);
-                    $nav_refresh_count++;
-                }
+                $upd_nav->execute([':nav' => $nav, ':cur_val' => $cur_val, ':id' => $rf['id']]);
+                $nav_refresh_count++;
             }
         }
     }
