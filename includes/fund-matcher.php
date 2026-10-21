@@ -27,7 +27,15 @@ const FUND_MATCH_BOILERPLATE = ['fund','plan','option','direct','regular','growt
 function fuzzy_match_fund(string $fund_name, array $pool, string $name_key = 'name'): ?array {
     // >2 (not >3) so 3-letter category words like "mid"/"cap" aren't discarded --
     // those are often exactly the word that distinguishes otherwise-similar schemes.
-    $words = array_filter(explode(' ', strtolower($fund_name)), fn($w) => strlen($w) > 2);
+    // Boilerplate is excluded from the target's own word list too (not just
+    // the candidate's "extra word" check below) -- otherwise a target that
+    // happens to include e.g. "Direct" ends up requiring a stricter match
+    // than one that doesn't, purely based on which side the boilerplate word
+    // landed on, when it should be noise regardless of which name has it.
+    $words = array_filter(
+        explode(' ', strtolower($fund_name)),
+        fn($w) => strlen($w) > 2 && !in_array($w, FUND_MATCH_BOILERPLATE, true)
+    );
     if (empty($words)) return null;
     $wc = count($words);
     $required = $wc <= 4 ? $wc : max(4, (int)ceil($wc * 0.85));

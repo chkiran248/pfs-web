@@ -812,7 +812,11 @@ async function confirmHoldings() {
 
   closeScanModal();
   if (r.success) {
-    addBubble('assistant', `✅ Successfully added **${r.added} holding${r.added!==1?'s':''}** to your portfolio from the uploaded document!\n\nYour portfolio dashboard has been updated. Would you like me to analyse your updated portfolio?`, false);
+    const parts=[];
+    if (r.added)   parts.push(`added **${r.added}** new holding${r.added!==1?'s':''}`);
+    if (r.updated) parts.push(`updated **${r.updated}** existing holding${r.updated!==1?'s':''} with the latest figures`);
+    const summary = parts.length ? parts.join(' and ') : 'processed your document';
+    addBubble('assistant', `✅ Successfully ${summary} from the uploaded document!\n\nYour portfolio dashboard has been updated. Would you like me to analyse your updated portfolio?`, false);
     scrollBottom();
   } else {
     addBubble('assistant','⚠ ' + (r.message||'Could not add holdings. Please try again.'), false);
