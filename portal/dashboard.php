@@ -537,6 +537,41 @@ if (!$has_insurance):
   <?php endif; ?>
 </div>
 
+<!-- Security & Trust -->
+<div class="portal-card" style="margin-top:1.5rem">
+  <div class="card-title" style="margin-bottom:1rem">Security &amp; Trust</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.25rem">
+    <div style="display:flex;gap:0.75rem;align-items:flex-start">
+      <i class="bi bi-lock-fill" style="font-size:1.1rem;color:var(--lime);margin-top:0.15rem;flex-shrink:0"></i>
+      <div>
+        <div style="font-size:0.85rem;font-weight:600;color:var(--cream);margin-bottom:0.2rem">Bank-Grade Security</div>
+        <div style="font-size:0.78rem;color:var(--text-secondary);line-height:1.55">Passwords are bcrypt-encrypted, never stored in plain text. All data is transmitted over secure HTTPS connections.</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:0.75rem;align-items:flex-start">
+      <i class="bi bi-shield-check" style="font-size:1.1rem;color:var(--lime);margin-top:0.15rem;flex-shrink:0"></i>
+      <div>
+        <div style="font-size:0.85rem;font-weight:600;color:var(--cream);margin-bottom:0.2rem">We Never Touch Your Money</div>
+        <div style="font-size:0.78rem;color:var(--text-secondary);line-height:1.55">As an AMFI Registered Mutual Fund Distributor, we have zero custody or access to move your funds. Transactions happen directly with your fund house or broker.</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:0.75rem;align-items:flex-start">
+      <i class="bi bi-clipboard-check" style="font-size:1.1rem;color:var(--lime);margin-top:0.15rem;flex-shrink:0"></i>
+      <div>
+        <div style="font-size:0.85rem;font-weight:600;color:var(--cream);margin-bottom:0.2rem">Advisory &amp; Tracking Only</div>
+        <div style="font-size:0.78rem;color:var(--text-secondary);line-height:1.55">This portal helps you plan and track your investments. We don't execute trades or manage money on your behalf.</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:0.75rem;align-items:flex-start">
+      <i class="bi bi-folder-check" style="font-size:1.1rem;color:var(--lime);margin-top:0.15rem;flex-shrink:0"></i>
+      <div>
+        <div style="font-size:0.85rem;font-weight:600;color:var(--cream);margin-bottom:0.2rem">Your Documents, Private to You</div>
+        <div style="font-size:0.78rem;color:var(--text-secondary);line-height:1.55">Uploaded statements are stored securely in your private document vault — accessible only to you and your advisor.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <?php if (!empty($allocation)): ?>
 <script>
 document.addEventListener('DOMContentLoaded', function () {

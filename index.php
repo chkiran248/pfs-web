@@ -597,6 +597,42 @@ $contact_csrf = $_SESSION['contact_csrf'];
   </div>
 </section>
 
+<!-- SECURITY & TRUST -->
+<section class="intelligence" id="security">
+  <div class="container">
+    <div class="section-header">
+      <p class="section-eyebrow">SECURITY &amp; TRUST</p>
+      <h2 class="section-title">Your Data.<br /><em>Secured.</em></h2>
+      <p class="section-sub">Prime Financials is built on three principles: your data stays protected, your money stays entirely in your control, and every recommendation stays within advisory boundaries.</p>
+    </div>
+    <div class="visual-card" style="max-width:860px;margin:0 auto">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:2rem">
+        <div style="display:flex;gap:0.9rem;align-items:flex-start">
+          <i class="bi bi-lock-fill" style="font-size:1.3rem;color:var(--mid);margin-top:0.2rem;flex-shrink:0"></i>
+          <div>
+            <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:600;color:var(--cream);margin-bottom:0.5rem;line-height:1.3">Bank-Grade Security</h3>
+            <p style="font-size:0.9rem;color:var(--text-secondary);line-height:1.7;margin:0">Your password is never stored in readable form — it's protected with bcrypt encryption. Every connection is secured with HTTPS.</p>
+          </div>
+        </div>
+        <div style="display:flex;gap:0.9rem;align-items:flex-start">
+          <i class="bi bi-shield-check" style="font-size:1.3rem;color:var(--mid);margin-top:0.2rem;flex-shrink:0"></i>
+          <div>
+            <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:600;color:var(--cream);margin-bottom:0.5rem;line-height:1.3">Zero Custody of Your Money</h3>
+            <p style="font-size:0.9rem;color:var(--text-secondary);line-height:1.7;margin:0">As an AMFI Registered Mutual Fund Distributor, we never have access to move or hold your funds. Every transaction happens directly with your fund house or broker.</p>
+          </div>
+        </div>
+        <div style="display:flex;gap:0.9rem;align-items:flex-start">
+          <i class="bi bi-clipboard-check" style="font-size:1.3rem;color:var(--mid);margin-top:0.2rem;flex-shrink:0"></i>
+          <div>
+            <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:600;color:var(--cream);margin-bottom:0.5rem;line-height:1.3">Advisory &amp; Tracking Platform</h3>
+            <p style="font-size:0.9rem;color:var(--text-secondary);line-height:1.7;margin:0">We help you plan, track, and optimise your investments. We do not execute trades or manage money on your behalf.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- FOOTER -->
 <footer class="footer">
   <div class="container footer__inner">
