@@ -41,9 +41,20 @@ $stmt = $db->prepare("SELECT AVG(DATEDIFF(NOW(), purchase_date)) as avg_days FRO
 $stmt->execute([':uid' => $uid]);
 $avg_days = (float)($stmt->fetchColumn() ?: 0);
 $xirr = 0;
-if ($avg_days > 0 && $total_invested > 0 && $total_current > 0) {
-    $years = $avg_days / 365;
-    $xirr  = (pow($total_current / $total_invested, 1 / $years) - 1) * 100;
+$xirr_reliable = false;
+// A holding period under ~30 days makes 1/years an extreme exponent --
+// raising even a modest gain ratio to that power explodes into a
+// nonsensical result (seen in production: a multi-quadrillion-percent
+// "XIRR"). Treat anything shorter as not reliably annualisable.
+$years = $avg_days / 365;
+if ($years >= (30 / 365) && $total_invested > 0 && $total_current > 0) {
+    $computed = (pow($total_current / $total_invested, 1 / $years) - 1) * 100;
+    // Extra sanity cap: treat anything beyond any real fund's plausible
+    // annualised return as unreliable too, rather than display it.
+    if (abs($computed) <= 1000) {
+        $xirr = $computed;
+        $xirr_reliable = true;
+    }
 }
 
 // ── Retirement Income (6% SWR on investable corpus) ──────
@@ -398,7 +409,7 @@ if (!$has_insurance):
   <div class="stat-box">
     <div class="stat-label">Est. XIRR</div>
     <div class="stat-value <?= $xirr >= 0 ? 'positive' : 'negative' ?>">
-      <?= $total_invested > 0 ? number_format($xirr, 2) . '%' : '—' ?>
+      <?= $xirr_reliable ? number_format($xirr, 2) . '%' : '—' ?>
     </div>
     <div class="stat-sub">Annualised return</div>
   </div>
