@@ -191,10 +191,21 @@ function run_mf_rebalance_analysis(PDO $db, int $user_id): array {
     $all_verdicts = [];
     $overall_data = null;
 
-    // Single call if <=100, batched (sequential) beyond that -- the only
-    // pattern proven reliable on this host (see ai-helpers.php call_llm_parallel
-    // doc comment for the curl_multi failure history).
-    $batch_size  = 100;
+    // Single call if <=15 holdings, batched (sequential) beyond that. A
+    // single call covering the whole portfolio -- summary, allocation
+    // breakdown, AND every fund's verdict -- needs roughly 150-300 output
+    // tokens per fund on top of that overhead; past ~15-20 funds it reliably
+    // burns through the 6000 max_tokens budget before finishing, producing
+    // truncated/unparseable JSON (confirmed: a 40-fund run used all 6000
+    // tokens and got cut off mid-summary, before the holdings array even
+    // started). The batched path's lighter per-batch schema (just a verdict
+    // array, no portfolio-level overhead) comfortably fits many more funds
+    // per call. Batching was previously avoided here because this endpoint
+    // ran synchronously inline with a web request capped at ~60s total --
+    // several sequential batch calls could exceed that. Now that the full
+    // analysis runs via the CLI queue processor (no execution-time ceiling),
+    // that constraint is gone and batching is the correct default again.
+    $batch_size  = 15;
     $batches     = array_chunk($all_holdings, $batch_size);
     $num_batches = count($batches);
 
