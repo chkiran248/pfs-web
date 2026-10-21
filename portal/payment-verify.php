@@ -81,7 +81,7 @@ if (!$order_id) {
                         <p>You now have full access to PrimoAI, Portfolio Rebalancer, Watchlists, Document Vault, and all premium tools.</p>
                         <p><a href='" . SITE_URL . "/portal/dashboard.php' style='background:#2E8540;color:#fff;padding:0.6rem 1.25rem;border-radius:6px;text-decoration:none;display:inline-block'>Go to Portal →</a></p>
                         <p style='font-size:0.8rem;color:#999'>Questions? WhatsApp us at +91 99800 01338 or reply to this email.</p>";
-                        send_email($user['email'], '[Prime Financials] Prime Member Subscription Activated', $email_body, "Your Prime Member subscription is active. Order ID: {$order_id}");
+                        send_email($user['email'], 'Prime Member Subscription Activated', $email_body, "Your Prime Member subscription is active. Order ID: {$order_id}");
                     }
                 } else {
                     $result  = 'error';

@@ -259,7 +259,10 @@ $plain = "Prime Financials — {$title}\nGenerated: {$date}\n\nHi {$user_name},\
 // actually reflects success. Reporting success without checking it meant a
 // real SMTP failure here was silently shown to the client as "Email Sent!".
 try {
-    $sent = send_email($user_email, "[Prime Financials] {$title} — {$date}", $email_html, $plain);
+    // send_email() already prepends "[Prime Financials] " to whatever subject
+    // is passed in -- doing it here too doubled the prefix in the actual
+    // email subject line.
+    $sent = send_email($user_email, "{$title} — {$date}", $email_html, $plain);
     echo json_encode($sent
         ? ['success' => true]
         : ['success' => false, 'error' => 'Failed to send email. Please try again.']);
