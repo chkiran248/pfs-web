@@ -63,7 +63,8 @@ function nav_link(string $href, string $icon, string $label, string $current): s
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
 </head>
-<body>
+<body<?= !empty($show_onboarding_tour) ? ' data-start-tour="1"' : '' ?>>
+<script>window.PF_SITE_URL = <?= json_encode(SITE_URL) ?>;</script>
 
 <!-- ── SESSION IDLE TIMEOUT MODAL ──────────────────────────── -->
 <div id="idle-overlay" style="display:none;position:fixed;inset:0;background:rgba(7,14,7,0.85);backdrop-filter:blur(6px);z-index:9999;align-items:center;justify-content:center">
@@ -241,6 +242,7 @@ function nav_link(string $href, string $icon, string $label, string $current): s
 
       <div class="header-right">
         <button class="theme-toggle" id="theme-toggle" title="Toggle theme">☀️</button>
+        <button class="theme-toggle" id="tour-relaunch-btn" title="Take a tour" onclick="window.relaunchTour && window.relaunchTour()"><i class="bi bi-compass"></i></button>
 
         <div class="header-user">
           <div class="user-avatar"><?= htmlspecialchars($initials, ENT_QUOTES, 'UTF-8') ?></div>

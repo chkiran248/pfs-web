@@ -217,6 +217,7 @@ try {
 }
 
 $page_title = 'Dashboard — Prime Financials';
+$show_onboarding_tour = empty($_SESSION['has_seen_tour']) || isset($_GET['start_tour']);
 require_once '../includes/portal-header.php';
 ?>
 
@@ -388,7 +389,7 @@ if (!$has_insurance):
 </style>
 
 <!-- Stat boxes -->
-<div class="stats-grid">
+<div class="stats-grid" id="tour-stats">
   <div class="stat-box">
     <div class="stat-label">Total Invested</div>
     <div class="stat-value neutral"><?= format_inr($total_invested) ?></div>
@@ -469,7 +470,7 @@ if (!$has_insurance):
 </div>
 
 <!-- Primo CTA -->
-<div class="portal-card" style="margin-top:1.5rem;background:linear-gradient(135deg,var(--surface-1),rgba(27,94,42,0.15));border-color:rgba(141,198,63,0.25)">
+<div class="portal-card" id="tour-primo-card" style="margin-top:1.5rem;background:linear-gradient(135deg,var(--surface-1),rgba(27,94,42,0.15));border-color:rgba(141,198,63,0.25)">
   <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
     <div style="display:flex;align-items:center;gap:1rem">
       <div style="font-size:2rem;color:var(--lime)">✦</div>
@@ -488,7 +489,7 @@ if (!$has_insurance):
 <style>.sugg-pill{font-size:0.78rem;padding:0.35rem 0.75rem;border:1px solid var(--border);border-radius:20px;background:var(--surface-2);color:var(--text-secondary);cursor:pointer;transition:all 0.15s;}.sugg-pill:hover{border-color:var(--mid);color:var(--cream);}</style>
 
 <!-- Quick tools strip -->
-<div class="portal-card" style="margin-top:1.5rem">
+<div class="portal-card" id="tour-quick-tools" style="margin-top:1.5rem">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
     <div class="card-title" style="margin-bottom:0">Quick Tools</div>
     <a href="<?= SITE_URL ?>/portal/calculators.php" class="auth-link" style="font-size:0.8rem">View all →</a>

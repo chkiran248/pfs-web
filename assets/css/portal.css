@@ -1308,3 +1308,68 @@ h1, h2, h3, h4, h5 {
 [data-theme="light"] .bottom-nav {
   box-shadow: 0 -2px 12px rgba(0,0,0,0.08);
 }
+
+/* ── ONBOARDING TOUR ── */
+.tour-overlay { position: fixed; inset: 0; z-index: 9500; }
+.tour-clickblock { position: fixed; inset: 0; z-index: 9500; background: transparent; }
+.tour-spotlight {
+  position: fixed;
+  border-radius: 10px;
+  border: 2px solid var(--lime);
+  box-shadow: 0 0 0 4000px rgba(7,14,7,0.72);
+  pointer-events: none;
+  transition: top 0.3s ease, left 0.3s ease, width 0.3s ease, height 0.3s ease;
+  z-index: 9501;
+}
+.tour-tooltip {
+  position: fixed;
+  z-index: 9502;
+  width: 300px;
+  max-width: calc(100vw - 32px);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.45);
+  transition: top 0.3s ease, left 0.3s ease;
+}
+.tour-progress {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.62rem;
+  color: var(--lime);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin-bottom: 0.5rem;
+}
+.tour-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--cream);
+  margin: 0 0 0.5rem;
+  line-height: 1.25;
+}
+.tour-body {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0 0 1rem;
+}
+.tour-actions { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.tour-actions-right { display: flex; gap: 0.5rem; }
+.tour-btn {
+  border: none;
+  border-radius: 7px;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.8rem;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.tour-btn--skip { background: transparent; color: var(--text-muted); padding-left: 0; }
+.tour-btn--skip:hover { color: var(--text-secondary); }
+.tour-btn--back { background: transparent; color: var(--lime); border: 1px solid var(--lime); }
+.tour-btn--back:hover { background: var(--mid-pale); }
+.tour-btn--next { background: var(--mid); color: #fff; }
+.tour-btn--next:hover { background: var(--bright); }

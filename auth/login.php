@@ -61,6 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $_SESSION['user_name']  = $user['full_name'];
                         $_SESSION['user_email'] = $user['email'];
                         $_SESSION['login_time'] = time();
+                        $_SESSION['has_seen_tour'] = (bool)($user['has_seen_tour'] ?? 1);
 
                         // Record session in DB
                         $token   = bin2hex(random_bytes(32));
