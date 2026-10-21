@@ -43,7 +43,14 @@ $prof_stmt = $db->prepare("SELECT risk_profile, life_stage, annual_income FROM u
 $prof_stmt->execute([':uid'=>$user_id]);
 $profile = $prof_stmt->fetch() ?: [];
 
-// 2. ALL MF holdings (no cap — batch processing handles large portfolios)
+// 2. ALL MF holdings with an actual investment (no cap — batch processing
+// handles large portfolios). Zero-invested_amount rows are excluded: these
+// are typically leftover artifacts from CAS extraction picking up a fund
+// name mentioned in disclosures/fine print with no real position behind
+// it -- there's nothing to rebalance with zero investment, and including
+// them doubled the AI's required output for one real account (81 total,
+// only 39 with money actually in them), pushing a single analysis call
+// past the hosting's hard execution-time ceiling.
 $hold_stmt = $db->prepare(
     "SELECT fund_name, fund_house, fund_type, invested_amount, current_value,
             units_held, avg_nav, current_nav, purchase_date, sip_active, sip_amount,
@@ -51,13 +58,14 @@ $hold_stmt = $db->prepare(
      FROM portfolio_entries
      WHERE user_id=:uid
      AND fund_type IN ('equity','debt','hybrid','elss','index','international','liquid','gold')
+     AND invested_amount > 0
      ORDER BY current_value DESC"
 );
 $hold_stmt->execute([':uid'=>$user_id]);
 $all_holdings = $hold_stmt->fetchAll();
 
 if (empty($all_holdings)) {
-    exit(json_encode(['success'=>false,'error'=>'No mutual fund holdings found. Add holdings via Portfolio page or upload a CAS statement via PrimoAI.']));
+    exit(json_encode(['success'=>false,'error'=>'No mutual fund holdings with an active investment found. Add holdings via Portfolio page or upload a CAS statement via PrimoAI.']));
 }
 
 // ── Resolve scheme codes from nav_history ─────────────────────────────
@@ -207,6 +215,8 @@ Aggressive:   Equity MF 80% / Debt MF 15% / Others 5%
 
 For each fund evaluate using the ACTUAL return data provided (1yr/3yr CAGR vs benchmark). Do NOT rely on training knowledge for fund performance — use only the numbers given. Compare each fund's 1yr and 3yr CAGR to its benchmark. Flag underperformers where fund CAGR trails benchmark by >2% over 3yr. Also evaluate: overlap (if two funds in same category), weight concentration (flag >20%), expense ratio, category fit for risk profile, SIP continuation. Where return data shows N/A, state clearly that performance could not be verified.
 
+Keep each fund's \"reason\" and \"action_detail\" to ONE short sentence (15 words max) — this report may cover many funds and must stay concise.
+
 Verdict options: hold / buy_more / switch / sell
 SIP options: continue / increase / decrease / stop
 
@@ -241,7 +251,7 @@ if ($num_batches === 1) {
 } else {
     // Batched fallback for portfolios over 100 holdings (rare). Plain
     // sequential calls -- the one pattern actually proven reliable here.
-    $batch_system = "You are a mutual fund portfolio analyst. For each fund in the list, return ONLY a JSON array of verdict objects. No overall summary — just the holdings array. Start with [ end with ].";
+    $batch_system = "You are a mutual fund portfolio analyst. For each fund in the list, return ONLY a JSON array of verdict objects. No overall summary — just the holdings array. Keep \"reason\" and \"action_detail\" to ONE short sentence (15 words max). Start with [ end with ].";
 
     foreach ($batches as $b_idx => $batch) {
         $bt = build_holdings_text($batch, $total_current, $bench_cagr, $bench_map);
