@@ -849,4 +849,12 @@ async function confirmHoldings() {
   </div>
 </div>
 
+<!-- Security & Trust (short form) -->
+<div style="display:flex;flex-wrap:wrap;gap:0.5rem 1.5rem;justify-content:center;align-items:center;margin-top:1.25rem;padding:0.7rem 1rem;background:var(--surface-2);border:1px solid var(--border-light);border-radius:8px;font-size:0.72rem;color:var(--text-secondary)">
+  <span><i class="bi bi-lock-fill" style="color:var(--lime);margin-right:0.35rem"></i>Bank-grade security</span>
+  <span><i class="bi bi-shield-check" style="color:var(--lime);margin-right:0.35rem"></i>Zero custody of your money</span>
+  <span><i class="bi bi-clipboard-check" style="color:var(--lime);margin-right:0.35rem"></i>Advisory &amp; tracking only</span>
+  <span><i class="bi bi-folder-check" style="color:var(--lime);margin-right:0.35rem"></i>Your documents, private to you</span>
+</div>
+
 <?php require_once '../includes/portal-footer.php'; ?>
