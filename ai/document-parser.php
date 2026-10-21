@@ -206,7 +206,7 @@ function extract_json_array(string $text): ?array {
 function extract_holdings_batched(string $text, string $doc_type, string $file_path): array {
     $complex_types = ['CAS_MUTUAL_FUND', 'PORTFOLIO_VALUATION', 'DEMAT_STATEMENT'];
     $has_text      = strlen(trim($text)) > 100;
-    $chunk_size    = 8000;
+    $chunk_size    = 12000; // fewer boundaries = fewer chances to lose a holding at a cut
 
     $chunks = ($has_text && in_array($doc_type, $complex_types) && strlen($text) > $chunk_size)
         ? chunk_text_on_lines($text, $chunk_size)
@@ -240,18 +240,49 @@ function extract_holdings_batched(string $text, string $doc_type, string $file_p
     return validate_extracted_holdings($all_holdings, $doc_type);
 }
 
-/** Split text into ~$max_len chunks, snapping to line boundaries so a row is never cut mid-line. */
-function chunk_text_on_lines(string $text, int $max_len): array {
+/**
+ * Split text into ~$max_len chunks. Prefers cutting at a blank line within a
+ * bounded lookahead window past the target size, since blank lines typically
+ * separate distinct records (one fund's entry from the next) in PDF-extracted
+ * text -- cutting there instead of at an arbitrary line reduces the chance of
+ * slicing a single multi-line holding's record in half, which was observed
+ * to silently drop real holdings from a scan's results (the AI can't
+ * recognise a fragment of a record as a complete one, so it just omits it).
+ * Falls back to cutting immediately at the line boundary if no blank line
+ * appears within the lookahead window, to avoid unbounded chunk growth.
+ */
+function chunk_text_on_lines(string $text, int $max_len, int $lookahead = 3000): array {
     $lines  = explode("\n", $text);
     $chunks = [];
     $buf    = '';
-    foreach ($lines as $line) {
-        if ($buf !== '' && strlen($buf) + strlen($line) + 1 > $max_len) {
-            $chunks[] = $buf;
-            $buf = '';
-        }
+    $i      = 0;
+    $n      = count($lines);
+
+    while ($i < $n) {
+        $line = $lines[$i];
         $buf .= ($buf === '' ? '' : "\n") . $line;
+        $i++;
+
+        if (strlen($buf) <= $max_len) continue;
+
+        // Over target size -- look ahead for the nearest blank line to cut at.
+        // Either way, every line consumed during the lookahead (whether a
+        // blank line was found or not) must end up in $extended -- $i has
+        // already moved past them, so using the original $buf here would
+        // silently drop those lines from every chunk entirely.
+        $extended = $buf;
+        $lookahead_used = 0;
+        while ($i < $n && $lookahead_used < $lookahead) {
+            $next = $lines[$i];
+            if (trim($next) === '') break; // natural break — stop extending, cut here
+            $extended .= "\n" . $next;
+            $lookahead_used += strlen($next) + 1;
+            $i++;
+        }
+        $chunks[] = $extended;
+        $buf = '';
     }
+
     if ($buf !== '') $chunks[] = $buf;
     return $chunks;
 }
