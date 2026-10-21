@@ -254,10 +254,16 @@ $email_html = '<!DOCTYPE html><html lang="en">
 
 $plain = "Prime Financials — {$title}\nGenerated: {$date}\n\nHi {$user_name},\n\nYour portfolio analysis report is attached. Please view this email in HTML format for the best experience.\n\n{$disclaimer}\n\nPrime Financials · support@primefin.in · +91 9980001338 · primefin.in";
 
+// send_email() catches its own PHPMailer exceptions internally and returns
+// bool -- it never throws, so the return value (not a catch block) is what
+// actually reflects success. Reporting success without checking it meant a
+// real SMTP failure here was silently shown to the client as "Email Sent!".
 try {
-    send_email($user_email, "[Prime Financials] {$title} — {$date}", $email_html, $plain);
-    echo json_encode(['success' => true]);
-} catch (\Exception $e) {
+    $sent = send_email($user_email, "[Prime Financials] {$title} — {$date}", $email_html, $plain);
+    echo json_encode($sent
+        ? ['success' => true]
+        : ['success' => false, 'error' => 'Failed to send email. Please try again.']);
+} catch (\Throwable $e) {
     error_log('Rebalancer email error: ' . $e->getMessage());
     echo json_encode(['success' => false, 'error' => 'Failed to send email. Please try again.']);
 }
