@@ -501,15 +501,25 @@ function startMFPolling(jobId) {
   }, 4000);
 }
 
-// On page load, resume polling if a job is already queued/processing
-// (e.g. the user navigated away and came back).
+// On page load, resume polling if a job is already queued/processing (e.g.
+// the user navigated away and came back), or redisplay the report if the
+// last job already completed -- otherwise a page reload after completion
+// loses the rendered report (and with it the Email/PDF buttons) with no way
+// to get back to it short of spending another full-analysis run.
 (async function resumeMFPollingIfActive() {
-  if (!document.getElementById('runMF')) return;
+  const btn  = document.getElementById('runMF');
+  const body = document.getElementById('mfResultsArea');
+  if (!btn || !body) return;
   try {
     const resp = await fetch(`${SITE_URL_JS}/ai/rebalance-mf-status.php`);
     const r = await resp.json();
-    if (r.success && (r.status === 'queued' || r.status === 'processing')) {
+    if (!r.success) return;
+    if (r.status === 'queued' || r.status === 'processing') {
       startMFPolling(r.job_id);
+    } else if (r.status === 'completed' && r.data) {
+      window._rbMFData = r.data;
+      renderMF(r.data, body);
+      btn.textContent = 'Re-run →';
     }
   } catch (err) { /* ignore — just show the normal idle state */ }
 })();
