@@ -28,32 +28,16 @@ if ($today_runs >= 5) {
     exit(json_encode(['success'=>false,'error'=>'Daily limit reached (5 runs/day). Try again tomorrow.']));
 }
 
-// 1. All 'equity' type holdings
-$hold_stmt = $db->prepare("SELECT fund_name, fund_house, fund_type, invested_amount, current_value, units_held, avg_nav, current_nav, purchase_date FROM portfolio_entries WHERE user_id=:uid AND fund_type='equity' ORDER BY current_value DESC LIMIT 50");
+// 1. Individual stock holdings -- asset_type is the authoritative category
+// (captured from the user's own Step 1 selection on the Portfolio page),
+// replacing the old fund-name keyword heuristic that could misclassify a
+// stock whose name happened to contain a word like "fund".
+$hold_stmt = $db->prepare("SELECT fund_name, fund_house, fund_type, invested_amount, current_value, units_held, avg_nav, current_nav, purchase_date FROM portfolio_entries WHERE user_id=:uid AND asset_type='stock' AND invested_amount > 0 ORDER BY current_value DESC LIMIT 50");
 $hold_stmt->execute([':uid'=>$user_id]);
-$all_equity = $hold_stmt->fetchAll();
+$holdings = $hold_stmt->fetchAll();
 
-if (empty($all_equity)) {
-    exit(json_encode(['success'=>false,'error'=>'No equity holdings found. Add stock holdings via Portfolio page.']));
-}
-
-// Filter to actual individual stocks (exclude mutual fund names)
-$fund_keywords = ['fund','etf','scheme','plan growth','regular growth','direct growth','idcw','fof','index fund','liquid','overnight'];
-$holdings = array_filter($all_equity, function($h) use ($fund_keywords) {
-    $lower = strtolower($h['fund_name']);
-    foreach ($fund_keywords as $kw) {
-        if (str_contains($lower, $kw)) return false;
-    }
-    return true;
-});
-$holdings = array_values($holdings);
-
-// If no stocks found after filtering (all are MFs), notify the user
 if (empty($holdings)) {
-    exit(json_encode([
-        'success' => false,
-        'error'   => 'Your equity holdings appear to be mutual funds (HDFC Flexi Cap, Nippon India, etc.). Please use the Mutual Fund Rebalancer on the left instead. The Equity Analyser is for individual stocks like INFY, RELIANCE, HDFCBANK.'
-    ]));
+    exit(json_encode(['success'=>false,'error'=>'No equity (stock) holdings found. Add stock holdings via the Portfolio page.']));
 }
 
 // Cap at 25 holdings to keep prompt manageable

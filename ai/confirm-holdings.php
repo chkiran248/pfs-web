@@ -44,14 +44,16 @@ try {
         $existing_pool[] = ['id' => $row['id'], 'name' => strtolower($row['fund_name']), 'folio' => trim((string)$row['folio_number'])];
     }
 
+    // asset_type is always 'mutual_fund' here -- CAS/NSDL statements processed
+    // by this flow are strictly mutual fund holdings, never individual stocks.
     $ins = $db->prepare("INSERT INTO portfolio_entries
-        (user_id,fund_name,fund_house,fund_type,units_held,avg_nav,current_nav,
+        (user_id,fund_name,fund_house,fund_type,asset_type,units_held,avg_nav,current_nav,
          invested_amount,current_value,purchase_date,maturity_date,folio_number,
          sip_active,sip_amount,interest_rate)
-        VALUES (:uid,:fn,:fh,:ft,:units,:avg,:cur,:inv,:curv,:pd,:md,:folio,:sip,:sipa,:rate)");
+        VALUES (:uid,:fn,:fh,:ft,'mutual_fund',:units,:avg,:cur,:inv,:curv,:pd,:md,:folio,:sip,:sipa,:rate)");
 
     $upd = $db->prepare("UPDATE portfolio_entries SET
-        fund_house=:fh, fund_type=:ft, units_held=:units, avg_nav=:avg, current_nav=:cur,
+        fund_house=:fh, fund_type=:ft, asset_type='mutual_fund', units_held=:units, avg_nav=:avg, current_nav=:cur,
         invested_amount=:inv, current_value=:curv, purchase_date=:pd, maturity_date=:md,
         folio_number=:folio, sip_active=:sip, sip_amount=:sipa, interest_rate=:rate
         WHERE id=:id AND user_id=:uid");

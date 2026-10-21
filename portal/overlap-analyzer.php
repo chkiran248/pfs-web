@@ -14,7 +14,7 @@ $uid = get_user_id();
 // Fetch equity holdings
 $holdings = [];
 try {
-    $stmt = $db->prepare("SELECT fund_name, fund_house, fund_type FROM portfolio_entries WHERE user_id = :uid AND fund_type IN ('equity','elss','index','hybrid') ORDER BY fund_name");
+    $stmt = $db->prepare("SELECT fund_name, fund_house, fund_type FROM portfolio_entries WHERE user_id = :uid AND asset_type='mutual_fund' AND fund_type IN ('equity','elss','index','hybrid') ORDER BY fund_name");
     $stmt->execute([':uid' => $uid]);
     $holdings = $stmt->fetchAll();
 } catch (\PDOException $e) {

@@ -11,8 +11,8 @@ require_premium('rebalancer');
 $user_id = get_user_id();
 $db      = get_db();
 
-$mf_count  = (int)$db->query("SELECT COUNT(*) FROM portfolio_entries WHERE user_id={$user_id} AND fund_type IN ('equity','debt','hybrid','elss','index','international','liquid','gold') AND invested_amount > 0")->fetchColumn();
-$eq_count  = (int)$db->query("SELECT COUNT(*) FROM portfolio_entries WHERE user_id={$user_id} AND fund_type='equity'")->fetchColumn();
+$mf_count  = (int)$db->query("SELECT COUNT(*) FROM portfolio_entries WHERE user_id={$user_id} AND asset_type='mutual_fund' AND invested_amount > 0")->fetchColumn();
+$eq_count  = (int)$db->query("SELECT COUNT(*) FROM portfolio_entries WHERE user_id={$user_id} AND asset_type='stock' AND invested_amount > 0")->fetchColumn();
 $last_mf   = $db->query("SELECT generated_at FROM rebalancer_results WHERE user_id={$user_id} AND rebalance_type='mutual_fund' ORDER BY generated_at DESC LIMIT 1")->fetchColumn();
 $last_eq   = $db->query("SELECT generated_at FROM rebalancer_results WHERE user_id={$user_id} AND rebalance_type='equity' ORDER BY generated_at DESC LIMIT 1")->fetchColumn();
 
@@ -20,12 +20,23 @@ $mf_hold_stmt = $db->prepare(
     "SELECT id, fund_name, invested_amount, current_value
      FROM portfolio_entries
      WHERE user_id=:uid
-     AND fund_type IN ('equity','debt','hybrid','elss','index','international','liquid','gold')
+     AND asset_type='mutual_fund'
      AND invested_amount > 0
      ORDER BY current_value DESC"
 );
 $mf_hold_stmt->execute([':uid' => $user_id]);
 $mf_holdings = $mf_hold_stmt->fetchAll();
+
+$eq_hold_stmt = $db->prepare(
+    "SELECT id, fund_name, invested_amount, current_value
+     FROM portfolio_entries
+     WHERE user_id=:uid
+     AND asset_type='stock'
+     AND invested_amount > 0
+     ORDER BY current_value DESC"
+);
+$eq_hold_stmt->execute([':uid' => $user_id]);
+$eq_holdings = $eq_hold_stmt->fetchAll();
 
 $page_title = 'Portfolio Rebalancer — Prime Financials';
 require_once '../includes/portal-header.php';
@@ -214,9 +225,6 @@ require_once '../includes/portal-header.php';
         </div>
         <div class="rb-card-meta">
           <?php if ($last_eq): ?><span class="rb-last-run">Last: <?= date('d M Y', strtotime($last_eq)) ?></span><?php endif; ?>
-          <button class="rb-run-btn" id="runEQ" onclick="runRebalancer('equity')" <?= !$eq_count ? 'disabled' : '' ?>>
-            <?= $eq_count ? 'Run Analysis →' : 'No Holdings' ?>
-          </button>
         </div>
       </div>
     </div>
@@ -233,9 +241,30 @@ require_once '../includes/portal-header.php';
           <a href="<?= SITE_URL ?>/portal/primo.php">Upload broker statement via PrimoAI →</a>
         </div>
       <?php else: ?>
-        <div class="rb-idle">
-          <p>Click <strong style="color:var(--cream)">Run Analysis</strong> for a research-based view of your <strong style="color:var(--cream)"><?= $eq_count ?> stock<?= $eq_count!==1?'s':'' ?></strong> — sector concentration, tax opportunities, position sizing.</p>
-          <p class="rb-note">~15–30 seconds.</p>
+        <div class="rb-mf-list">
+          <?php foreach ($eq_holdings as $h):
+            $gain_pct = $h['invested_amount'] > 0
+              ? round((($h['current_value'] - $h['invested_amount']) / $h['invested_amount']) * 100, 1) : 0;
+          ?>
+          <div class="rb-mf-row-wrap" data-id="<?= (int)$h['id'] ?>">
+            <div class="rb-mf-row">
+              <div class="rb-mf-row-main">
+                <div class="rb-mf-row-name"><?= htmlspecialchars($h['fund_name'], ENT_QUOTES, 'UTF-8') ?></div>
+                <div class="rb-mf-row-meta">
+                  ₹<?= number_format((float)$h['current_value'], 0) ?>
+                  <span class="<?= $gain_pct >= 0 ? 'gain-pos' : 'gain-neg' ?>"><?= $gain_pct >= 0 ? '+' : '' ?><?= $gain_pct ?>%</span>
+                </div>
+              </div>
+              <button class="rb-analyse-btn" onclick="analyseSingleStock(<?= (int)$h['id'] ?>, this)">Analyse</button>
+            </div>
+            <div class="rb-mf-row-result" style="display:none"></div>
+          </div>
+          <?php endforeach; ?>
+        </div>
+
+        <div class="rb-mf-footer">
+          <p class="rb-note">Or run a full research view across all <?= $eq_count ?> stock<?= $eq_count!==1?'s':'' ?> — sector concentration, tax opportunities, position sizing.</p>
+          <button class="rb-run-btn" id="runEQ" onclick="runRebalancer('equity')">Run Analysis →</button>
         </div>
       <?php endif; ?>
     </div>
@@ -402,6 +431,52 @@ function renderSingleVerdict(f, el) {
         ${f.return_assessment ? `<span>${e(f.return_assessment.replace(/_/g,' '))}</span>` : ''}
         <span class="rb-sip-pill" style="color:${s.c};border-color:${s.c}">${s.l}</span>
       </div>
+      <p class="rb-reason">${e(f.reason || '')}</p>
+      ${f.action_detail ? `<p class="rb-action">→ ${e(f.action_detail)}</p>` : ''}
+    </div>`;
+}
+
+// ── Equity single-stock analysis (per-row Analyse button) ──
+async function analyseSingleStock(holdingId, btn) {
+  const wrap = btn.closest('.rb-mf-row-wrap');
+  const slot = wrap.querySelector('.rb-mf-row-result');
+  const orig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Analysing…';
+  slot.style.display = 'block';
+  slot.innerHTML = `<div class="rb-loading" style="padding:0.75rem 0"><div class="rb-spinner" style="width:22px;height:22px;border-width:2px"></div></div>`;
+
+  try {
+    const resp = await fetch(SITE_URL_JS + '/ai/rebalance-equity-single.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF },
+      body: JSON.stringify({ holding_id: holdingId })
+    });
+    const r = await resp.json();
+    if (!r.success) throw new Error(r.error || 'Analysis failed');
+    renderSingleStockVerdict(r.data, slot);
+  } catch (err) {
+    const friendly = err instanceof SyntaxError ? "We couldn't complete this analysis right now." : e(err.message);
+    slot.innerHTML = `<div class="rb-error" style="padding:0.6rem 0.75rem;font-size:0.8rem">⚠ ${friendly}</div>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = orig;
+  }
+}
+
+function renderSingleStockVerdict(f, el) {
+  const v = EQ_VERDICTS[f.verdict] || EQ_VERDICTS.hold;
+  const gp = f.unrealised_gain_pct || 0;
+  el.innerHTML = `
+    <div class="rb-holding" style="margin:0">
+      <div class="rb-holding-top">
+        <span class="rb-verdict" style="background:${v.bg};color:${v.c};border:1px solid ${v.c}">${v.l}</span>
+      </div>
+      <div class="rb-meta-row">
+        <span class="${gp>=0?'gain-pos':'gain-neg'}">${gp>=0?'+':''}${gp}% unrealised</span>
+        <span>${f.holding_period_days||0}d held</span>
+      </div>
+      ${f.tax_note ? `<p class="rb-tax-note">💰 ${e(f.tax_note)}</p>` : ''}
       <p class="rb-reason">${e(f.reason || '')}</p>
       ${f.action_detail ? `<p class="rb-action">→ ${e(f.action_detail)}</p>` : ''}
     </div>`;

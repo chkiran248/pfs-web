@@ -144,7 +144,7 @@ function run_mf_rebalance_analysis(PDO $db, int $user_id): array {
                 scheme_code, return_1yr, return_3yr, perf_refreshed_at
          FROM portfolio_entries
          WHERE user_id=:uid
-         AND fund_type IN ('equity','debt','hybrid','elss','index','international','liquid','gold')
+         AND asset_type='mutual_fund'
          AND invested_amount > 0
          ORDER BY current_value DESC"
     );
@@ -298,7 +298,7 @@ function run_mf_single_fund_analysis(PDO $db, int $user_id, int $holding_id): ar
                 scheme_code, return_1yr, return_3yr
          FROM portfolio_entries
          WHERE id=:id AND user_id=:uid
-         AND fund_type IN ('equity','debt','hybrid','elss','index','international','liquid','gold')
+         AND asset_type='mutual_fund'
          AND invested_amount > 0"
     );
     $stmt->execute([':id' => $holding_id, ':uid' => $user_id]);
@@ -313,7 +313,7 @@ function run_mf_single_fund_analysis(PDO $db, int $user_id, int $holding_id): ar
 
     $tot_stmt = $db->prepare(
         "SELECT COALESCE(SUM(current_value),0) FROM portfolio_entries
-         WHERE user_id=:uid AND fund_type IN ('equity','debt','hybrid','elss','index','international','liquid','gold')
+         WHERE user_id=:uid AND asset_type='mutual_fund'
          AND invested_amount > 0"
     );
     $tot_stmt->execute([':uid' => $user_id]);

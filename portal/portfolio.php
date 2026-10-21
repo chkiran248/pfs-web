@@ -12,8 +12,13 @@ $db  = get_db();
 $uid = get_user_id();
 $error = '';
 
-$fund_types = ['equity','debt','hybrid','elss','index','international','liquid','fd','nps','gold','fixed_income','other'];
-$type_colours = ['equity'=>'badge-green','debt'=>'badge-gold','hybrid'=>'badge-green','elss'=>'badge-green','index'=>'badge-muted','international'=>'badge-muted','liquid'=>'badge-muted','fd'=>'badge-gold','nps'=>'badge-gold','gold'=>'badge-gold','fixed_income'=>'badge-gold','other'=>'badge-muted'];
+$fund_types = ['equity','debt','hybrid','elss','index','international','liquid','fd','nps','gold','fixed_income','other','insurance','pms','aif','crypto'];
+$type_colours = ['equity'=>'badge-green','debt'=>'badge-gold','hybrid'=>'badge-green','elss'=>'badge-green','index'=>'badge-muted','international'=>'badge-muted','liquid'=>'badge-muted','fd'=>'badge-gold','nps'=>'badge-gold','gold'=>'badge-gold','fixed_income'=>'badge-gold','other'=>'badge-muted','insurance'=>'badge-gold','pms'=>'badge-green','aif'=>'badge-green','crypto'=>'badge-muted'];
+
+// asset_type is the authoritative category (captured from the user's own
+// Step 1 selection) -- fund_type alone can't distinguish a stock from an
+// equity mutual fund, or standalone gold from a gold mutual fund.
+$asset_type_values = ['mutual_fund','stock','fd','nps','gold','insurance','pms','aif','crypto','fixed_income','other'];
 
 // ── Handle Add / Edit ────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['action']??'', ['add_holding','edit_holding'])) {
@@ -24,6 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['action']??'', ['ad
             ':fund_name' => trim($_POST['fund_name'] ?? ''),
             ':fund_house'=> trim($_POST['fund_house'] ?? ''),
             ':fund_type' => in_array($_POST['fund_type']??'',$fund_types) ? $_POST['fund_type'] : 'other',
+            ':asset_type'=> in_array($_POST['asset_type']??'',$asset_type_values) ? $_POST['asset_type'] : 'other',
             ':units'     => (float)($_POST['units_held'] ?? 0),
             ':avg_nav'   => (float)($_POST['avg_nav'] ?? 0),
             ':cur_nav'   => (float)($_POST['current_nav'] ?? 0),
@@ -42,12 +48,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['action']??'', ['ad
         else {
             try {
                 if (($_POST['action']??'') === 'add_holding') {
-                    $db->prepare("INSERT INTO portfolio_entries (user_id,fund_name,fund_house,fund_type,units_held,avg_nav,current_nav,invested_amount,current_value,purchase_date,maturity_date,folio_number,sip_active,sip_amount,sip_date,interest_rate,notes) VALUES (:uid,:fund_name,:fund_house,:fund_type,:units,:avg_nav,:cur_nav,:invested,:cur_val,:purchase,:maturity,:folio,:sip,:sip_amt,:sip_date,:rate,:notes)")
+                    $db->prepare("INSERT INTO portfolio_entries (user_id,fund_name,fund_house,fund_type,asset_type,units_held,avg_nav,current_nav,invested_amount,current_value,purchase_date,maturity_date,folio_number,sip_active,sip_amount,sip_date,interest_rate,notes) VALUES (:uid,:fund_name,:fund_house,:fund_type,:asset_type,:units,:avg_nav,:cur_nav,:invested,:cur_val,:purchase,:maturity,:folio,:sip,:sip_amt,:sip_date,:rate,:notes)")
                        ->execute($d);
                 } else {
                     $hid = (int)($_POST['holding_id'] ?? 0);
                     $d[':id'] = $hid;
-                    $db->prepare("UPDATE portfolio_entries SET fund_name=:fund_name,fund_house=:fund_house,fund_type=:fund_type,units_held=:units,avg_nav=:avg_nav,current_nav=:cur_nav,invested_amount=:invested,current_value=:cur_val,purchase_date=:purchase,maturity_date=:maturity,folio_number=:folio,sip_active=:sip,sip_amount=:sip_amt,sip_date=:sip_date,interest_rate=:rate,notes=:notes WHERE id=:id AND user_id=:uid")
+                    $db->prepare("UPDATE portfolio_entries SET fund_name=:fund_name,fund_house=:fund_house,fund_type=:fund_type,asset_type=:asset_type,units_held=:units,avg_nav=:avg_nav,current_nav=:cur_nav,invested_amount=:invested,current_value=:cur_val,purchase_date=:purchase,maturity_date=:maturity,folio_number=:folio,sip_active=:sip,sip_amount=:sip_amt,sip_date=:sip_date,interest_rate=:rate,notes=:notes WHERE id=:id AND user_id=:uid")
                        ->execute($d);
                 }
                 $_SESSION['flash'] = ['type'=>'success','message'=>'Holding saved successfully.'];
@@ -80,7 +86,7 @@ if (empty($_SESSION['pf_nav_refreshed_at']) || (time() - $_SESSION['pf_nav_refre
     $rf_entries = $db->query(
         "SELECT id, fund_name, units_held, scheme_code, invested_amount, current_value FROM portfolio_entries
          WHERE user_id = {$uid}
-           AND fund_type IN ('equity','debt','hybrid','elss','index','international','liquid')
+           AND asset_type='mutual_fund'
            AND (units_held > 0 OR (scheme_code IS NOT NULL AND scheme_code <> ''))"
     )->fetchAll();
 
@@ -169,6 +175,23 @@ foreach ($holdings as $h) {
     $allocation[$t] = ($allocation[$t] ?? 0) + (float)$h['current_value'];
 }
 
+// Category cards (Mutual Funds / Equity / Others) -- asset_type is the
+// authoritative category, captured from the user's own Step 1 selection;
+// anything that isn't 'mutual_fund' or 'stock' (fd, nps, gold, insurance,
+// pms, aif, crypto, fixed_income, other, or missing on pre-migration rows)
+// rolls up into "Others".
+$category_groups = [
+    'mutual_fund' => ['label' => 'Mutual Funds', 'invested' => 0.0, 'current' => 0.0, 'count' => 0],
+    'stock'       => ['label' => 'Equity',       'invested' => 0.0, 'current' => 0.0, 'count' => 0],
+    'other'       => ['label' => 'Others',       'invested' => 0.0, 'current' => 0.0, 'count' => 0],
+];
+foreach ($holdings as $h) {
+    $bucket = in_array($h['asset_type'] ?? '', ['mutual_fund', 'stock'], true) ? $h['asset_type'] : 'other';
+    $category_groups[$bucket]['invested'] += (float)$h['invested_amount'];
+    $category_groups[$bucket]['current']  += (float)$h['current_value'];
+    $category_groups[$bucket]['count']++;
+}
+
 // Edit prefill
 $edit_holding = null;
 if (isset($_GET['edit'])) {
@@ -209,6 +232,27 @@ require_once '../includes/portal-header.php';
   </div>
 </div>
 
+<!-- Category breakdown -->
+<div class="grid-3" style="margin-top:1rem">
+  <?php foreach ($category_groups as $cg):
+    $cg_gain     = $cg['current'] - $cg['invested'];
+    $cg_gain_pct = $cg['invested'] > 0 ? ($cg_gain / $cg['invested']) * 100 : 0;
+  ?>
+  <div class="portal-card">
+    <div class="card-title" style="margin-bottom:0.75rem"><?= htmlspecialchars($cg['label'], ENT_QUOTES, 'UTF-8') ?></div>
+    <?php if ($cg['count'] === 0): ?>
+      <div style="text-align:center;padding:0.75rem 0;color:var(--text-muted);font-size:0.85rem">No holdings yet</div>
+    <?php else: ?>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:700;color:var(--cream)"><?= format_inr($cg['current']) ?></div>
+      <div style="font-size:0.75rem;color:var(--text-muted);margin:0.2rem 0 0.5rem">Invested <?= format_inr($cg['invested']) ?> · <?= $cg['count'] ?> holding<?= $cg['count']!==1?'s':'' ?></div>
+      <div style="font-size:0.85rem;font-weight:500;color:<?= $cg_gain>=0?'var(--bright)':'var(--danger)' ?>">
+        <?= $cg_gain>=0?'+':'' ?><?= format_inr(abs($cg_gain)) ?> (<?= $cg_gain>=0?'+':'' ?><?= number_format($cg_gain_pct,2) ?>%)
+      </div>
+    <?php endif; ?>
+  </div>
+  <?php endforeach; ?>
+</div>
+
 <!-- Add/Edit form -->
 <div class="portal-card" style="margin-top:1.5rem">
   <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleForm()">
@@ -220,12 +264,15 @@ require_once '../includes/portal-header.php';
       <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrf_token(),ENT_QUOTES,'UTF-8') ?>">
       <input type="hidden" name="action" value="<?= $edit_holding ? 'edit_holding' : 'add_holding' ?>">
       <input type="hidden" name="fund_type" id="hidden_fund_type" value="<?= htmlspecialchars($edit_holding['fund_type']??'equity',ENT_QUOTES,'UTF-8') ?>">
+      <input type="hidden" name="asset_type" id="hidden_asset_type" value="<?= htmlspecialchars($edit_holding['asset_type'] ?? 'mutual_fund', ENT_QUOTES, 'UTF-8') ?>">
       <?php if ($edit_holding): ?><input type="hidden" name="holding_id" value="<?= $edit_holding['id'] ?>"><?php endif; ?>
 
       <?php
-        // Determine initial asset_type for edit mode
+        // Determine initial asset_type for edit mode -- prefer the real
+        // asset_type column; fall back to the fund_type heuristic only for
+        // rows that predate it (or on an environment before the migration).
         $init_ft = $edit_holding['fund_type'] ?? '';
-        $init_asset = match($init_ft) {
+        $init_asset = $edit_holding['asset_type'] ?? match($init_ft) {
           'fd'          => 'fd',
           'nps'         => 'nps',
           'gold'        => 'gold',
@@ -238,10 +285,6 @@ require_once '../includes/portal-header.php';
           'equity' => str_contains(strtolower($edit_holding['fund_name']??''), 'fund') ? 'mutual_fund' : 'stock',
           default => 'mutual_fund',
         };
-        if ($edit_holding && !str_contains(strtolower($edit_holding['fund_name']??''), 'fund') &&
-            in_array($edit_holding['fund_type']??'', ['equity'])) {
-            $init_asset = 'stock';
-        }
       ?>
 
       <!-- Bulk import tip -->
@@ -403,7 +446,6 @@ require_once '../includes/portal-header.php';
             <input class="form-input" type="date" name="purchase_date" id="pd_stock" value="<?= ($init_asset==='stock'&&$edit_holding)?htmlspecialchars($edit_holding['purchase_date']??'',ENT_QUOTES,'UTF-8'):'' ?>" style="max-width:220px">
           </div>
           <input type="hidden" name="folio_number" value="">
-          <input type="hidden" name="units_held" value="" id="u_stock_hidden">
         </div>
 
         <!-- ── FD fields ── -->
@@ -830,6 +872,7 @@ var currentAssetType = '<?= $init_asset ?>';
 
 function selectAssetType(type) {
   currentAssetType = type;
+  document.getElementById('hidden_asset_type').value = type;
   // Update button styles
   document.querySelectorAll('.asset-type-btn').forEach(b => {
     var active = b.dataset.type === type;
