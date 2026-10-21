@@ -11,10 +11,21 @@ require_premium('rebalancer');
 $user_id = get_user_id();
 $db      = get_db();
 
-$mf_count  = (int)$db->query("SELECT COUNT(*) FROM portfolio_entries WHERE user_id={$user_id} AND fund_type IN ('equity','debt','hybrid','elss','index','international','liquid','gold')")->fetchColumn();
+$mf_count  = (int)$db->query("SELECT COUNT(*) FROM portfolio_entries WHERE user_id={$user_id} AND fund_type IN ('equity','debt','hybrid','elss','index','international','liquid','gold') AND invested_amount > 0")->fetchColumn();
 $eq_count  = (int)$db->query("SELECT COUNT(*) FROM portfolio_entries WHERE user_id={$user_id} AND fund_type='equity'")->fetchColumn();
 $last_mf   = $db->query("SELECT generated_at FROM rebalancer_results WHERE user_id={$user_id} AND rebalance_type='mutual_fund' ORDER BY generated_at DESC LIMIT 1")->fetchColumn();
 $last_eq   = $db->query("SELECT generated_at FROM rebalancer_results WHERE user_id={$user_id} AND rebalance_type='equity' ORDER BY generated_at DESC LIMIT 1")->fetchColumn();
+
+$mf_hold_stmt = $db->prepare(
+    "SELECT id, fund_name, invested_amount, current_value
+     FROM portfolio_entries
+     WHERE user_id=:uid
+     AND fund_type IN ('equity','debt','hybrid','elss','index','international','liquid','gold')
+     AND invested_amount > 0
+     ORDER BY current_value DESC"
+);
+$mf_hold_stmt->execute([':uid' => $user_id]);
+$mf_holdings = $mf_hold_stmt->fetchAll();
 
 $page_title = 'Portfolio Rebalancer — Prime Financials';
 require_once '../includes/portal-header.php';
@@ -103,6 +114,18 @@ require_once '../includes/portal-header.php';
 .gain-pos { color:var(--bright); }
 .gain-neg { color:#ef5350; }
 .research-badge { color:var(--lime); }
+.rb-mf-list { display:flex; flex-direction:column; gap:0.5rem; margin-bottom:1.25rem; }
+.rb-mf-row-wrap { background:var(--surface-2); border:1px solid var(--border-light); border-radius:8px; }
+.rb-mf-row { display:flex; align-items:center; justify-content:space-between; gap:0.75rem; padding:0.75rem 0.875rem; }
+.rb-mf-row-main { min-width:0; flex:1; }
+.rb-mf-row-name { font-size:0.85rem; color:var(--cream); font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.rb-mf-row-meta { font-family:'DM Mono',monospace; font-size:0.72rem; color:var(--text-muted); margin-top:0.2rem; display:flex; gap:0.5rem; }
+.rb-analyse-btn { background:transparent; color:var(--lime); border:1px solid var(--lime); border-radius:6px; padding:0.4rem 0.8rem; font-size:0.78rem; font-family:'Inter',sans-serif; font-weight:500; cursor:pointer; flex-shrink:0; transition:background 0.15s; }
+.rb-analyse-btn:hover:not(:disabled) { background:rgba(141,198,63,0.1); }
+.rb-analyse-btn:disabled { opacity:0.55; cursor:not-allowed; }
+.rb-mf-row-result { padding:0 0.875rem 0.75rem; }
+.rb-mf-footer { text-align:center; padding:1rem 0.5rem 0.25rem; border-top:1px solid var(--border-light); margin-top:0.25rem; }
+.rb-mf-footer .rb-note { margin-bottom:0.75rem; }
 .rb-report-actions { display:flex; gap:0.65rem; margin-top:1rem; flex-wrap:wrap; }
 .rb-action-btn { display:flex; align-items:center; gap:0.4rem; padding:0.55rem 1rem; border-radius:7px; font-size:0.82rem; font-family:'Inter',sans-serif; font-weight:500; cursor:pointer; border:none; transition:all 0.18s; }
 .rb-action-btn--pdf  { background:var(--mid); color:#fff; }
@@ -134,9 +157,6 @@ require_once '../includes/portal-header.php';
         </div>
         <div class="rb-card-meta">
           <?php if ($last_mf): ?><span class="rb-last-run">Last: <?= date('d M Y', strtotime($last_mf)) ?></span><?php endif; ?>
-          <button class="rb-run-btn" id="runMF" onclick="runRebalancer('mutual_fund')" <?= !$mf_count ? 'disabled' : '' ?>>
-            <?= $mf_count ? 'Run Analysis →' : 'No Holdings' ?>
-          </button>
         </div>
       </div>
     </div>
@@ -149,10 +169,33 @@ require_once '../includes/portal-header.php';
           <a href="<?= SITE_URL ?>/portal/primo.php">Upload CAS statement via PrimoAI →</a>
         </div>
       <?php else: ?>
-        <div class="rb-idle">
-          <p>Click <strong style="color:var(--cream)">Run Analysis</strong> to get AI-powered rebalancing recommendations for your <strong style="color:var(--cream)"><?= $mf_count ?> MF holding<?= $mf_count!==1?'s':'' ?></strong>.</p>
-          <p class="rb-note">Checks allocation drift, underperformers, overlap &amp; SIP strategy. ~15–30 sec.</p>
+        <div class="rb-mf-list">
+          <?php foreach ($mf_holdings as $h):
+            $gain_pct = $h['invested_amount'] > 0
+              ? round((($h['current_value'] - $h['invested_amount']) / $h['invested_amount']) * 100, 1) : 0;
+          ?>
+          <div class="rb-mf-row-wrap" data-id="<?= (int)$h['id'] ?>">
+            <div class="rb-mf-row">
+              <div class="rb-mf-row-main">
+                <div class="rb-mf-row-name"><?= htmlspecialchars($h['fund_name'], ENT_QUOTES, 'UTF-8') ?></div>
+                <div class="rb-mf-row-meta">
+                  ₹<?= number_format((float)$h['current_value'], 0) ?>
+                  <span class="<?= $gain_pct >= 0 ? 'gain-pos' : 'gain-neg' ?>"><?= $gain_pct >= 0 ? '+' : '' ?><?= $gain_pct ?>%</span>
+                </div>
+              </div>
+              <button class="rb-analyse-btn" onclick="analyseSingleFund(<?= (int)$h['id'] ?>, this)">Analyse</button>
+            </div>
+            <div class="rb-mf-row-result" style="display:none"></div>
+          </div>
+          <?php endforeach; ?>
         </div>
+
+        <div class="rb-mf-footer">
+          <p class="rb-note">Or run a full analysis across all <?= $mf_count ?> holding<?= $mf_count!==1?'s':'' ?> — checks allocation drift, underperformers, overlap &amp; SIP strategy.</p>
+          <button class="rb-run-btn" id="runMF" onclick="runMFAnalysis()">Run Analysis →</button>
+        </div>
+
+        <div id="mfResultsArea"></div>
       <?php endif; ?>
     </div>
   </div>
@@ -318,6 +361,158 @@ async function runRebalancer(type) {
     btn.textContent = 'Re-run →';
   }
 }
+
+// ── MF single-fund analysis (per-row Analyse button) ────────
+async function analyseSingleFund(holdingId, btn) {
+  const wrap = btn.closest('.rb-mf-row-wrap');
+  const slot = wrap.querySelector('.rb-mf-row-result');
+  const orig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Analysing…';
+  slot.style.display = 'block';
+  slot.innerHTML = `<div class="rb-loading" style="padding:0.75rem 0"><div class="rb-spinner" style="width:22px;height:22px;border-width:2px"></div></div>`;
+
+  try {
+    const resp = await fetch(SITE_URL_JS + '/ai/rebalance-mf-single.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF },
+      body: JSON.stringify({ holding_id: holdingId })
+    });
+    const r = await resp.json();
+    if (!r.success) throw new Error(r.error || 'Analysis failed');
+    renderSingleVerdict(r.data, slot);
+  } catch (err) {
+    const friendly = err instanceof SyntaxError ? "We couldn't complete this analysis right now." : e(err.message);
+    slot.innerHTML = `<div class="rb-error" style="padding:0.6rem 0.75rem;font-size:0.8rem">⚠ ${friendly}</div>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = orig;
+  }
+}
+
+function renderSingleVerdict(f, el) {
+  const v = MF_VERDICTS[f.verdict] || MF_VERDICTS.hold;
+  const s = SIP_CFG[f.sip_recommendation] || SIP_CFG.continue;
+  el.innerHTML = `
+    <div class="rb-holding" style="margin:0">
+      <div class="rb-holding-top">
+        <span class="rb-verdict" style="background:${v.bg};color:${v.c};border:1px solid ${v.c}">${v.l}</span>
+      </div>
+      <div class="rb-meta-row">
+        ${f.return_assessment ? `<span>${e(f.return_assessment.replace(/_/g,' '))}</span>` : ''}
+        <span class="rb-sip-pill" style="color:${s.c};border-color:${s.c}">${s.l}</span>
+      </div>
+      <p class="rb-reason">${e(f.reason || '')}</p>
+      ${f.action_detail ? `<p class="rb-action">→ ${e(f.action_detail)}</p>` : ''}
+    </div>`;
+}
+
+// ── MF full-portfolio analysis: queue + poll ────────────────
+// The MF "Run Analysis" button no longer waits on one long-running request --
+// it queues a job instantly (ai/rebalance-mf.php), then polls
+// ai/rebalance-mf-status.php until a background cron (running outside the
+// hosting's ~60s web-request ceiling) finishes it. This is what finally makes
+// the full-portfolio analysis immune to the timeout that kept breaking it.
+let mfPollTimer = null;
+
+async function runMFAnalysis() {
+  const btn = document.getElementById('runMF');
+  const body = document.getElementById('mfResultsArea');
+  if (!btn || !body) return;
+
+  btn.disabled = true;
+  btn.textContent = 'Queuing…';
+
+  try {
+    const resp = await fetch(MF_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF },
+      body: JSON.stringify({})
+    });
+    const r = await resp.json();
+    if (!r.success) throw new Error(r.error || 'Could not start analysis');
+    startMFPolling(r.job_id);
+  } catch (err) {
+    const friendly = err instanceof SyntaxError ? "We couldn't start your analysis right now." : e(err.message);
+    body.innerHTML = `<div class="rb-error">⚠ ${friendly}</div>`;
+    btn.disabled = false;
+    btn.textContent = 'Run Analysis →';
+  }
+}
+
+function startMFPolling(jobId) {
+  const btn = document.getElementById('runMF');
+  const body = document.getElementById('mfResultsArea');
+  if (!btn || !body) return;
+
+  btn.disabled = true;
+  btn.textContent = 'Analysing…';
+
+  body.innerHTML = `
+    <div class="rb-loading">
+      <div class="rb-spinner"></div>
+      <p class="rb-status-msg" style="color:var(--cream);font-size:0.9rem;font-weight:500;margin-bottom:0.25rem;transition:opacity 0.4s">
+        Your analysis has been queued…
+      </p>
+      <p class="rb-note rb-elapsed" style="font-variant-numeric:tabular-nums">0s elapsed</p>
+      <p class="rb-note" style="margin-top:0.5rem">Feel free to leave this page — we'll keep working in the background and the result will be here when you return.</p>
+    </div>`;
+
+  const msgEl     = body.querySelector('.rb-status-msg');
+  const elapsedEl = body.querySelector('.rb-elapsed');
+  const steps     = RB_STEPS.mutual_fund;
+  const startTime = Date.now();
+  let stepIdx     = 0;
+
+  if (mfPollTimer) clearInterval(mfPollTimer);
+
+  mfPollTimer = setInterval(async () => {
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    if (elapsedEl) elapsedEl.textContent = elapsed + 's elapsed';
+    if (stepIdx + 1 < steps.length && elapsed >= steps[stepIdx + 1].t) {
+      stepIdx++;
+      if (msgEl) {
+        msgEl.style.opacity = '0';
+        setTimeout(() => { if (msgEl.isConnected) { msgEl.textContent = steps[stepIdx].msg; msgEl.style.opacity = '1'; } }, 200);
+      }
+    }
+
+    try {
+      const resp = await fetch(`${SITE_URL_JS}/ai/rebalance-mf-status.php?job_id=${jobId}`);
+      const r = await resp.json();
+      if (!r.success) return; // transient hiccup — keep polling
+
+      if (r.status === 'completed') {
+        clearInterval(mfPollTimer);
+        window._rbMFData = r.data;
+        renderMF(r.data, body);
+        btn.disabled = false;
+        btn.textContent = 'Re-run →';
+      } else if (r.status === 'failed') {
+        clearInterval(mfPollTimer);
+        body.innerHTML = `<div class="rb-error">⚠ ${e(r.error || 'Analysis failed.')}<br><small style="color:var(--text-muted)">Please try again in a few minutes, or contact your advisor on WhatsApp if this keeps happening.</small></div>`;
+        btn.disabled = false;
+        btn.textContent = 'Run Analysis →';
+      }
+      // queued/processing — keep polling
+    } catch (err) {
+      // network blip — don't abort, just try again next tick
+    }
+  }, 4000);
+}
+
+// On page load, resume polling if a job is already queued/processing
+// (e.g. the user navigated away and came back).
+(async function resumeMFPollingIfActive() {
+  if (!document.getElementById('runMF')) return;
+  try {
+    const resp = await fetch(`${SITE_URL_JS}/ai/rebalance-mf-status.php`);
+    const r = await resp.json();
+    if (r.success && (r.status === 'queued' || r.status === 'processing')) {
+      startMFPolling(r.job_id);
+    }
+  } catch (err) { /* ignore — just show the normal idle state */ }
+})();
 
 // ── PDF Download ───────────────────────────────────────────
 function downloadPDF(type) {
