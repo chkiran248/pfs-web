@@ -96,7 +96,8 @@ function build_extraction_prompt(string $text, string $doc_type, string $file_pa
 
     $instructions = match($doc_type) {
         'CAS_MUTUAL_FUND' => "Extract ALL mutual fund holdings from this CAMS/KFintech Consolidated Account Statement.
-For each holding return: fund_name, fund_house, fund_type (equity/debt/hybrid/elss/index/international/liquid/gold), folio_number, units_held (decimal), avg_nav, current_nav, invested_amount, current_value, purchase_date (YYYY-MM-DD), sip_active (true/false), sip_amount (monthly).",
+For each holding return: fund_name, fund_house, fund_type (equity/debt/hybrid/elss/index/international/liquid/gold), folio_number, units_held (decimal), avg_nav, current_nav, invested_amount, current_value, purchase_date (YYYY-MM-DD), sip_active (true/false), sip_amount (monthly).
+For purchase_date: many schemes show multiple SIP/lumpsum transaction dates rather than one purchase date — if so, use the EARLIEST transaction date for that folio+scheme. If no transaction date is visible at all, return null. NEVER use today's date, the statement generation date, or the statement period end date as a substitute — an incorrect recent date is worse than no date.",
 
         'PORTFOLIO_VALUATION' => "Extract ALL mutual fund holdings from this Portfolio Valuation Report (Valueplus/AssetPlus or similar).
 Each fund row typically shows: Scheme Name, Scheme Type/Category, Market Value (current value), Investment Value or Cost Value (amount invested), Units, NAV or Current NAV, and sometimes XIRR/Returns.

@@ -761,26 +761,45 @@ async function uploadForScan() {
 function showHoldingsPreview(holdings, msg) {
   let html=`<div class="flash-success" style="margin:0.75rem 0">✓ ${msg}</div>`;
   html+=`<p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:0.75rem">Uncheck any holdings you don't want to add:</p>`;
-  html+=`<div style="overflow-x:auto"><table class="portal-table"><thead><tr><th></th><th>Fund / Stock</th><th>Type</th><th>Invested</th><th>Value</th></tr></thead><tbody>`;
+  html+=`<div style="overflow-x:auto"><table class="portal-table"><thead><tr><th>#</th><th></th><th>Fund / Stock</th><th>Type</th><th>Invested</th><th>Current NAV</th><th>Value</th></tr></thead><tbody>`;
   holdings.forEach((h,i)=>{
     const inv=h.invested_amount?'₹'+h.invested_amount.toLocaleString('en-IN'):'—';
     const val=h.current_value?'₹'+h.current_value.toLocaleString('en-IN'):'—';
-    html+=`<tr><td><input type="checkbox" checked data-i="${i}" class="hcheck" style="accent-color:var(--mid)"></td>
+    const nav=h.current_nav?'₹'+Number(h.current_nav).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:4}):'—';
+    html+=`<tr><td style="color:var(--text-muted)">${i+1}</td><td><input type="checkbox" checked data-i="${i}" class="hcheck" style="accent-color:var(--mid)"></td>
       <td><strong style="color:var(--cream)">${h.fund_name}</strong>${h.fund_house?'<br><small style="color:var(--text-secondary)">'+h.fund_house+'</small>':''}${h.folio_number?'<br><small style="color:var(--text-muted)">Folio: '+h.folio_number+'</small>':''}</td>
       <td><span class="badge badge-muted">${(h.fund_type||'equity').toUpperCase()}</span></td>
       <td style="font-family:'IBM Plex Mono',monospace;font-size:0.82rem">${inv}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:0.82rem">${nav}</td>
       <td style="font-family:'IBM Plex Mono',monospace;font-size:0.82rem">${val}</td></tr>`;
   });
   html+=`</tbody></table></div>`;
+  html+=`<div id="scanTotals" style="display:flex;gap:1.5rem;justify-content:flex-end;margin-top:0.75rem;padding:0.75rem 1rem;background:var(--surface-2);border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:0.82rem"></div>`;
   document.getElementById('scanResults').innerHTML=html;
   document.getElementById('scanResults').style.display='block';
   const btn=document.getElementById('confirmBtn');
   btn.textContent=`Add ${holdings.length} Holdings to Portfolio`;
   btn.style.display='inline-flex';
-  document.querySelectorAll('.hcheck').forEach(cb=>cb.addEventListener('change',()=>{
-    const checked=document.querySelectorAll('.hcheck:checked').length;
+
+  function updateTotals(){
+    let totalInv=0, totalVal=0, checked=0;
+    document.querySelectorAll('.hcheck').forEach(cb=>{
+      if(!cb.checked) return;
+      checked++;
+      const h=holdings[Number(cb.dataset.i)];
+      totalInv+=Number(h.invested_amount)||0;
+      totalVal+=Number(h.current_value)||0;
+    });
+    const gain=totalVal-totalInv;
+    const gainColor=gain>=0?'var(--bright)':'#ef5350';
+    document.getElementById('scanTotals').innerHTML=
+      `<span style="color:var(--text-secondary)">Total Invested: <strong style="color:var(--cream)">₹${totalInv.toLocaleString('en-IN')}</strong></span>`+
+      `<span style="color:var(--text-secondary)">Current Value: <strong style="color:var(--cream)">₹${totalVal.toLocaleString('en-IN')}</strong></span>`+
+      `<span style="color:${gainColor}">${gain>=0?'+':''}₹${Math.abs(gain).toLocaleString('en-IN')}</span>`;
     document.getElementById('confirmBtn').textContent=`Add ${checked} Holdings to Portfolio`;
-  }));
+  }
+  updateTotals();
+  document.querySelectorAll('.hcheck').forEach(cb=>cb.addEventListener('change',updateTotals));
 }
 
 async function confirmHoldings() {
