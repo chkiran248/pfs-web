@@ -936,13 +936,10 @@ if (<?= ($edit_holding['sip_active']??0) ? 'true' : 'false' ?>) toggleSip();
       <thead><tr>
         <th onclick="sortTable(0)" style="cursor:pointer">Fund ↕</th>
         <th onclick="sortTable(1)" style="cursor:pointer">Type ↕</th>
-        <th>Units</th>
-        <th>Avg NAV</th>
-        <th>Cur NAV</th>
-        <th onclick="sortTable(5)" style="cursor:pointer">Invested ↕</th>
-        <th onclick="sortTable(6)" style="cursor:pointer">Value ↕</th>
-        <th onclick="sortTable(7)" style="cursor:pointer">Return ↕</th>
-        <th>Action</th>
+        <th>Units / NAV</th>
+        <th onclick="sortTable(3)" style="cursor:pointer">Invested ↕</th>
+        <th onclick="sortTable(4)" style="cursor:pointer">Value / Return ↕</th>
+        <th></th>
       </tr></thead>
       <tbody>
         <?php foreach ($holdings as $h):
@@ -954,22 +951,25 @@ if (<?= ($edit_holding['sip_active']??0) ? 'true' : 'false' ?>) toggleSip();
             <div style="font-size:0.75rem;color:var(--text-secondary)"><?= htmlspecialchars($h['fund_house']??'',ENT_QUOTES,'UTF-8') ?></div>
           </td>
           <td><span class="badge <?= $type_colours[$h['fund_type']]??'badge-muted' ?>" style="white-space:nowrap"><?= htmlspecialchars(fund_type_display($h['fund_type'], $h['fund_name']), ENT_QUOTES, 'UTF-8') ?></span></td>
-          <td style="font-family:'IBM Plex Mono',monospace;font-size:0.82rem"><?= number_format((float)$h['units_held'],4) ?></td>
-          <td style="font-family:'IBM Plex Mono',monospace;font-size:0.82rem">₹<?= number_format((float)$h['avg_nav'],2) ?></td>
-          <td style="font-family:'IBM Plex Mono',monospace;font-size:0.82rem">₹<?= number_format((float)$h['current_nav'],2) ?></td>
-          <td><?= format_inr((float)$h["invested_amount"]) ?></td>
-          <td><?= format_inr((float)$h["current_value"]) ?></td>
-          <td style="color:<?= $ret>=0?'var(--bright)':'var(--danger)' ?>;font-family:'IBM Plex Mono',monospace;font-size:0.82rem">
-            <?= $ret>=0?'+':'' ?><?= number_format($ret,2) ?>%
+          <td style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;white-space:nowrap">
+            <div><?= number_format((float)$h['units_held'],4) ?> u</div>
+            <div style="color:var(--text-muted)">₹<?= number_format((float)$h['avg_nav'],2) ?> → ₹<?= number_format((float)$h['current_nav'],2) ?></div>
+          </td>
+          <td style="white-space:nowrap"><?= format_inr((float)$h["invested_amount"]) ?></td>
+          <td style="white-space:nowrap">
+            <div><?= format_inr((float)$h["current_value"]) ?></div>
+            <div style="color:<?= $ret>=0?'var(--bright)':'var(--danger)' ?>;font-family:'IBM Plex Mono',monospace;font-size:0.78rem">
+              <?= $ret>=0?'+':'' ?><?= number_format($ret,2) ?>%
+            </div>
           </td>
           <td>
             <div style="display:flex;gap:0.4rem">
-              <a href="?edit=<?= $h['id'] ?>" class="btn-ghost btn-sm">Edit</a>
+              <a href="?edit=<?= $h['id'] ?>" class="btn-ghost btn-sm" title="Edit">✎</a>
               <form method="POST" style="display:inline" onsubmit="return confirmAction('Delete this holding?',function(){})">
                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrf_token(),ENT_QUOTES,'UTF-8') ?>">
                 <input type="hidden" name="action" value="delete_holding">
                 <input type="hidden" name="holding_id" value="<?= $h['id'] ?>">
-                <button type="submit" class="btn-danger btn-sm">Del</button>
+                <button type="submit" class="btn-danger btn-sm" title="Delete">✕</button>
               </form>
             </div>
           </td>
