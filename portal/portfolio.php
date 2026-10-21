@@ -175,18 +175,26 @@ foreach ($holdings as $h) {
     $allocation[$t] = ($allocation[$t] ?? 0) + (float)$h['current_value'];
 }
 
-// Category cards (Mutual Funds / Equity / Others) -- asset_type is the
-// authoritative category, captured from the user's own Step 1 selection;
-// anything that isn't 'mutual_fund' or 'stock' (fd, nps, gold, insurance,
-// pms, aif, crypto, fixed_income, other, or missing on pre-migration rows)
-// rolls up into "Others".
+// Category cards -- one per asset_type, matching the Step 1 selector below
+// exactly (same icons). asset_type is the authoritative category, captured
+// from the user's own Step 1 selection at entry time. Every category renders
+// even with zero holdings; anything not in this list (shouldn't happen, but
+// covers pre-migration NULL rows just in case) rolls up into "Others".
 $category_groups = [
-    'mutual_fund' => ['label' => 'Mutual Funds', 'invested' => 0.0, 'current' => 0.0, 'count' => 0],
-    'stock'       => ['label' => 'Equity',       'invested' => 0.0, 'current' => 0.0, 'count' => 0],
-    'other'       => ['label' => 'Others',       'invested' => 0.0, 'current' => 0.0, 'count' => 0],
+    'mutual_fund' => ['label' => 'Mutual Funds',   'icon' => 'bi-graph-up-arrow',   'invested' => 0.0, 'current' => 0.0, 'count' => 0],
+    'stock'       => ['label' => 'Equity',         'icon' => 'bi-bar-chart-line',   'invested' => 0.0, 'current' => 0.0, 'count' => 0],
+    'fd'          => ['label' => 'Fixed Deposits', 'icon' => 'bi-bank',             'invested' => 0.0, 'current' => 0.0, 'count' => 0],
+    'nps'         => ['label' => 'NPS',            'icon' => 'bi-shield-check',     'invested' => 0.0, 'current' => 0.0, 'count' => 0],
+    'gold'        => ['label' => 'Gold / SGB',     'icon' => 'bi-gem',              'invested' => 0.0, 'current' => 0.0, 'count' => 0],
+    'insurance'   => ['label' => 'Insurance',      'icon' => 'bi-heart-pulse',      'invested' => 0.0, 'current' => 0.0, 'count' => 0],
+    'pms'         => ['label' => 'PMS',            'icon' => 'bi-briefcase',        'invested' => 0.0, 'current' => 0.0, 'count' => 0],
+    'aif'         => ['label' => 'AIF',            'icon' => 'bi-layers',           'invested' => 0.0, 'current' => 0.0, 'count' => 0],
+    'crypto'      => ['label' => 'Crypto',         'icon' => 'bi-currency-bitcoin', 'invested' => 0.0, 'current' => 0.0, 'count' => 0],
+    'fixed_income'=> ['label' => 'Fixed Income',   'icon' => 'bi-building-check',   'invested' => 0.0, 'current' => 0.0, 'count' => 0],
+    'other'       => ['label' => 'Others',         'icon' => 'bi-grid',             'invested' => 0.0, 'current' => 0.0, 'count' => 0],
 ];
 foreach ($holdings as $h) {
-    $bucket = in_array($h['asset_type'] ?? '', ['mutual_fund', 'stock'], true) ? $h['asset_type'] : 'other';
+    $bucket = array_key_exists($h['asset_type'] ?? '', $category_groups) ? $h['asset_type'] : 'other';
     $category_groups[$bucket]['invested'] += (float)$h['invested_amount'];
     $category_groups[$bucket]['current']  += (float)$h['current_value'];
     $category_groups[$bucket]['count']++;
@@ -233,20 +241,20 @@ require_once '../includes/portal-header.php';
 </div>
 
 <!-- Category breakdown -->
-<div class="grid-3" style="margin-top:1rem">
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:0.6rem;margin-top:1rem">
   <?php foreach ($category_groups as $cg):
     $cg_gain     = $cg['current'] - $cg['invested'];
     $cg_gain_pct = $cg['invested'] > 0 ? ($cg_gain / $cg['invested']) * 100 : 0;
   ?>
-  <div class="portal-card">
-    <div class="card-title" style="margin-bottom:0.75rem"><?= htmlspecialchars($cg['label'], ENT_QUOTES, 'UTF-8') ?></div>
+  <div class="portal-card" style="padding:0.8rem 0.6rem;text-align:center">
+    <i class="bi <?= htmlspecialchars($cg['icon'], ENT_QUOTES, 'UTF-8') ?>" style="font-size:1.1rem;color:var(--lime);display:block;margin-bottom:0.35rem"></i>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:0.3rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><?= htmlspecialchars($cg['label'], ENT_QUOTES, 'UTF-8') ?></div>
     <?php if ($cg['count'] === 0): ?>
-      <div style="text-align:center;padding:0.75rem 0;color:var(--text-muted);font-size:0.85rem">No holdings yet</div>
+      <div style="font-size:0.68rem;color:var(--text-muted);padding:0.25rem 0">No holdings</div>
     <?php else: ?>
-      <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:700;color:var(--cream)"><?= format_inr($cg['current']) ?></div>
-      <div style="font-size:0.75rem;color:var(--text-muted);margin:0.2rem 0 0.5rem">Invested <?= format_inr($cg['invested']) ?> · <?= $cg['count'] ?> holding<?= $cg['count']!==1?'s':'' ?></div>
-      <div style="font-size:0.85rem;font-weight:500;color:<?= $cg_gain>=0?'var(--bright)':'var(--danger)' ?>">
-        <?= $cg_gain>=0?'+':'' ?><?= format_inr(abs($cg_gain)) ?> (<?= $cg_gain>=0?'+':'' ?><?= number_format($cg_gain_pct,2) ?>%)
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:700;color:var(--cream);white-space:nowrap"><?= format_inr($cg['current']) ?></div>
+      <div style="font-size:0.62rem;font-weight:500;color:<?= $cg_gain>=0?'var(--bright)':'var(--danger)' ?>;margin-top:0.15rem">
+        <?= $cg_gain>=0?'+':'' ?><?= number_format($cg_gain_pct,1) ?>%
       </div>
     <?php endif; ?>
   </div>
